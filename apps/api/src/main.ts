@@ -6,8 +6,14 @@ const env = loadEnv();
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.enableCors({
+    origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
+  });
+
   await app.listen(env.PORT);
   console.log(`API server running on port ${env.PORT}`);
 }
 
 bootstrap();
+EOF

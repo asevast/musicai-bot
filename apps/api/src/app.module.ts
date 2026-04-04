@@ -3,9 +3,15 @@ import { TracksModule } from './modules/tracks/tracks.module';
 import { UsersModule } from './modules/users/users.module';
 import { CreditsModule } from './modules/credits/credits.module';
 import { PaymentsModule } from './modules/payments/payments.module';
+import {
+  GenerateRateLimitMiddleware,
+  CommandRateLimitMiddleware,
+} from './middleware/rate-limit.middleware';
 
 @Module({
   imports: [TracksModule, UsersModule, CreditsModule, PaymentsModule],
+  providers: [GenerateRateLimitMiddleware, CommandRateLimitMiddleware],
+  exports: [GenerateRateLimitMiddleware, CommandRateLimitMiddleware],
 })
 export class AppModule {}
 EOF

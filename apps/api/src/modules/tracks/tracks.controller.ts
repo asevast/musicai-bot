@@ -1,12 +1,15 @@
-import { Controller, Get, Post, Body, Param, Patch, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { TracksService } from './tracks.service';
 import type { CreateTrackDto } from '@musicai/shared-types';
+import { TelegramAuthGuard } from '../../guards/telegram-auth.guard';
+import { GenerateRateLimitMiddleware } from '../../middleware/rate-limit.middleware';
 
 @Controller('tracks')
 export class TracksController {
   constructor(private readonly tracksService: TracksService) {}
 
   @Post()
+  @UseGuards(TelegramAuthGuard)
   create(@Body() dto: CreateTrackDto) {
     return this.tracksService.createTrack(dto.telegramId, dto);
   }
