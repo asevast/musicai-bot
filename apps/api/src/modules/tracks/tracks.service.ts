@@ -2,10 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { prisma } from '@musicai/database';
 import type { CreateTrackDto } from '@musicai/shared-types';
 import { CreditsService, InsufficientCreditsError } from '../credits/credits.service';
+import { SynthJobProducer } from '@musicai/queues';
 
 @Injectable()
 export class TracksService {
-  constructor(private readonly creditsService: CreditsService) {}
+  private synthJobProducer: SynthJobProducer;
+
+  constructor(private readonly creditsService: CreditsService) {
+    this.synthJobProducer = new SynthJobProducer();
+  }
 
   async createTrack(userId: string, dto: CreateTrackDto) {
     const cost = this.calcCost(dto.model, dto.durationSeconds);
@@ -43,6 +48,33 @@ export class TracksService {
     await prisma.synthJob.create({
       data: { trackId: track.id },
     });
+
+    const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    const isPaidUser = user.subscriptionTier !== 'free';
+
+    await this.synthJobProducer.addSynthJob(
+      {
+        trackId: track.id,
+        userId,
+        telegramId: dto.telegramId,
+        chatId: dto.chatId,
+        messageId: dto.messageId,
+        lyriaRequest: {
+          model: dto.model,
+          prompt: dto.prompt,
+          negativePrompt: dto.negativePrompt,
+          vocal: dto.type !== 'instrumental',
+          lyrics: dto.lyrics,
+          bpm: dto.bpm,
+          intensity: dto.intensity,
+          durationSeconds: dto.durationSeconds,
+          language: dto.language,
+          imageBase64: dto.imageBase64,
+          imageMimeType: dto.imageMimeType,
+        },
+      },
+      isPaidUser,
+    );
 
     return track;
   }

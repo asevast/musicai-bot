@@ -1,6 +1,7 @@
 import { createConversation } from '@grammyjs/conversations';
 import { BotContext } from '../bot';
 import { trackTypeKeyboard, languageKeyboard, intensityKeyboard, confirmKeyboard } from '../keyboards/track-options.keyboard';
+import { loadEnv } from '@musicai/config';
 
 interface CreateTrackSession {
   type?: 'full_song' | 'clip' | 'instrumental';
@@ -11,9 +12,17 @@ interface CreateTrackSession {
   negativePrompt?: string;
 }
 
+const API_URL = process.env.API_URL || 'http://localhost:3000';
+
 export const createTrackScene = createConversation<BotContext, CreateTrackSession>(
   async (conversation, ctx) => {
     const session = conversation.session;
+    const user = ctx.user;
+
+    if (!user) {
+      await ctx.reply('❌ Error: User not found');
+      return;
+    }
 
     // Step 1: Select track type
     await ctx.reply('🎵 *Select track type:*', {
@@ -133,6 +142,45 @@ export const createTrackScene = createConversation<BotContext, CreateTrackSessio
     }
 
     // Create the track
-    await ctx.reply('🎵 Patience you must have, young padawan... Creating your track...');
+    const statusMsg = await ctx.reply('🎵 Patience you must have, young padawan... Creating your track...');
+
+    try {
+      const model = session.type === 'clip' ? 'lyria-3-clip-preview' : 'lyria-3-pro-preview';
+
+      const response = await fetch(`${API_URL}/tracks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model,
+          type: session.type,
+          prompt: session.prompt,
+          negativePrompt: session.negativePrompt,
+          bpm: session.bpm,
+          intensity: session.intensity,
+          language: session.language,
+          telegramId: user.telegramId.toString(),
+          chatId: ctx.chat?.id,
+          messageId: statusMsg.message_id,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
+
+      const track = await response.json();
+
+      await ctx.reply(
+        `✅ *Track queued!*\n\n` +
+          `Track ID: \`${track.id.slice(0, 8)}...\`\n` +
+          `Estimated time: ~45 seconds\n\n` +
+          `You will be notified when your track is ready.`,
+        { parse_mode: 'Markdown' },
+      );
+    } catch (err) {
+      await ctx.reply(`❌ Failed to create track: ${err instanceof Error ? err.message : String(err)}`);
+    }
   },
 );
+EOF
