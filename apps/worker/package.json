@@ -10,10 +10,12 @@
   "dependencies": {
     "@musicai/config": "workspace:*",
     "@musicai/database": "workspace:*",
+    "@musicai/queues": "workspace:*",
     "@musicai/shared-types": "workspace:*",
     "@musicai/vertex-ai": "workspace:*",
     "@google-cloud/storage": "^7.0.0",
     "bullmq": "^5.0.0",
+    "grammy": "^1.30.0",
     "ioredis": "^5.4.0"
   },
   "devDependencies": {

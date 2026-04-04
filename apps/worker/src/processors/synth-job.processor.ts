@@ -1,16 +1,21 @@
-import { Job } from 'bullmq';
+import { Job, Queue } from 'bullmq';
 import { PrismaClient } from '@musicai/database';
 import { LyriaClient } from '@musicai/vertex-ai';
 import { mapVertexError, RETRY_CONFIG, LyriaErrorCode } from '@musicai/vertex-ai';
-import type { SynthJobPayload } from '@musicai/shared-types';
+import { QUEUES, QUEUE_OPTIONS } from '@musicai/queues';
+import type { SynthJobPayload, NotifyPayload } from '@musicai/shared-types';
 import { Storage } from '@google-cloud/storage';
 
 export class SynthJobProcessor {
+  private notifyQueue: Queue;
+
   constructor(
     private readonly prisma: PrismaClient,
     private readonly lyriaClient: LyriaClient,
     private readonly bucketName: string,
-  ) {}
+  ) {
+    this.notifyQueue = new Queue(QUEUES.NOTIFY, QUEUE_OPTIONS);
+  }
 
   async process(job: Job<SynthJobPayload>): Promise<void> {
     const { trackId, lyriaRequest, chatId, messageId } = job.data;
@@ -23,6 +28,12 @@ export class SynthJobProcessor {
     await this.prisma.synthJob.update({
       where: { trackId },
       data: { startedAt: new Date(), bullJobId: job.id },
+    });
+
+    await this.sendNotify({
+      chatId,
+      messageId,
+      text: '🎵 Patience you must have, young padawan... Generating your track...',
     });
 
     let lyriaResponse;
@@ -43,6 +54,13 @@ export class SynthJobProcessor {
           where: { id: trackId },
           data: { status: 'failed' },
         });
+
+        await this.sendNotify({
+          chatId,
+          text: '❌ Track generation failed. Credits have been refunded.',
+          errorCode,
+        });
+
         return;
       }
 
@@ -70,6 +88,21 @@ export class SynthJobProcessor {
     await this.prisma.synthJob.update({
       where: { trackId },
       data: { finishedAt: new Date() },
+    });
+
+    await this.sendNotify({
+      chatId,
+      messageId,
+      text: '✅ Your track is ready!',
+      trackId,
+      gcsUrl,
+    });
+  }
+
+  private async sendNotify(payload: NotifyPayload): Promise<void> {
+    await this.notifyQueue.add('notify', payload, {
+      attempts: 3,
+      backoff: { type: 'exponential', delay: 2000 },
     });
   }
 
@@ -116,3 +149,4 @@ export class SynthJobProcessor {
     ]);
   }
 }
+EOF
