@@ -8,6 +8,7 @@
     "start": "node dist/main.js"
   },
   "dependencies": {
+    "@grammyjs/conversations": "^2.0.0",
     "@musicai/config": "workspace:*",
     "@musicai/database": "workspace:*",
     "@musicai/shared-types": "workspace:*",
