@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum SubscriptionTier {
+  free
+  pro
+  unlimited
+}
+
+enum TrackStatus {
+  queued
+  processing
+  done
+  failed
+}
+
+enum TrackType {
+  full_song
+  clip
+  instrumental
+}
+
+enum Intensity {
+  low
+  medium
+  high
+  epic
+}
+
+enum CreditTxType {
+  earn
+  spend
+  buy
+  bonus
+  refund
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model User {
+  id                   String            @id @default(uuid())
+  telegramId           BigInt            @unique @map("telegram_id")
+  username             String?           @db.VarChar(64)
+  firstName            String?           @map("first_name") @db.VarChar(64)
+  credits              Int               @default(10)
+  subscriptionTier     SubscriptionTier  @default(free) @map("subscription_tier")
+  subscriptionExpiresAt DateTime?        @map("subscription_expires_at")
+  defaultSettings      Json              @default("{}") @map("default_settings")
+  referredById         String?           @map("referred_by_id")
+  referredBy           User?             @relation("referrals", fields: [referredById], references: [id])
+  referrals            User[]            @relation("referrals")
+  tracks               Track[]
+  creditTransactions   CreditTransaction[]
+  createdAt            DateTime          @default(now()) @map("created_at")
+  updatedAt            DateTime          @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Track {
+  id               String      @id @default(uuid())
+  userId           String      @map("user_id")
+  user             User        @relation(fields: [userId], references: [id])
+  model            String      @db.VarChar(64)    // lyria-3-pro-preview | lyria-3-clip-preview
+  type             TrackType
+  prompt           String      @db.Text
+  negativePrompt   String?     @map("negative_prompt") @db.Text
+  lyrics           String?     @db.Text
+  parameters       Json        @default("{}")    // bpm, intensity, duration, language
+  status           TrackStatus @default(queued)
+  gcsUrl           String?     @map("gcs_url") @db.Text
+  durationSec      Int?        @map("duration_sec") @db.SmallInt
+  isPublic         Boolean     @default(false) @map("is_public")
+  telegramFileId   String?     @map("telegram_file_id") @db.VarChar(256)
+  revisedPrompt    String?     @map("revised_prompt") @db.Text
+  creditsCharged   Int         @default(0) @map("credits_charged")
+  isRegeneration   Boolean     @default(false) @map("is_regeneration")
+  sourceTrackId    String?     @map("source_track_id") @db.VarChar(64)
+  synthJob         SynthJob?
+  createdAt        DateTime    @default(now()) @map("created_at")
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([isPublic, createdAt(sort: Desc)])
+  @@map("tracks")
+}
+
+model SynthJob {
+  id              String    @id @default(uuid())
+  trackId         String    @unique @map("track_id")
+  track           Track     @relation(fields: [trackId], references: [id])
+  bullJobId       String?   @map("bull_job_id") @db.VarChar(128)
+  attempts        Int       @default(0) @db.SmallInt
+  errorCode       String?   @map("error_code") @db.VarChar(64)
+  errorMessage    String?   @map("error_message") @db.Text
+  vertexRequestId String?   @map("vertex_request_id") @db.VarChar(256)
+  startedAt       DateTime? @map("started_at")
+  finishedAt      DateTime? @map("finished_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  @@map("synth_jobs")
+}
+
+model CreditTransaction {
+  id          String       @id @default(uuid())
+  userId      String       @map("user_id")
+  user        User         @relation(fields: [userId], references: [id])
+  amount      Int                              // +/- кредиты
+  type        CreditTxType
+  description String       @db.VarChar(255)
+  paymentId   String?      @map("payment_id") @db.VarChar(128)
+  trackId     String?      @map("track_id") @db.VarChar(64)
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("credit_transactions")
+}

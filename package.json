@@ -1,0 +1,28 @@
+{
+  "name": "musicai-bot",
+  "version": "0.0.1",
+  "private": true,
+  "packageManager": "pnpm@8.15.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "clean": "turbo run clean",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "db:generate": "pnpm --filter @musicai/database generate",
+    "db:migrate": "pnpm --filter @musicai/database migrate",
+    "db:push": "pnpm --filter @musicai/database push",
+    "db:studio": "pnpm --filter @musicai/database studio"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "prettier": "^3.2.0",
+    "turbo": "^1.11.0",
+    "typescript": "^5.4.0"
+  }
+}

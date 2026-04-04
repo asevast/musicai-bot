@@ -1,0 +1,28 @@
+{
+  "name": "@musicai/api",
+  "version": "0.0.1",
+  "main": "./dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/main.ts",
+    "start": "node dist/main.js"
+  },
+  "dependencies": {
+    "@musicai/config": "workspace:*",
+    "@musicai/database": "workspace:*",
+    "@musicai/shared-types": "workspace:*",
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/platform-express": "^11.0.0",
+    "class-validator": "^0.14.0",
+    "class-transformer": "^0.5.1",
+    "reflect-metadata": "^0.2.1",
+    "rxjs": "^7.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/express": "^4.17.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.4.0"
+  }
+}
