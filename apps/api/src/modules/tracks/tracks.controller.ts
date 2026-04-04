@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Query } from '@nestjs/common';
 import { TracksService } from './tracks.service';
 import type { CreateTrackDto } from '@musicai/shared-types';
 
@@ -11,13 +11,39 @@ export class TracksController {
     return this.tracksService.createTrack(dto.telegramId, dto);
   }
 
+  @Get('user/:userId')
+  findByUser(
+    @Param('userId') userId: string,
+    @Query('limit') limit = '10',
+    @Query('offset') offset = '0',
+  ) {
+    return this.tracksService.getUserTracks(userId, parseInt(limit, 10), parseInt(offset, 10));
+  }
+
+  @Get('public')
+  getPublic(@Query('limit') limit = '20', @Query('offset') offset = '0') {
+    return this.tracksService.getPublicTracks(parseInt(limit, 10), parseInt(offset, 10));
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.tracksService.getTrack(id);
   }
 
-  @Get('user/:userId')
-  findByUser(@Param('userId') userId: string) {
-    return this.tracksService.getUserTracks(userId);
+  @Patch(':id/status')
+  updateStatus(
+    @Param('id') id: string,
+    @Body() body: { status: 'queued' | 'processing' | 'done' | 'failed' },
+  ) {
+    return this.tracksService.updateTrackStatus(id, body.status);
+  }
+
+  @Patch(':id/done')
+  markDone(
+    @Param('id') id: string,
+    @Body() body: { gcsUrl: string; revisedPrompt?: string; durationSec?: number },
+  ) {
+    return this.tracksService.markTrackDone(id, body);
   }
 }
+EOF
