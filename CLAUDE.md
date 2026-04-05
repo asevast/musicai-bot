@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Status
 
-This repository is currently in the **specification phase**. No code has been implemented yet.
+This repository is in **active development**. Core MVP features are implemented.
 
 ## Primary Documentation
 
@@ -17,7 +17,7 @@ This repository is currently in the **specification phase**. No code has been im
 - Monetization and credits system
 - Development phases (6 stages, MVP through beta)
 
-## Planned Architecture
+## Architecture
 
 ```
 apps/
@@ -29,7 +29,8 @@ packages/
 ├── database/     # Prisma schema + migrations
 ├── vertex-ai/    # Lyria 3 client wrapper
 ├── shared-types/ # Common types/DTOs
-└── config/       # Zod ENV validation
+├── config/       # Zod ENV validation
+└── queues/       # BullMQ queue configuration and producers
 ```
 
 ## Key Constraints
@@ -38,12 +39,54 @@ packages/
 - **Lyria 3 limitations:** No multi-turn editing, no inpainting, no audio-to-audio, no voice cloning
 - **Workarounds documented:** See section 13 in SPEC.md for editing lyrics and batch generation
 
-## When Implementation Begins
+## Development Commands
 
-The project will use:
-- **Monorepo:** Turborepo + pnpm workspaces
-- **Testing:** Jest + Testcontainers
-- **CI/CD:** GitHub Actions + Cloud Run
-- **Infrastructure:** Terraform for GCP resources
+```bash
+# Install dependencies
+pnpm install
 
-Refer to SPEC.md section 12 for the 6-stage development roadmap.
+# Start local services (PostgreSQL + Redis)
+docker-compose up -d
+
+# Generate Prisma client
+pnpm db:generate
+
+# Push database schema
+pnpm db:push
+
+# Run services
+pnpm --filter @musicai/bot dev
+pnpm --filter @musicai/api dev
+pnpm --filter @musicai/worker dev
+
+# Build
+pnpm build
+```
+
+## Environment Variables
+
+Required variables in `.env`:
+- `BOT_TOKEN` - Telegram bot token
+- `GOOGLE_CLOUD_PROJECT` - GCP project ID
+- `GCS_BUCKET_NAME` - GCS bucket for MP3 files
+- `DATABASE_URL` - PostgreSQL connection string
+- `REDIS_URL` - Redis connection string
+
+## Queue Configuration
+
+BullMQ queues are configured in `packages/queues/src/queues.config.ts`:
+- `synth:pro:urgent` - Paid users, priority 10
+- `synth:pro:normal` - Free users, priority 1
+- `synth:clip` - Clip generation
+- `notify` - Telegram notifications
+
+Rate limits per queue respect Vertex AI quota (10 req/min).
+
+## API Authentication
+
+API endpoints require `X-Telegram-Id` header for authentication. Use `TelegramAuthGuard` to protect endpoints.
+
+## Rate Limiting
+
+Use `GenerateRateLimitMiddleware` for track generation and `CommandRateLimitMiddleware` for commands. Limits are configurable via environment variables.
+EOF

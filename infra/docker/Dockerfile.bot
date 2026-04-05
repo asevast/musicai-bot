@@ -1,0 +1,30 @@
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY packages ./packages
+COPY apps/bot ./apps/bot
+
+RUN npm install -g pnpm@8
+RUN pnpm install --frozen-lockfile
+RUN pnpm --filter @musicai/bot build
+
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S musicai -u 1001
+
+COPY --from=builder /app/apps/bot/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages/database ./packages/database
+COPY --from=builder /app/packages/config ./packages/config
+COPY --from=builder /app/packages/shared-types ./packages/shared-types
+
+USER musicai
+
+ENV NODE_ENV=production
+
+CMD ["node", "dist/main.js"]
