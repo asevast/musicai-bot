@@ -3,10 +3,8 @@
   "compilerOptions": {
     "outDir": "./src/generated",
     "rootDir": "./src",
-    "paths": {
-      "@prisma/client": ["./src/generated/client"]
-    }
+    "skipLibCheck": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "src/dist"]
+  "exclude": ["node_modules", "src/generated/client", "src/dist"]
 }
