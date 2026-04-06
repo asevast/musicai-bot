@@ -17,6 +17,10 @@ export const envSchema = z.object({
   GCS_BUCKET_NAME: z.string().min(1),
   GCS_PUBLIC_BASE_URL: z.string().url(),
 
+  // Lyria API (via routerai.ru)
+  LYRIA_API_KEY: z.string().min(1),
+  LYRIA_BASE_URL: z.string().url().default('https://routerai.ru/api/v1'),
+
   // Database
   DATABASE_URL: z.string().url(),
   DIRECT_DATABASE_URL: z.string().url().optional(),

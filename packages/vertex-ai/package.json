@@ -14,7 +14,7 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@google-cloud/vertexai": "^1.0.0"
+    "openai": "^4.0.0"
   },
   "devDependencies": {
     "typescript": "^5.4.0"

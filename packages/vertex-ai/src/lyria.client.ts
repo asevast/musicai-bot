@@ -1,56 +1,49 @@
-import { VertexAI, type Part } from '@google-cloud/vertexai';
+import OpenAI from 'openai';
 import type { LyriaRequest, LyriaResponse } from './lyria.types';
 import { LyriaGenerationError } from './lyria.errors';
 
 export class LyriaClient {
-  private readonly vertexAI: VertexAI;
+  private readonly client: OpenAI;
 
-  constructor(projectId: string, location = 'us-central1') {
-    this.vertexAI = new VertexAI({ project: projectId, location });
+  constructor(apiKey: string, baseUrl = 'https://routerai.ru/api/v1') {
+    this.client = new OpenAI({
+      apiKey,
+      baseURL: baseUrl,
+    });
   }
 
   async generate(req: LyriaRequest): Promise<LyriaResponse> {
-    const model = this.vertexAI.preview.getGenerativeModel({
-      model: req.model,
+    const model =
+      req.model === 'lyria-3-clip-preview'
+        ? 'google/lyria-3-clip-preview'
+        : 'google/lyria-3-pro-preview';
+
+    const audioChunks: string[] = [];
+
+    const stream = await this.client.chat.completions.create({
+      model,
+      messages: [{ role: 'user', content: req.prompt }],
+      stream: true,
     });
 
-    const parts: Part[] = [{ text: req.prompt }];
-
-    if (req.imageBase64 && req.imageMimeType) {
-      parts.push({
-        inlineData: { mimeType: req.imageMimeType, data: req.imageBase64 },
-      });
+    for await (const chunk of stream) {
+      const delta = chunk.choices[0]?.delta as Record<string, unknown>;
+      const audio = delta?.audio as { data?: string } | undefined;
+      if (audio?.data) {
+        audioChunks.push(audio.data);
+      }
     }
 
-    const generationConfig: Record<string, unknown> = {
-      outputMimeType: 'audio/mp3',
-      negativePrompt: req.negativePrompt,
-      vocal: req.vocal ?? true,
-      lyrics: req.lyrics,
-      bpm: req.bpm,
-      intensity: req.intensity,
-      language: req.language ?? 'en',
-      promptRewriter: req.promptRewriter ?? true,
-    };
-
-    if (req.model === 'lyria-3-pro-preview' && req.durationSeconds) {
-      generationConfig.durationSeconds = req.durationSeconds;
+    if (audioChunks.length === 0) {
+      throw new LyriaGenerationError('No audio data received from Lyria API');
     }
 
-    const result = await model.generateContent({
-      contents: [{ role: 'user', parts }],
-      generationConfig,
-    });
-
-    const audioData = result.response.candidates?.[0]?.content?.parts?.[0];
-    if (!audioData?.inlineData) {
-      throw new LyriaGenerationError('Empty response from Lyria API');
-    }
+    const mp3Data = Buffer.from(audioChunks.join(''), 'base64');
 
     return {
-      audioBase64: audioData.inlineData.data,
+      audioBase64: mp3Data.toString('base64'),
       mimeType: 'audio/mp3',
-      revisedPrompt: result.response.candidates?.[0]?.content?.parts?.[1]?.text,
+      revisedPrompt: req.prompt,
     };
   }
 }
