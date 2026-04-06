@@ -27,6 +27,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Generate Prisma Client
+        run: pnpm --filter @musicai/database generate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/musicai_test
+
       - name: Build
         run: pnpm build
 
@@ -83,9 +88,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Generate Prisma Client
+        run: pnpm --filter @musicai/database generate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/musicai_test
+
       - name: Setup database
-        run: |
-          pnpm --filter @musicai/database exec prisma migrate deploy
+        run: pnpm --filter @musicai/database exec prisma db push
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/musicai_test
 
