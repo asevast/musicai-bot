@@ -11,22 +11,22 @@ export const envSchema = z.object({
   WEBHOOK_SECRET: z.string().min(16).optional(),
 
   // Google Cloud
-  GOOGLE_CLOUD_PROJECT: z.string().min(1),
+  GOOGLE_CLOUD_PROJECT: z.string().optional(),
   VERTEX_AI_LOCATION: z.string().default('us-central1'),
   GOOGLE_APPLICATION_CREDENTIALS: z.string().optional(),
-  GCS_BUCKET_NAME: z.string().min(1),
-  GCS_PUBLIC_BASE_URL: z.string().url(),
+  GCS_BUCKET_NAME: z.string().optional(),
+  GCS_PUBLIC_BASE_URL: z.string().optional(),
 
   // Lyria API (via routerai.ru)
   LYRIA_API_KEY: z.string().min(1),
   LYRIA_BASE_URL: z.string().url().default('https://routerai.ru/api/v1'),
 
   // Database
-  DATABASE_URL: z.string().url(),
-  DIRECT_DATABASE_URL: z.string().url().optional(),
+  DATABASE_URL: z.string().min(1),
+  DIRECT_DATABASE_URL: z.string().optional(),
 
   // Redis
-  REDIS_URL: z.string().url(),
+  REDIS_URL: z.string().min(1),
 
   // Payments
   YUKASSA_SHOP_ID: z.string().optional(),

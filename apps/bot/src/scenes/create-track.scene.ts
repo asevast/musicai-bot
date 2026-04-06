@@ -19,6 +19,7 @@ interface CreateTrackData {
 }
 
 export const createTrackScene = createConversation<BotContext, BotContext>(
+  'create-track',
   async (conversation, ctx) => {
     const user = ctx.user;
 

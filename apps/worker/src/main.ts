@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { Worker } from 'bullmq';
 import { loadEnv } from '@musicai/config';
 import { prisma } from '@musicai/database';
