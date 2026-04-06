@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config({ path: '../../.env' });
+
 import { Bot } from 'grammy';
 import { loadEnv } from '@musicai/config';
 import { prisma } from '@musicai/database';

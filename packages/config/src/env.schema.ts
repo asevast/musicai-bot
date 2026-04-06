@@ -7,8 +7,8 @@ export const envSchema = z.object({
 
   // Telegram
   BOT_TOKEN: z.string().min(1),
-  WEBHOOK_URL: z.string().url().optional(),
-  WEBHOOK_SECRET: z.string().min(16).optional(),
+  WEBHOOK_URL: z.string().optional(),
+  WEBHOOK_SECRET: z.string().optional(),
 
   // Google Cloud
   GOOGLE_CLOUD_PROJECT: z.string().optional(),
