@@ -1,7 +1,7 @@
 import { Job, Queue } from 'bullmq';
 import { PrismaClient } from '@musicai/database';
 import { LyriaClient } from '@musicai/vertex-ai';
-import { mapVertexError, RETRY_CONFIG, LyriaErrorCode } from '@musicai/vertex-ai';
+import { mapVertexError, RETRY_CONFIG } from '@musicai/vertex-ai';
 import { QUEUES, QUEUE_OPTIONS } from '@musicai/queues';
 import type { SynthJobPayload, NotifyPayload } from '@musicai/shared-types';
 import { Storage } from '@google-cloud/storage';
@@ -12,7 +12,7 @@ export class SynthJobProcessor {
   constructor(
     private readonly prisma: PrismaClient,
     private readonly lyriaClient: LyriaClient,
-    private readonly bucketName: string,
+    private readonly bucketName: string
   ) {
     this.notifyQueue = new Queue(QUEUES.NOTIFY, QUEUE_OPTIONS);
   }
@@ -38,7 +38,21 @@ export class SynthJobProcessor {
 
     let lyriaResponse;
     try {
-      lyriaResponse = await this.lyriaClient.generate(lyriaRequest);
+      const request = {
+        ...lyriaRequest,
+        language: lyriaRequest.language as
+          | 'en'
+          | 'de'
+          | 'es'
+          | 'fr'
+          | 'hi'
+          | 'ja'
+          | 'ko'
+          | 'pt'
+          | undefined,
+        imageMimeType: lyriaRequest.imageMimeType as 'image/jpeg' | 'image/png' | undefined,
+      };
+      lyriaResponse = await this.lyriaClient.generate(request);
     } catch (err) {
       const errorCode = mapVertexError(err);
       const retryConfig = RETRY_CONFIG[errorCode];
@@ -149,4 +163,3 @@ export class SynthJobProcessor {
     ]);
   }
 }
-EOF

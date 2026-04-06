@@ -1,8 +1,7 @@
-import { Controller, Get, Post, Body, Param, Patch, Query, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Query, UseGuards } from '@nestjs/common';
 import { TracksService } from './tracks.service';
 import type { CreateTrackDto } from '@musicai/shared-types';
 import { TelegramAuthGuard } from '../../guards/telegram-auth.guard';
-import { GenerateRateLimitMiddleware } from '../../middleware/rate-limit.middleware';
 
 @Controller('tracks')
 export class TracksController {
@@ -18,7 +17,7 @@ export class TracksController {
   findByUser(
     @Param('userId') userId: string,
     @Query('limit') limit = '10',
-    @Query('offset') offset = '0',
+    @Query('offset') offset = '0'
   ) {
     return this.tracksService.getUserTracks(userId, parseInt(limit, 10), parseInt(offset, 10));
   }
@@ -36,7 +35,7 @@ export class TracksController {
   @Patch(':id/status')
   updateStatus(
     @Param('id') id: string,
-    @Body() body: { status: 'queued' | 'processing' | 'done' | 'failed' },
+    @Body() body: { status: 'queued' | 'processing' | 'done' | 'failed' }
   ) {
     return this.tracksService.updateTrackStatus(id, body.status);
   }
@@ -44,9 +43,8 @@ export class TracksController {
   @Patch(':id/done')
   markDone(
     @Param('id') id: string,
-    @Body() body: { gcsUrl: string; revisedPrompt?: string; durationSec?: number },
+    @Body() body: { gcsUrl: string; revisedPrompt?: string; durationSec?: number }
   ) {
     return this.tracksService.markTrackDone(id, body);
   }
 }
-EOF

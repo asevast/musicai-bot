@@ -33,7 +33,7 @@ export class NotifyProcessor {
         await this.bot.api.sendAudio(chatId, gcsUrl, {
           title: track.revisedPrompt?.slice(0, 64) || 'MusicAI Track',
           performer: 'MusicAI Bot',
-          duration: track.durationSec,
+          duration: track.durationSec ?? undefined,
           caption: this.buildTrackCaption(track),
         });
       }
@@ -42,7 +42,7 @@ export class NotifyProcessor {
     if (errorCode) {
       await this.bot.api.sendMessage(
         chatId,
-        `❌ Track generation failed.\n\nError: ${errorCode}\n\nCredits have been refunded.`,
+        `❌ Track generation failed.\n\nError: ${errorCode}\n\nCredits have been refunded.`
       );
     }
   }

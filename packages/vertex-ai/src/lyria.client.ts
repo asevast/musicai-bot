@@ -1,14 +1,12 @@
-import { VertexAI } from '@google-cloud/vertexai';
-import type { LyriaRequest, LyriaResponse, LyriaModel } from './lyria.types';
+import { VertexAI, type Part } from '@google-cloud/vertexai';
+import type { LyriaRequest, LyriaResponse } from './lyria.types';
 import { LyriaGenerationError } from './lyria.errors';
 
 export class LyriaClient {
   private readonly vertexAI: VertexAI;
-  private readonly location: string;
 
   constructor(projectId: string, location = 'us-central1') {
     this.vertexAI = new VertexAI({ project: projectId, location });
-    this.location = location;
   }
 
   async generate(req: LyriaRequest): Promise<LyriaResponse> {
@@ -16,7 +14,7 @@ export class LyriaClient {
       model: req.model,
     });
 
-    const parts: object[] = [{ text: req.prompt }];
+    const parts: Part[] = [{ text: req.prompt }];
 
     if (req.imageBase64 && req.imageMimeType) {
       parts.push({

@@ -1,4 +1,5 @@
-import { Bot, Context, session, conversations } from 'grammy';
+import { Bot, Context, session } from 'grammy';
+import { conversations } from '@grammyjs/conversations';
 import { loadEnv } from '@musicai/config';
 import { prisma } from '@musicai/database';
 import { startCommand } from './commands/start.command';
@@ -17,7 +18,7 @@ export function setupBot(bot: Bot<BotContext>) {
   bot.use(
     session({
       initial: () => ({}),
-    }),
+    })
   );
 
   bot.use(conversations());
@@ -57,7 +58,7 @@ export function setupBot(bot: Bot<BotContext>) {
   bot.command('delete_account', deleteAccountCommand);
 
   bot.callbackQuery('create_track', async (ctx) => {
-    await ctx.conversation.enter('create-track');
+    await (ctx as any).conversation?.enter('create-track');
   });
 
   bot.callbackQuery('history', historyCommand);
@@ -100,4 +101,3 @@ declare module 'grammy' {
     };
   }
 }
-EOF

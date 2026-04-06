@@ -37,5 +37,5 @@ export const historyCommand = async (ctx: Context) => {
     message += '\n';
   });
 
-  await ctx.reply(message, { parse_mode: 'Markdown', disable_web_page_preview: true });
+  await ctx.reply(message, { parse_mode: 'Markdown' });
 };

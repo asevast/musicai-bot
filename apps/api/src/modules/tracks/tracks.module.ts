@@ -10,4 +10,3 @@ import { CreditsModule } from '../credits/credits.module';
   exports: [TracksService],
 })
 export class TracksModule {}
-EOF

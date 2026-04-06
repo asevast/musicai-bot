@@ -21,7 +21,7 @@ export const libraryCommand = async (ctx: Context) => {
       '📚 *Community Library*\n\n' +
         'No public tracks yet. Be the first to share your creation!\n\n' +
         'Use /create to generate a track and add it to the library.',
-      { parse_mode: 'Markdown' },
+      { parse_mode: 'Markdown' }
     );
   }
 
@@ -38,5 +38,5 @@ export const libraryCommand = async (ctx: Context) => {
     message += '\n';
   });
 
-  await ctx.reply(message, { parse_mode: 'Markdown', disable_web_page_preview: true });
+  await ctx.reply(message, { parse_mode: 'Markdown' });
 };

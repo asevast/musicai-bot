@@ -32,4 +32,3 @@ export const startCommand = async (ctx: Context) => {
     }
   );
 };
-EOF

@@ -64,4 +64,3 @@ main().catch((err) => {
   prisma.$disconnect();
   process.exit(1);
 });
-EOF

@@ -1,9 +1,15 @@
 import { createConversation } from '@grammyjs/conversations';
 import { BotContext } from '../bot';
-import { trackTypeKeyboard, languageKeyboard, intensityKeyboard, confirmKeyboard } from '../keyboards/track-options.keyboard';
-import { loadEnv } from '@musicai/config';
+import {
+  trackTypeKeyboard,
+  languageKeyboard,
+  intensityKeyboard,
+  confirmKeyboard,
+} from '../keyboards/track-options.keyboard';
 
-interface CreateTrackSession {
+const API_URL = process.env.API_URL || 'http://localhost:3000';
+
+interface CreateTrackData {
   type?: 'full_song' | 'clip' | 'instrumental';
   prompt?: string;
   language?: string;
@@ -12,11 +18,8 @@ interface CreateTrackSession {
   negativePrompt?: string;
 }
 
-const API_URL = process.env.API_URL || 'http://localhost:3000';
-
-export const createTrackScene = createConversation<BotContext, CreateTrackSession>(
+export const createTrackScene = createConversation<BotContext, BotContext>(
   async (conversation, ctx) => {
-    const session = conversation.session;
     const user = ctx.user;
 
     if (!user) {
@@ -24,24 +27,33 @@ export const createTrackScene = createConversation<BotContext, CreateTrackSessio
       return;
     }
 
-    // Step 1: Select track type
+    const session = (ctx as any).session ?? {};
+
+    session.type = undefined;
+    session.prompt = undefined;
+    session.language = undefined;
+    session.intensity = undefined;
+    session.bpm = undefined;
+    session.negativePrompt = undefined;
+
     await ctx.reply('🎵 *Select track type:*', {
       parse_mode: 'Markdown',
       reply_markup: trackTypeKeyboard(),
     });
 
-    const typeCtx = await conversation.waitForCallbackQuery(
-      ['type_full_song', 'type_clip', 'type_instrumental'],
-    );
-    session.type = typeCtx.callbackQuery.data.replace('type_', '') as CreateTrackSession['type'];
+    const typeCtx = await conversation.waitForCallbackQuery([
+      'type_full_song',
+      'type_clip',
+      'type_instrumental',
+    ]);
+    session.type = typeCtx.callbackQuery.data.replace('type_', '') as CreateTrackData['type'];
     await typeCtx.answerCallbackQuery();
 
-    // Step 2: Enter prompt
     await ctx.reply(
       '📝 *Describe your track:*\n\n' +
         'Genre, mood, instruments, atmosphere...\n\n' +
         '*Example:* Lo-fi hip hop, soft piano, vinyl crackle, 75 BPM, study mood',
-      { parse_mode: 'Markdown' },
+      { parse_mode: 'Markdown' }
     );
 
     const promptCtx = await conversation.waitFor('message:text');
@@ -52,7 +64,6 @@ export const createTrackScene = createConversation<BotContext, CreateTrackSessio
       return;
     }
 
-    // Step 3: Select language (skip for instrumental)
     if (session.type !== 'instrumental') {
       await ctx.reply('🌍 *Select vocal language:*', {
         parse_mode: 'Markdown',
@@ -73,7 +84,6 @@ export const createTrackScene = createConversation<BotContext, CreateTrackSessio
       await langCtx.answerCallbackQuery();
     }
 
-    // Step 4: Select intensity
     await ctx.reply('🎚️ *Select intensity:*', {
       parse_mode: 'Markdown',
       reply_markup: intensityKeyboard(),
@@ -85,10 +95,12 @@ export const createTrackScene = createConversation<BotContext, CreateTrackSessio
       'intensity_high',
       'intensity_epic',
     ]);
-    session.intensity = intensityCtx.callbackQuery.data.replace('intensity_', '') as CreateTrackSession['intensity'];
+    session.intensity = intensityCtx.callbackQuery.data.replace(
+      'intensity_',
+      ''
+    ) as CreateTrackData['intensity'];
     await intensityCtx.answerCallbackQuery();
 
-    // Step 5: Optional BPM
     await ctx.reply('🎯 *Enter BPM (60-200) or send "auto":*', { parse_mode: 'Markdown' });
 
     const bpmCtx = await conversation.waitFor('message:text');
@@ -105,7 +117,6 @@ export const createTrackScene = createConversation<BotContext, CreateTrackSessio
       }
     }
 
-    // Step 6: Optional negative prompt
     await ctx.reply('🚫 *Enter negative prompt (what to avoid) or send "skip":*', {
       parse_mode: 'Markdown',
     });
@@ -115,7 +126,6 @@ export const createTrackScene = createConversation<BotContext, CreateTrackSessio
       session.negativePrompt = negCtx.msg.text.slice(0, 300);
     }
 
-    // Step 7: Confirm
     const cost = session.type === 'clip' ? 1 : session.type === 'instrumental' ? 3 : 5;
 
     await ctx.reply(
@@ -130,7 +140,7 @@ export const createTrackScene = createConversation<BotContext, CreateTrackSessio
       {
         parse_mode: 'Markdown',
         reply_markup: confirmKeyboard(),
-      },
+      }
     );
 
     const confirmCtx = await conversation.waitForCallbackQuery(['confirm_create', 'cancel_create']);
@@ -141,8 +151,9 @@ export const createTrackScene = createConversation<BotContext, CreateTrackSessio
       return;
     }
 
-    // Create the track
-    const statusMsg = await ctx.reply('🎵 Patience you must have, young padawan... Creating your track...');
+    const statusMsg = await ctx.reply(
+      '🎵 Patience you must have, young padawan... Creating your track...'
+    );
 
     try {
       const model = session.type === 'clip' ? 'lyria-3-clip-preview' : 'lyria-3-pro-preview';
@@ -169,18 +180,19 @@ export const createTrackScene = createConversation<BotContext, CreateTrackSessio
         throw new Error(error);
       }
 
-      const track = await response.json();
+      const track = (await response.json()) as { id: string };
 
       await ctx.reply(
         `✅ *Track queued!*\n\n` +
           `Track ID: \`${track.id.slice(0, 8)}...\`\n` +
           `Estimated time: ~45 seconds\n\n` +
           `You will be notified when your track is ready.`,
-        { parse_mode: 'Markdown' },
+        { parse_mode: 'Markdown' }
       );
     } catch (err) {
-      await ctx.reply(`❌ Failed to create track: ${err instanceof Error ? err.message : String(err)}`);
+      await ctx.reply(
+        `❌ Failed to create track: ${err instanceof Error ? err.message : String(err)}`
+      );
     }
-  },
+  }
 );
-EOF

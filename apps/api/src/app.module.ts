@@ -14,4 +14,3 @@ import {
   exports: [GenerateRateLimitMiddleware, CommandRateLimitMiddleware],
 })
 export class AppModule {}
-EOF
