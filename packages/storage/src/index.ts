@@ -48,9 +48,7 @@ export class StorageService {
   }
 
   private get bucketName(): string {
-    return cachedBucketName || getStorageConfig().credentials
-      ? process.env.MINIO_BUCKET_NAME || 'musicai-tracks'
-      : 'musicai-tracks';
+    return cachedBucketName ?? (process.env.MINIO_BUCKET_NAME || 'musicai-tracks');
   }
 
   async uploadTrack(buffer: Buffer, trackId: string): Promise<string> {

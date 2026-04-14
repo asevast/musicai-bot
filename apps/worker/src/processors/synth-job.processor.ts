@@ -3,16 +3,15 @@ import { PrismaClient } from '@musicai/database';
 import { LyriaClient } from '@musicai/vertex-ai';
 import { mapVertexError, RETRY_CONFIG } from '@musicai/vertex-ai';
 import { QUEUES, QUEUE_OPTIONS } from '@musicai/queues';
+import { storageService } from '@musicai/storage';
 import type { SynthJobPayload, NotifyPayload } from '@musicai/shared-types';
-import { Storage } from '@google-cloud/storage';
 
 export class SynthJobProcessor {
   private notifyQueue: Queue;
 
   constructor(
     private readonly prisma: PrismaClient,
-    private readonly lyriaClient: LyriaClient,
-    private readonly bucketName: string
+    private readonly lyriaClient: LyriaClient
   ) {
     this.notifyQueue = new Queue(QUEUES.NOTIFY, QUEUE_OPTIONS);
   }
@@ -85,18 +84,19 @@ export class SynthJobProcessor {
     }
 
     const audioBuffer = Buffer.from(lyriaResponse.audioBase64, 'base64');
-    const gcsUrl = await this.uploadToGCS(trackId, audioBuffer);
+    const storageKey = await storageService.uploadTrack(audioBuffer, trackId);
 
     const durationSec = this.estimateDuration(audioBuffer);
 
     await this.prisma.track.update({
       where: { id: trackId },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       data: {
         status: 'done',
-        gcsUrl,
+        storageKey,
         revisedPrompt: lyriaResponse.revisedPrompt,
         durationSec,
-      },
+      } as any,
     });
 
     await this.prisma.synthJob.update({
@@ -109,7 +109,6 @@ export class SynthJobProcessor {
       messageId,
       text: '✅ Your track is ready!',
       trackId,
-      gcsUrl,
     });
   }
 
@@ -118,19 +117,6 @@ export class SynthJobProcessor {
       attempts: 3,
       backoff: { type: 'exponential', delay: 2000 },
     });
-  }
-
-  private async uploadToGCS(trackId: string, buffer: Buffer): Promise<string> {
-    const storage = new Storage();
-    const bucket = storage.bucket(this.bucketName);
-    const file = bucket.file(`tracks/${trackId}.mp3`);
-
-    await file.save(buffer, {
-      contentType: 'audio/mp3',
-      metadata: { trackId },
-    });
-
-    return `https://storage.googleapis.com/${this.bucketName}/tracks/${trackId}.mp3`;
   }
 
   private estimateDuration(buffer: Buffer): number {
@@ -145,6 +131,17 @@ export class SynthJobProcessor {
     });
 
     if (!job?.track.creditsCharged) return;
+
+    const existingRefund = await this.prisma.creditTransaction.findFirst({
+      where: {
+        userId: job.track.userId,
+        trackId,
+        type: 'refund',
+      },
+      select: { id: true },
+    });
+
+    if (existingRefund) return;
 
     await this.prisma.$transaction([
       this.prisma.user.update({

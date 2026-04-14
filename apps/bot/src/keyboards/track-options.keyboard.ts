@@ -1,12 +1,18 @@
 import { InlineKeyboard } from 'grammy';
 
-export const trackTypeKeyboard = () =>
-  new InlineKeyboard()
+export const trackTypeKeyboard = (isPaidUser = false) => {
+  const keyboard = new InlineKeyboard().text('✂️ Clip 30s (1 cr)', 'type_clip');
+
+  if (!isPaidUser) {
+    return keyboard;
+  }
+
+  return keyboard
+    .row()
     .text('🎵 Full Song (5 cr)', 'type_full_song')
     .row()
-    .text('✂️ Clip 30s (1 cr)', 'type_clip')
-    .row()
     .text('🎹 Instrumental (3 cr)', 'type_instrumental');
+};
 
 export const languageKeyboard = () =>
   new InlineKeyboard()
