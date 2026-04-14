@@ -2,6 +2,7 @@
   "name": "@musicai/bot",
   "version": "0.0.1",
   "main": "./dist/main.js",
+  "type": "module",
   "scripts": {
     "build": "tsc",
     "dev": "tsx watch src/main.ts",
@@ -10,16 +11,18 @@
     "test:run": "vitest run"
   },
   "dependencies": {
-    "@grammyjs/conversations": "^2.0.0",
+    "@grammyjs/conversations": "^1.0.2",
     "@musicai/config": "workspace:*",
     "@musicai/database": "workspace:*",
     "@musicai/shared-types": "workspace:*",
+    "@musicai/storage": "workspace:*",
     "dotenv": "^17.4.1",
     "grammy": "^1.30.0",
     "ioredis": "^5.4.0"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
+    "ts-node": "^10.9.2",
     "tsx": "^4.7.0",
     "typescript": "^5.4.0",
     "vitest": "^2.0.0"

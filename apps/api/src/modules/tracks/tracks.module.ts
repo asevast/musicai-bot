@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { TracksService } from './tracks.service';
-import { TracksController } from './tracks.controller';
 import { CreditsModule } from '../credits/credits.module';
+import { TracksController } from './tracks.controller';
+import { TracksService } from './tracks.service';
 
 @Module({
   imports: [CreditsModule],
