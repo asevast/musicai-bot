@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      dotenv:
+        specifier: ^17.4.1
+        version: 17.4.1
     devDependencies:
       '@types/node':
         specifier: ^20.11.0

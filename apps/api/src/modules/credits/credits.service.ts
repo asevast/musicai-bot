@@ -50,6 +50,10 @@ export class CreditsService {
   }
 
   async assertAndDeduct(userId: string, amount: number, description: string): Promise<void> {
+    if (amount <= 0) {
+      return;
+    }
+
     await prisma.$transaction(async (tx) => {
       const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
 
@@ -89,6 +93,17 @@ export class CreditsService {
     });
 
     if (!job?.track.creditsCharged) return;
+
+    const existingRefund = await prisma.creditTransaction.findFirst({
+      where: {
+        userId,
+        trackId,
+        type: 'refund',
+      },
+      select: { id: true },
+    });
+
+    if (existingRefund) return;
 
     await this.addCredits(
       userId,

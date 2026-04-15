@@ -73,25 +73,35 @@ export const handleSuccessfulPayment = async (ctx: BotContext): Promise<void> =>
     }
 
     const telegramPaymentId = successfulPayment.telegram_payment_charge_id;
+    const existingTransaction = await prisma.creditTransaction.findFirst({
+      where: { paymentId: telegramPaymentId },
+      select: { id: true },
+    });
+
+    if (existingTransaction) {
+      await ctx.reply('Payment has already been processed.');
+      return;
+    }
 
     if (pkg.id === 'unlimited') {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          subscriptionTier: 'unlimited',
-          subscriptionExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        },
-      });
-
-      await prisma.creditTransaction.create({
-        data: {
-          userId: user.id,
-          amount: 0,
-          type: 'buy',
-          description: `Unlimited subscription purchased`,
-          paymentId: telegramPaymentId,
-        },
-      });
+      await prisma.$transaction([
+        prisma.user.update({
+          where: { id: user.id },
+          data: {
+            subscriptionTier: 'unlimited',
+            subscriptionExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          },
+        }),
+        prisma.creditTransaction.create({
+          data: {
+            userId: user.id,
+            amount: 0,
+            type: 'buy',
+            description: 'Unlimited subscription purchased',
+            paymentId: telegramPaymentId,
+          },
+        }),
+      ]);
 
       await ctx.reply(
         '👑 *Unlimited Subscription Activated!*\n\n' +
@@ -100,18 +110,14 @@ export const handleSuccessfulPayment = async (ctx: BotContext): Promise<void> =>
         { parse_mode: 'Markdown' }
       );
     } else if (pkg.id === 'pro') {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          subscriptionTier: 'pro',
-          subscriptionExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        },
-      });
-
       await prisma.$transaction([
         prisma.user.update({
           where: { id: user.id },
-          data: { credits: { increment: pkg.credits } },
+          data: {
+            subscriptionTier: 'pro',
+            subscriptionExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            credits: { increment: pkg.credits },
+          },
         }),
         prisma.creditTransaction.create({
           data: {

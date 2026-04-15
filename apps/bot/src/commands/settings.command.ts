@@ -1,5 +1,7 @@
-import { Context, InlineKeyboard } from 'grammy';
+import { Context } from 'grammy';
 import { prisma } from '@musicai/database';
+import { settingsMenuKeyboard } from '../keyboards/main-menu.keyboard';
+import { buildSettingsSummary, parseUserSettings } from '../utils/user-settings';
 
 export const settingsCommand = async (ctx: Context) => {
   const user = ctx.user;
@@ -7,19 +9,14 @@ export const settingsCommand = async (ctx: Context) => {
     return ctx.reply('Error: User not found');
   }
 
-  const keyboard = new InlineKeyboard()
-    .text('🎵 Default Genre', 'set_genre')
-    .row()
-    .text('🌍 Default Language', 'set_language')
-    .row()
-    .text('🎚️ Default Intensity', 'set_intensity')
-    .row()
-    .text('🎯 Default BPM', 'set_bpm')
-    .row()
-    .text('🔙 Main Menu', 'main_menu');
+  const dbUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { defaultSettings: true },
+  });
+  const settings = parseUserSettings(dbUser?.defaultSettings);
 
-  await ctx.reply('⚙️ *Settings*\n\nSelect an option:', {
+  await ctx.reply(`⚙️ *Settings*\n\n${buildSettingsSummary(settings)}\n\nSelect an option:`, {
     parse_mode: 'Markdown',
-    reply_markup: keyboard,
+    reply_markup: settingsMenuKeyboard(),
   });
 };

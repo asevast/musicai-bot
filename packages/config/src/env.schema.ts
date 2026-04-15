@@ -7,8 +7,9 @@ export const envSchema = z.object({
 
   // Telegram
   BOT_TOKEN: z.string().min(1),
-  WEBHOOK_URL: z.string().url().optional(),
-  WEBHOOK_SECRET: z.string().min(16).optional(),
+  TELEGRAM_CHAT_ID: z.string().optional(),
+  WEBHOOK_URL: z.string().optional(),
+  WEBHOOK_SECRET: z.string().optional(),
 
   // Google Cloud
   GOOGLE_CLOUD_PROJECT: z.string().optional(),
@@ -25,8 +26,19 @@ export const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   DIRECT_DATABASE_URL: z.string().optional(),
 
+  // Supabase
+  SUPABASE_URL: z.string().url().optional(),
+  SUPABASE_ANON_KEY: z.string().optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
+
   // Redis
   REDIS_URL: z.string().min(1),
+
+  // MinIO (S3-compatible storage)
+  MINIO_ENDPOINT: z.string().default('localhost:9000'),
+  MINIO_ROOT_USER: z.string().min(1),
+  MINIO_ROOT_PASSWORD: z.string().min(1),
+  MINIO_BUCKET_NAME: z.string().default('musicai-tracks'),
 
   // Payments
   YUKASSA_SHOP_ID: z.string().optional(),
