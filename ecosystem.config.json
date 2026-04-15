@@ -1,0 +1,43 @@
+{
+  "apps": [
+    {
+      "name": "musicai-api",
+      "script": "npx",
+      "args": "tsx --tsconfig apps/api/tsconfig.json apps/api/src/main.ts",
+      "cwd": "/home/asevast/musicbot",
+      "instances": 1,
+      "autorestart": true,
+      "watch": false,
+      "max_memory_restart": "500M",
+      "env": {
+        "NODE_ENV": "production"
+      }
+    },
+    {
+      "name": "musicai-worker",
+      "script": "npx",
+      "args": "tsx apps/worker/src/main.ts",
+      "cwd": "/home/asevast/musicbot",
+      "instances": 1,
+      "autorestart": true,
+      "watch": false,
+      "max_memory_restart": "500M",
+      "env": {
+        "NODE_ENV": "production"
+      }
+    },
+    {
+      "name": "musicai-bot",
+      "script": "npx",
+      "args": "tsx apps/bot/src/main.ts",
+      "cwd": "/home/asevast/musicbot",
+      "instances": 1,
+      "autorestart": true,
+      "watch": false,
+      "max_memory_restart": "500M",
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  ]
+}

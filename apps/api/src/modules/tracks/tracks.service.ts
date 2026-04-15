@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -15,7 +16,7 @@ export class TracksService {
   private synthJobProducer = new SynthJobProducer();
   private readonly env = loadEnv();
 
-  constructor(private readonly creditsService: CreditsService) {
+  constructor(@Inject(CreditsService) private readonly creditsService: CreditsService) {
     console.log('[TracksService] Queue options:', JSON.stringify(getQueueOptions(), null, 2));
   }
 
