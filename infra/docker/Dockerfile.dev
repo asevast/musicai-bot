@@ -22,6 +22,7 @@ COPY apps/worker/package.json ./apps/worker/
 
 # Packages
 COPY packages/database/package.json ./packages/database/
+COPY packages/database/prisma ./packages/database/prisma
 COPY packages/config/package.json ./packages/config/
 COPY packages/queues/package.json ./packages/queues/
 COPY packages/shared-types/package.json ./packages/shared-types/
@@ -32,13 +33,31 @@ COPY packages/vertex-ai/package.json ./packages/vertex-ai/
 # Native binaries (esbuild, sharp, etc.) are compiled for Linux
 RUN pnpm install
 
-# Generate Prisma client with Linux binaries (these are needed at runtime)
-# The binary targets include both native and linux-musl-openssl-3.0.x for Alpine
-RUN pnpm --filter @musicai/database generate
+# Copy package source and build packages (for dist/index.js that package.json main points to)
+# This is needed because the apps import from @musicai/* workspace packages
+COPY packages/config/src ./packages/config/src
+RUN pnpm --filter @musicai/config build
 
-# Note: Source code is NOT copied here - it's mounted from host via docker-compose volumes
-# This enables hot reload while keeping node_modules inside the container
-# However, the Prisma generated client stays in the image (see volumes in docker-compose.yml)
+COPY packages/database/src/index.ts ./packages/database/src/index.ts
+COPY packages/database/prisma ./packages/database/prisma
+RUN pnpm --filter @musicai/database generate
+RUN pnpm --filter @musicai/database build
+
+COPY packages/queues/src ./packages/queues/src
+RUN pnpm --filter @musicai/queues build
+
+COPY packages/shared-types/src ./packages/shared-types/src
+RUN pnpm --filter @musicai/shared-types build
+
+COPY packages/storage/src ./packages/storage/src
+RUN pnpm --filter @musicai/storage build
+
+COPY packages/vertex-ai/src ./packages/vertex-ai/src
+RUN pnpm --filter @musicai/vertex-ai build
+
+# Note: Source code is mounted from host via docker-compose volumes for hot reload
+# The built dist/ files remain from this image and are used when host files reference them
+# node_modules stays entirely inside the container
 
 # ─── Target: Bot Service ──────────────────────────────────────────────────────
 FROM base AS bot
