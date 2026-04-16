@@ -4,7 +4,7 @@
   "main": "./dist/main.js",
   "scripts": {
     "build": "tsc",
-    "dev": "tsx watch --tsconfig tsconfig.json --exclude '**/packages/database/src/generated/**' --env-file-if-exists=../../.env src/main.ts",
+    "dev": "tsx watch src/main.ts",
     "start": "node dist/main.js",
     "test": "vitest",
     "test:run": "vitest run"

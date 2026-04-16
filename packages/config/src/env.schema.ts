@@ -26,8 +26,8 @@ export const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   DIRECT_DATABASE_URL: z.string().optional(),
 
-  // Supabase
-  SUPABASE_URL: z.string().url().optional(),
+  // Supabase (optional - only needed for Supabase integration)
+  SUPABASE_URL: z.union([z.literal(''), z.string().url()]).optional(),
   SUPABASE_ANON_KEY: z.string().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
 
