@@ -2,7 +2,12 @@ import 'reflect-metadata';
 import dotenv from 'dotenv';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
-dotenv.config({ path: resolve(dirname(fileURLToPath(import.meta.url)), '../../../.env') });
+
+// Load .env only if env vars not already set (host dev)
+// In Docker, env vars are set via env_file in docker-compose.yml
+if (!process.env.BOT_TOKEN) {
+  dotenv.config({ path: resolve(dirname(fileURLToPath(import.meta.url)), '../../../.env') });
+}
 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
