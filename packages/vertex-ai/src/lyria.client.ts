@@ -57,7 +57,7 @@ export class LyriaClient {
       method: 'POST',
       signal: AbortSignal.timeout(200_000),
       headers: {
-      headers: {
+        'Content-Type': 'application/json',
         'Content-Type': 'application/json',
         Authorization: `Bearer ${this.apiKey}`,
       },
