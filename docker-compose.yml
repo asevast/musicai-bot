@@ -88,8 +88,8 @@ services:
       - ./packages/shared-types/src:/app/packages/shared-types/src
       - ./packages/storage/src:/app/packages/storage/src
       - ./packages/vertex-ai/src:/app/packages/vertex-ai/src
-      # Database: mount only source files (NOT generated), preserve image's Prisma binaries
-      - ./packages/database/src/index.ts:/app/packages/database/src/index.ts
+      # Database: mount dist (compiled JS) and prisma, preserve image's Prisma binaries
+      - ./packages/database/dist:/app/packages/database/dist
       - ./packages/database/prisma:/app/packages/database/prisma
       # node_modules is NOT mounted - comes from image
     env_file: .env.development
@@ -122,8 +122,8 @@ services:
       - ./packages/shared-types/src:/app/packages/shared-types/src
       - ./packages/storage/src:/app/packages/storage/src
       - ./packages/vertex-ai/src:/app/packages/vertex-ai/src
-      # Database: mount only source files (NOT generated), preserve image's Prisma binaries
-      - ./packages/database/src/index.ts:/app/packages/database/src/index.ts
+      # Database: mount dist (compiled JS) and prisma, preserve image's Prisma binaries
+      - ./packages/database/dist:/app/packages/database/dist
       - ./packages/database/prisma:/app/packages/database/prisma
     env_file: .env.development
     depends_on:
@@ -151,8 +151,8 @@ services:
       - ./packages/shared-types/src:/app/packages/shared-types/src
       - ./packages/storage/src:/app/packages/storage/src
       - ./packages/vertex-ai/src:/app/packages/vertex-ai/src
-      # Database: mount only source files (NOT generated), preserve image's Prisma binaries
-      - ./packages/database/src/index.ts:/app/packages/database/src/index.ts
+      # Database: mount dist (compiled JS) and prisma, preserve image's Prisma binaries
+      - ./packages/database/dist:/app/packages/database/dist
       - ./packages/database/prisma:/app/packages/database/prisma
     env_file: .env.development
     depends_on:

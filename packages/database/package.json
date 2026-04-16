@@ -1,19 +1,19 @@
 {
   "name": "@musicai/database",
   "version": "0.0.1",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "type": "module",
   "exports": {
     ".": {
-      "types": "./src/generated/client/index.d.ts",
-      "import": "./src/index.ts",
-      "require": "./src/index.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
     }
   },
   "scripts": {
-    "build": "prisma generate",
-    "dev": "prisma generate",
+    "build": "prisma generate && tsc",
+    "dev": "prisma generate && tsc --watch",
     "generate": "prisma generate",
     "migrate": "prisma migrate dev",
     "push": "prisma db push",
