@@ -3,24 +3,72 @@ version: '3.8'
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: musicai-postgres
+    container_name: musicai_postgres
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
       POSTGRES_DB: musicai
+      POSTGRES_USER: musicai
+      POSTGRES_PASSWORD: Gang26
     ports:
       - '${POSTGRES_PORT:-5433}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U musicai -d musicai']
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
-    container_name: musicai-redis
+    container_name: musicai_redis
+    restart: unless-stopped
+    command: redis-server --requirepass "Seor#26" --appendonly yes
     ports:
       - '6379:6379'
     volumes:
       - redis_data:/data
 
+  minio:
+    image: minio/minio:latest
+    container_name: musicai_minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ':9001'
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - minio_data:/data
+
+  adminer:
+    image: adminer:latest
+    container_name: musicai_adminer
+    restart: unless-stopped
+    ports:
+      - '8081:8080'
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  bullboard:
+    image: deadly0/bull-board:latest
+    container_name: musicai_bullboard
+    restart: unless-stopped
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: Seor#26
+      REDIS_DB: 0
+      PORT: 3000
+    ports:
+      - '3001:3000'
+    depends_on:
+      - redis
+
 volumes:
   postgres_data:
   redis_data:
+  minio_data:
