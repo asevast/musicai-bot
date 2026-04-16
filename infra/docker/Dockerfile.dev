@@ -13,6 +13,7 @@ WORKDIR /app
 # Copy workspace configuration files first (for layer caching)
 COPY pnpm-workspace.yaml turbo.json ./
 COPY package.json pnpm-lock.yaml ./
+COPY tsconfig.base.json ./
 
 # Copy all package.json files to leverage layer caching
 # Apps
@@ -36,23 +37,29 @@ RUN pnpm install
 # Copy package source and build packages (for dist/index.js that package.json main points to)
 # This is needed because the apps import from @musicai/* workspace packages
 COPY packages/config/src ./packages/config/src
+COPY packages/config/tsconfig.json ./packages/config/
 RUN pnpm --filter @musicai/config build
 
 COPY packages/database/src/index.ts ./packages/database/src/index.ts
 COPY packages/database/prisma ./packages/database/prisma
+COPY packages/database/tsconfig.json ./packages/database/
 RUN pnpm --filter @musicai/database generate
 RUN pnpm --filter @musicai/database build
 
 COPY packages/queues/src ./packages/queues/src
+COPY packages/queues/tsconfig.json ./packages/queues/
 RUN pnpm --filter @musicai/queues build
 
 COPY packages/shared-types/src ./packages/shared-types/src
+COPY packages/shared-types/tsconfig.json ./packages/shared-types/
 RUN pnpm --filter @musicai/shared-types build
 
 COPY packages/storage/src ./packages/storage/src
+COPY packages/storage/tsconfig.json ./packages/storage/
 RUN pnpm --filter @musicai/storage build
 
 COPY packages/vertex-ai/src ./packages/vertex-ai/src
+COPY packages/vertex-ai/tsconfig.json ./packages/vertex-ai/
 RUN pnpm --filter @musicai/vertex-ai build
 
 # Note: Source code is mounted from host via docker-compose volumes for hot reload
