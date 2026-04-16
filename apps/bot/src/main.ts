@@ -3,9 +3,12 @@ import dotenv from 'dotenv';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
-// Load .env from project root (works in both Docker and host)
-const __dirname = dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: resolve(__dirname, '../../../.env') });
+// Load .env from project root only if env vars not already set (host dev)
+// In Docker, env vars are set via env_file in docker-compose.yml
+if (!process.env.BOT_TOKEN) {
+  const __dirname = dirname(fileURLToPath(import.meta.url));
+  dotenv.config({ path: resolve(__dirname, '../../../.env') });
+}
 
 import { Bot, MemorySessionStorage } from 'grammy';
 import { loadEnv } from '@musicai/config';
