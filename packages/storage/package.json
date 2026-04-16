@@ -21,6 +21,7 @@
     "@musicai/config": "workspace:*"
   },
   "devDependencies": {
+    "@google-cloud/storage": "^7.0.0",
     "typescript": "^5.4.0"
   }
 }
