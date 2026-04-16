@@ -171,6 +171,10 @@ export class TracksService {
       );
     }
 
+    if (dto.type === 'instrumental' && dto.lyrics) {
+      throw new BadRequestException('Instrumental tracks cannot have lyrics');
+    }
+
     if (dto.bpm !== undefined && (!Number.isInteger(dto.bpm) || dto.bpm < 60 || dto.bpm > 200)) {
       throw new BadRequestException('BPM must be an integer between 60 and 200');
     }
