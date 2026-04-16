@@ -82,9 +82,13 @@ services:
     restart: unless-stopped
     volumes:
       - ./apps/bot/src:/app/apps/bot/src
-      - ./packages:/app/packages
-      # Preserve Prisma client binaries from image (don't overwrite with host's)
-      - /app/packages/database/src/generated
+      # Mount packages selectively (preserve Prisma generated binaries)
+      - ./packages/config/src:/app/packages/config/src
+      - ./packages/queues/src:/app/packages/queues/src
+      - ./packages/shared-types/src:/app/packages/shared-types/src
+      - ./packages/storage/src:/app/packages/storage/src
+      - ./packages/vertex-ai/src:/app/packages/vertex-ai/src
+      # Note: packages/database is NOT mounted - uses image's generated client
       # node_modules is NOT mounted - comes from image
     env_file: .env.development
     depends_on:
@@ -110,9 +114,13 @@ services:
       - ./apps/api/src:/app/apps/api/src
       - ./apps/api/tsconfig.json:/app/apps/api/tsconfig.json
       - ./tsconfig.base.json:/app/tsconfig.base.json
-      - ./packages:/app/packages
-      # Preserve Prisma client binaries from image (don't overwrite with host's)
-      - /app/packages/database/src/generated
+      # Mount packages selectively (preserve Prisma generated binaries)
+      - ./packages/config/src:/app/packages/config/src
+      - ./packages/queues/src:/app/packages/queues/src
+      - ./packages/shared-types/src:/app/packages/shared-types/src
+      - ./packages/storage/src:/app/packages/storage/src
+      - ./packages/vertex-ai/src:/app/packages/vertex-ai/src
+      # Note: packages/database is NOT mounted - uses image's generated client
     env_file: .env.development
     depends_on:
       postgres:
@@ -133,9 +141,13 @@ services:
     restart: unless-stopped
     volumes:
       - ./apps/worker/src:/app/apps/worker/src
-      - ./packages:/app/packages
-      # Preserve Prisma client binaries from image (don't overwrite with host's)
-      - /app/packages/database/src/generated
+      # Mount packages selectively (preserve Prisma generated binaries)
+      - ./packages/config/src:/app/packages/config/src
+      - ./packages/queues/src:/app/packages/queues/src
+      - ./packages/shared-types/src:/app/packages/shared-types/src
+      - ./packages/storage/src:/app/packages/storage/src
+      - ./packages/vertex-ai/src:/app/packages/vertex-ai/src
+      # Note: packages/database is NOT mounted - uses image's generated client
     env_file: .env.development
     depends_on:
       postgres:
