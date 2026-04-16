@@ -1,12 +1,12 @@
 export const QUEUES = {
-  SYNTH_PRO_URGENT: 'synth:pro:urgent',
-  SYNTH_PRO_NORMAL: 'synth:pro:normal',
-  SYNTH_CLIP: 'synth:clip',
-  SYNTH_DLQ: 'synth:dlq',
+  SYNTH_PRO_URGENT: 'synth-pro-urgent',
+  SYNTH_PRO_NORMAL: 'synth-pro-normal',
+  SYNTH_CLIP: 'synth-clip',
+  SYNTH_DLQ: 'synth-dlq',
   NOTIFY: 'notify',
 } as const;
 
-export type QueueName = typeof QUEUES[keyof typeof QUEUES];
+export type QueueName = (typeof QUEUES)[keyof typeof QUEUES];
 
 export const QUEUE_OPTIONS = {
   connection: {
