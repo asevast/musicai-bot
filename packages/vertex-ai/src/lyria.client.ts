@@ -58,7 +58,6 @@ export class LyriaClient {
       signal: AbortSignal.timeout(200_000),
       headers: {
         'Content-Type': 'application/json',
-        'Content-Type': 'application/json',
         Authorization: `Bearer ${this.apiKey}`,
       },
       body: JSON.stringify(requestBody),
@@ -117,9 +116,7 @@ export class LyriaClient {
           if (data !== '[DONE]') {
             try {
               const parsed = JSON.parse(data);
-              const audio = parsed.choices?.[0]?.delta?.audio as
-                | { data?: string }
-                | undefined;
+              const audio = parsed.choices?.[0]?.delta?.audio as { data?: string } | undefined;
               if (audio?.data) {
                 audioChunks.push(audio.data);
               }
