@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -15,7 +16,7 @@ export class TracksService {
   private synthJobProducer = new SynthJobProducer();
   private readonly env = loadEnv();
 
-  constructor(private readonly creditsService: CreditsService) {
+  constructor(@Inject(CreditsService) private readonly creditsService: CreditsService) {
     console.log('[TracksService] Queue options:', JSON.stringify(getQueueOptions(), null, 2));
   }
 
@@ -168,6 +169,10 @@ export class TracksService {
       throw new BadRequestException(
         `Lyrics must be ${this.env.MAX_LYRICS_LENGTH} characters or less`
       );
+    }
+
+    if (dto.type === 'instrumental' && dto.lyrics) {
+      throw new BadRequestException('Instrumental tracks cannot have lyrics');
     }
 
     if (dto.bpm !== undefined && (!Number.isInteger(dto.bpm) || dto.bpm < 60 || dto.bpm > 200)) {

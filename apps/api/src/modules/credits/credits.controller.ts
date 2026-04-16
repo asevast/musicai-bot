@@ -1,9 +1,9 @@
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, Inject } from '@nestjs/common';
 import { CreditsService } from './credits.service';
 
 @Controller('credits')
 export class CreditsController {
-  constructor(private readonly creditsService: CreditsService) {}
+  constructor(@Inject(CreditsService) private readonly creditsService: CreditsService) {}
 
   @Get('user/:userId')
   async getUserCredits(@Param('userId') userId: string) {
@@ -20,7 +20,7 @@ export class CreditsController {
       description: string;
       paymentId?: string;
       trackId?: string;
-    },
+    }
   ) {
     await this.creditsService.addCredits(
       body.userId,
@@ -28,7 +28,7 @@ export class CreditsController {
       body.type,
       body.description,
       body.paymentId,
-      body.trackId,
+      body.trackId
     );
     return { success: true };
   }
@@ -37,12 +37,12 @@ export class CreditsController {
   async getTransactionHistory(
     @Param('userId') userId: string,
     @Query('limit') limit = '20',
-    @Query('offset') offset = '0',
+    @Query('offset') offset = '0'
   ) {
     return this.creditsService.getTransactionHistory(
       userId,
       parseInt(limit, 10),
-      parseInt(offset, 10),
+      parseInt(offset, 10)
     );
   }
 }

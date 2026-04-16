@@ -1,9 +1,9 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Inject } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 
 @Controller('payments')
 export class PaymentsController {
-  constructor(private readonly paymentsService: PaymentsService) {}
+  constructor(@Inject(PaymentsService) private readonly paymentsService: PaymentsService) {}
 
   @Get('packages')
   getPackages() {
@@ -26,7 +26,7 @@ export class PaymentsController {
       userId: string;
       packageId: string;
       paymentId: string;
-    },
+    }
   ) {
     return this.paymentsService.processPayment(body.userId, body.packageId, body.paymentId);
   }
@@ -38,12 +38,12 @@ export class PaymentsController {
       userId: string;
       packageId: string;
       telegramPaymentId: string;
-    },
+    }
   ) {
     return this.paymentsService.handleTelegramStarsPayment(
       body.userId,
       body.packageId,
-      body.telegramPaymentId,
+      body.telegramPaymentId
     );
   }
 }

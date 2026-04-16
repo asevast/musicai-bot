@@ -4,7 +4,7 @@
   "main": "./dist/main.js",
   "scripts": {
     "build": "tsc",
-    "dev": "tsx watch src/main.ts",
+    "dev": "tsx watch --tsconfig tsconfig.json --exclude '**/packages/database/src/generated/**' --env-file-if-exists=../../.env src/main.ts",
     "start": "node dist/main.js",
     "test": "vitest",
     "test:run": "vitest run"
@@ -14,9 +14,9 @@
     "@musicai/database": "workspace:*",
     "@musicai/queues": "workspace:*",
     "@musicai/shared-types": "workspace:*",
-    "@nestjs/common": "^11.0.0",
-    "@nestjs/core": "^11.0.0",
-    "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/common": "^10.0.0",
+    "@nestjs/core": "^10.0.0",
+    "@nestjs/platform-express": "^10.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "dotenv": "^17.4.1",
@@ -25,8 +25,12 @@
   },
   "devDependencies": {
     "@types/express": "^4.17.0",
-    "@types/node": "^20.11.0",
-    "tsx": "^4.7.0",
+    "@types/node": "^20.19.39",
+    "@types/supertest": "^7.2.0",
+    "supertest": "^7.2.2",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.4.0",
     "vitest": "^2.0.0"
   }

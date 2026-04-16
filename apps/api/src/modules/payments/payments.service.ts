@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { prisma } from '@musicai/database';
 import { CreditsService } from '../credits/credits.service';
 
@@ -20,7 +20,7 @@ export const PACKAGES: Record<string, PaymentPackage> = {
 
 @Injectable()
 export class PaymentsService {
-  constructor(private readonly creditsService: CreditsService) {}
+  constructor(@Inject(CreditsService) private readonly creditsService: CreditsService) {}
 
   getPackage(packageId: string): PaymentPackage | undefined {
     return PACKAGES[packageId];
@@ -33,7 +33,7 @@ export class PaymentsService {
   async processPayment(
     userId: string,
     packageId: string,
-    paymentId: string,
+    paymentId: string
   ): Promise<{ success: boolean; credits?: number; error?: string }> {
     const pkg = this.getPackage(packageId);
 
@@ -67,7 +67,7 @@ export class PaymentsService {
         pkg.credits,
         'buy',
         `Pro subscription (${pkg.name})`,
-        paymentId,
+        paymentId
       );
 
       return { success: true, credits: pkg.credits };
@@ -78,7 +78,7 @@ export class PaymentsService {
       pkg.credits,
       'buy',
       `Credit pack purchase (${pkg.name})`,
-      paymentId,
+      paymentId
     );
 
     return { success: true, credits: pkg.credits };
@@ -87,7 +87,7 @@ export class PaymentsService {
   async handleTelegramStarsPayment(
     userId: string,
     packageId: string,
-    telegramPaymentId: string,
+    telegramPaymentId: string
   ): Promise<{ success: boolean; credits?: number; error?: string }> {
     return this.processPayment(userId, packageId, telegramPaymentId);
   }
