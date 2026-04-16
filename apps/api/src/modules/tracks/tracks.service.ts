@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { loadEnv } from '@musicai/config';
 import { prisma, type Track } from '@musicai/database';
-import { SynthJobProducer, getQueueOptions } from '@musicai/queues';
+import { SynthJobProducer } from '@musicai/queues';
 import type { CreateTrackDto, SubscriptionTier } from '@musicai/shared-types';
 import { CreditsService } from '../credits/credits.service';
 
@@ -16,9 +16,7 @@ export class TracksService {
   private synthJobProducer = new SynthJobProducer();
   private readonly env = loadEnv();
 
-  constructor(private readonly creditsService: CreditsService) {
-    console.log('[TracksService] Queue options:', JSON.stringify(getQueueOptions(), null, 2));
-  }
+  constructor(private readonly creditsService: CreditsService) {}
 
   async getPublicTracks(limit = 20, offset = 0): Promise<Track[]> {
     return prisma.track.findMany({
@@ -37,10 +35,25 @@ export class TracksService {
     });
   }
 
-  async createTrack(userId: string, dto: CreateTrackDto): Promise<Track> {
+  async createTrack(telegramId: string, dto: CreateTrackDto): Promise<Track> {
     this.validateDto(dto);
 
-    const user = await this.getNormalizedUser(userId);
+    let user = await prisma.user.findUniqueOrThrow({
+      where: { telegramId: Number(telegramId) },
+    });
+
+    if (
+      user.subscriptionTier !== 'free' &&
+      user.subscriptionExpiresAt &&
+      user.subscriptionExpiresAt <= new Date()
+    ) {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { subscriptionTier: 'free', subscriptionExpiresAt: null },
+      });
+    }
+
+    const userId = user.id;
     const tier = user.subscriptionTier as SubscriptionTier;
 
     this.assertAccess(tier, dto);

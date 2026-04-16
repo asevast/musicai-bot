@@ -5,6 +5,8 @@ import {
   languageKeyboard,
   intensityKeyboard,
   confirmKeyboard,
+  lyricsKeyboard,
+  additionalSettingsKeyboard,
 } from '../keyboards/track-options.keyboard';
 import { parseUserSettings } from '../utils/user-settings';
 
@@ -17,6 +19,7 @@ interface CreateTrackData {
   intensity?: 'low' | 'medium' | 'high' | 'epic';
   bpm?: number;
   negativePrompt?: string;
+  lyrics?: string;
 }
 
 type CreateTrackConversation = Conversation<BotContext>;
@@ -92,52 +95,127 @@ export const createTrackScene = createConversation(async function createTrack(
     session.language = undefined;
   }
 
-  if (settings.intensity) {
-    await ctx.reply(`🎚️ *Intensity:* using your default setting: *${settings.intensity}*`, {
-      parse_mode: 'Markdown',
-    });
-  } else {
-    await ctx.reply('🎚️ *Select intensity:*', {
-      parse_mode: 'Markdown',
-      reply_markup: intensityKeyboard(),
-    });
+  // Step 4: Lyrics (for vocal tracks)
+  if (session.type !== 'instrumental') {
+    await ctx.reply(
+      '✍️ *Lyrics*\n\n' +
+        'Would you like to provide your own lyrics text, have AI generate them automatically, or skip?',
+      {
+        parse_mode: 'Markdown',
+        reply_markup: lyricsKeyboard(),
+      }
+    );
 
-    const intensityCtx = await conversation.waitForCallbackQuery([
-      'intensity_low',
-      'intensity_medium',
-      'intensity_high',
-      'intensity_epic',
+    const lyricsCtx = await conversation.waitForCallbackQuery([
+      'lyrics_custom',
+      'lyrics_auto',
+      'lyrics_skip',
     ]);
-    session.intensity = intensityCtx.callbackQuery.data.replace(
-      'intensity_',
-      ''
-    ) as CreateTrackData['intensity'];
-    await intensityCtx.answerCallbackQuery();
-  }
+    const lyricsChoice = lyricsCtx.callbackQuery.data;
+    await lyricsCtx.answerCallbackQuery();
 
-  await ctx.reply('🎯 *Enter BPM (60-200) or send "auto":*', { parse_mode: 'Markdown' });
-
-  const bpmCtx = await conversation.waitFor('message:text');
-  const bpmText = bpmCtx.msg.text.toLowerCase();
-  if (bpmText === 'auto') {
-    session.bpm = undefined;
-  } else {
-    const bpm = parseInt(bpmText, 10);
-    if (isNaN(bpm) || bpm < 60 || bpm > 200) {
-      await ctx.reply('❝ Invalid BPM. Using auto.');
-      session.bpm = undefined;
+    if (lyricsChoice === 'lyrics_custom') {
+      await ctx.reply(
+        '📝 *Enter your lyrics:*\n\n' +
+          'Write your lyrics below. Use line breaks between verses and chorus.',
+        { parse_mode: 'Markdown' }
+      );
+      const lyricsMsg = await conversation.waitFor('message:text');
+      session.lyrics = lyricsMsg.msg.text.slice(0, 2000);
+    } else if (lyricsChoice === 'lyrics_auto') {
+      // AI will generate lyrics automatically - no user input needed
+      session.lyrics = undefined; // Will be handled by API
     } else {
-      session.bpm = bpm;
+      // Skip lyrics
+      session.lyrics = undefined;
     }
   }
 
-  await ctx.reply('🚫 *Enter negative prompt (what to avoid) or send "skip":*', {
-    parse_mode: 'Markdown',
-  });
+  // Step 5: Additional Settings
+  await ctx.reply(
+    '⚙️ *Additional Settings*\n\n' +
+      'You can customize BPM, intensity, and negative prompt, or skip to use defaults.',
+    {
+      parse_mode: 'Markdown',
+      reply_markup: additionalSettingsKeyboard(),
+    }
+  );
 
-  const negCtx = await conversation.waitFor('message:text');
-  if (negCtx.msg.text.toLowerCase() !== 'skip') {
-    session.negativePrompt = negCtx.msg.text.slice(0, 300);
+  let settingsDone = false;
+  while (!settingsDone) {
+    const settingsCtx = await conversation.waitForCallbackQuery([
+      'settings_bpm',
+      'settings_intensity',
+      'settings_negative',
+      'settings_skip',
+    ]);
+    const setting = settingsCtx.callbackQuery.data;
+    await settingsCtx.answerCallbackQuery();
+
+    if (setting === 'settings_bpm') {
+      await ctx.reply('🎯 *Enter BPM (60-200) or send "auto":*', { parse_mode: 'Markdown' });
+      const bpmCtx = await conversation.waitFor('message:text');
+      const bpmText = bpmCtx.msg.text.toLowerCase();
+      if (bpmText === 'auto') {
+        session.bpm = undefined;
+      } else {
+        const bpm = parseInt(bpmText, 10);
+        if (isNaN(bpm) || bpm < 60 || bpm > 200) {
+          await ctx.reply('⚠️ Invalid BPM. Using auto.');
+          session.bpm = undefined;
+        } else {
+          session.bpm = bpm;
+        }
+      }
+      // Show menu again
+      await ctx.reply('⚙️ *Additional Settings*\n\nAnything else?', {
+        parse_mode: 'Markdown',
+        reply_markup: additionalSettingsKeyboard(),
+      });
+    } else if (setting === 'settings_intensity') {
+      await ctx.reply('🎚️ *Select intensity:*', {
+        parse_mode: 'Markdown',
+        reply_markup: intensityKeyboard(),
+      });
+      const intensityCtx = await conversation.waitForCallbackQuery([
+        'intensity_low',
+        'intensity_medium',
+        'intensity_high',
+        'intensity_epic',
+      ]);
+      session.intensity = intensityCtx.callbackQuery.data.replace(
+        'intensity_',
+        ''
+      ) as CreateTrackData['intensity'];
+      await intensityCtx.answerCallbackQuery();
+      // Show menu again
+      await ctx.reply('⚙️ *Additional Settings*\n\nAnything else?', {
+        parse_mode: 'Markdown',
+        reply_markup: additionalSettingsKeyboard(),
+      });
+    } else if (setting === 'settings_negative') {
+      await ctx.reply('🚫 *Enter negative prompt (what to avoid) or send "skip":*', {
+        parse_mode: 'Markdown',
+      });
+      const negCtx = await conversation.waitFor('message:text');
+      if (negCtx.msg.text.toLowerCase() !== 'skip') {
+        session.negativePrompt = negCtx.msg.text.slice(0, 300);
+      }
+      // Show menu again
+      await ctx.reply('⚙️ *Additional Settings*\n\nAnything else?', {
+        parse_mode: 'Markdown',
+        reply_markup: additionalSettingsKeyboard(),
+      });
+    } else if (setting === 'settings_skip') {
+      settingsDone = true;
+    }
+  }
+
+  // Ensure intensity has a value
+  if (!session.intensity && settings.intensity) {
+    session.intensity = settings.intensity as CreateTrackData['intensity'];
+  } else if (!session.intensity) {
+    session.intensity = 'medium';
   }
 
   const cost = session.type === 'clip' ? 1 : session.type === 'instrumental' ? 3 : 5;
@@ -149,6 +227,8 @@ export const createTrackScene = createConversation(async function createTrack(
       `• Language: ${session.language ?? 'N/A'}\n` +
       `• Intensity: ${session.intensity}\n` +
       `• BPM: ${session.bpm ?? 'Auto'}\n` +
+      `• Lyrics: ${session.lyrics ? 'Custom' : session.type !== 'instrumental' ? 'Auto' : 'N/A'}\n` +
+      `• Negative Prompt: ${session.negativePrompt ? 'Yes' : 'No'}\n` +
       `• Cost: ${cost} credits\n\n` +
       `*Proceed?*`,
     {
@@ -191,6 +271,7 @@ export const createTrackScene = createConversation(async function createTrack(
         type: session.type,
         prompt: session.prompt,
         negativePrompt: session.negativePrompt,
+        lyrics: session.lyrics,
         bpm: session.bpm,
         intensity: session.intensity,
         language: session.language,

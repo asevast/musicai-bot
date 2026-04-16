@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 
 // Load .env only if env vars not already set (host dev)
 // In Docker, env vars are set via env_file in docker-compose.yml
-if (!process.env.BOT_TOKEN) {
+if (!process.env.DATABASE_URL) {
   dotenv.config({ path: resolve(dirname(fileURLToPath(import.meta.url)), '../../../.env') });
 }
 

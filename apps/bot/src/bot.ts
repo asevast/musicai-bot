@@ -318,13 +318,12 @@ export function setupBot(bot: Bot<BotContext>) {
     });
 
     if (tracks.length === 0) {
-      return ctx.editMessageText(`📜 *${title}*\n\nNo tracks found.`, {
-        parse_mode: 'Markdown',
+      return ctx.editMessageText(`📜 ${title}\n\nNo tracks found.`, {
         reply_markup: historyMenuKeyboard(),
       });
     }
 
-    let message = `📜 *${title}*\n\n`;
+    let message = `📜 ${title}\n\n`;
     tracks.forEach((track: any, i: number) => {
       const statusEmoji = { queued: '⏳', processing: '🔄', done: '✅', failed: '❌' }[
         track.status
@@ -334,7 +333,6 @@ export function setupBot(bot: Bot<BotContext>) {
     });
 
     await ctx.editMessageText(message, {
-      parse_mode: 'Markdown',
       reply_markup: historyMenuKeyboard(),
     });
   };

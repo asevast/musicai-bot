@@ -18,10 +18,10 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.679.0",
     "@aws-sdk/s3-request-presigner": "^3.679.0",
+    "@google-cloud/storage": "^7.0.0",
     "@musicai/config": "workspace:*"
   },
   "devDependencies": {
-    "@google-cloud/storage": "^7.0.0",
     "typescript": "^5.4.0"
   }
 }

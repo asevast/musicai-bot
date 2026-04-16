@@ -18,14 +18,13 @@ export const libraryCommand = async (ctx: Context) => {
 
   if (tracks.length === 0) {
     return ctx.reply(
-      '📚 *Community Library*\n\n' +
+      '📚 Community Library\n\n' +
         'No public tracks yet. Be the first to share your creation!\n\n' +
-        'Use /create to generate a track and add it to the library.',
-      { parse_mode: 'Markdown' }
+        'Use /create to generate a track and add it to the library.'
     );
   }
 
-  let message = '📚 *Community Library*\n\n';
+  let message = '📚 Community Library\n\n';
 
   tracks.forEach((track, index) => {
     const displayName = track.user.username || track.user.firstName || 'Anonymous';
@@ -33,10 +32,10 @@ export const libraryCommand = async (ctx: Context) => {
     message += `   by @${displayName}\n`;
     message += `   ${track.prompt.slice(0, 40)}...\n`;
     if (track.gcsUrl) {
-      message += `   🎧 [Listen](${track.gcsUrl})\n`;
+      message += `   🎧 Listen: ${track.gcsUrl}\n`;
     }
     message += '\n';
   });
 
-  await ctx.reply(message, { parse_mode: 'Markdown' });
+  await ctx.reply(message);
 };

@@ -85,18 +85,18 @@ export class SynthJobProcessor {
 
     const audioBuffer = Buffer.from(lyriaResponse.audioBase64, 'base64');
     const storageKey = await storageService.uploadTrack(audioBuffer, trackId);
+    const gcsUrl = storageService.getPublicUrl(storageKey);
 
     const durationSec = this.estimateDuration(audioBuffer);
 
     await this.prisma.track.update({
       where: { id: trackId },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       data: {
         status: 'done',
-        storageKey,
+        gcsUrl,
         revisedPrompt: lyriaResponse.revisedPrompt,
         durationSec,
-      } as any,
+      },
     });
 
     await this.prisma.synthJob.update({
