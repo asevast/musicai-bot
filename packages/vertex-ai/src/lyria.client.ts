@@ -55,6 +55,8 @@ export class LyriaClient {
     // Make the fetch request directly
     const response = await fetch(`${this.baseUrl}/chat/completions`, {
       method: 'POST',
+      signal: AbortSignal.timeout(200_000),
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${this.apiKey}`,
