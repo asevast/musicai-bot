@@ -51,6 +51,8 @@ COPY packages/database/prisma ./packages/database/prisma
 COPY packages/database/tsconfig.json ./packages/database/
 RUN pnpm --filter @musicai/database generate
 RUN pnpm --filter @musicai/database build
+# Copy Prisma generated client (with query engine binary) to dist
+RUN cp -r ./packages/database/src/generated ./packages/database/dist/
 
 COPY packages/queues/src ./packages/queues/src
 COPY packages/queues/tsconfig.json ./packages/queues/
