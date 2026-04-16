@@ -15,7 +15,7 @@ BullMQ 5 does not support colons in queue names. The following queues were renam
 ## Migration Steps
 
 1. Clear old queues before deploying:
-   docker compose exec redis redis-cli -a "Seor#26" FLUSHDB
+   docker compose exec redis redis-cli -a "<REDIS_PASSWORD>" FLUSHDB
 
 2. Restart all services:
    docker compose restart
