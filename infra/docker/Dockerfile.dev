@@ -36,9 +36,15 @@ RUN pnpm install
 
 # Copy package source and build packages (for dist/index.js that package.json main points to)
 # This is needed because the apps import from @musicai/* workspace packages
+# Build in dependency order: config → shared-types → others
+
 COPY packages/config/src ./packages/config/src
 COPY packages/config/tsconfig.json ./packages/config/
 RUN pnpm --filter @musicai/config build
+
+COPY packages/shared-types/src ./packages/shared-types/src
+COPY packages/shared-types/tsconfig.json ./packages/shared-types/
+RUN pnpm --filter @musicai/shared-types build
 
 COPY packages/database/src/index.ts ./packages/database/src/index.ts
 COPY packages/database/prisma ./packages/database/prisma
@@ -49,10 +55,6 @@ RUN pnpm --filter @musicai/database build
 COPY packages/queues/src ./packages/queues/src
 COPY packages/queues/tsconfig.json ./packages/queues/
 RUN pnpm --filter @musicai/queues build
-
-COPY packages/shared-types/src ./packages/shared-types/src
-COPY packages/shared-types/tsconfig.json ./packages/shared-types/
-RUN pnpm --filter @musicai/shared-types build
 
 COPY packages/storage/src ./packages/storage/src
 COPY packages/storage/tsconfig.json ./packages/storage/
