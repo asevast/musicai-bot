@@ -32,8 +32,13 @@ COPY packages/vertex-ai/package.json ./packages/vertex-ai/
 # Native binaries (esbuild, sharp, etc.) are compiled for Linux
 RUN pnpm install
 
+# Generate Prisma client with Linux binaries (these are needed at runtime)
+# The binary targets include both native and linux-musl-openssl-3.0.x for Alpine
+RUN pnpm --filter @musicai/database generate
+
 # Note: Source code is NOT copied here - it's mounted from host via docker-compose volumes
 # This enables hot reload while keeping node_modules inside the container
+# However, the Prisma generated client stays in the image (see volumes in docker-compose.yml)
 
 # ─── Target: Bot Service ──────────────────────────────────────────────────────
 FROM base AS bot
