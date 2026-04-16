@@ -1,6 +1,8 @@
-version: '3.8'
+version: '3.9'
 
 services:
+  # ─── Infrastructure Services ────────────────────────────────────────────────
+
   postgres:
     image: postgres:16-alpine
     container_name: musicai_postgres
@@ -8,9 +10,9 @@ services:
     environment:
       POSTGRES_DB: musicai
       POSTGRES_USER: musicai
-      POSTGRES_PASSWORD: Gang26
+      POSTGRES_PASSWORD: musicai_secret
     ports:
-      - '${POSTGRES_PORT:-5433}:5432'
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -23,11 +25,16 @@ services:
     image: redis:7-alpine
     container_name: musicai_redis
     restart: unless-stopped
-    command: redis-server --requirepass "Seor#26" --appendonly yes
+    command: redis-server --requirepass "redis_secret" --appendonly yes
     ports:
       - '6379:6379'
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', '-a', 'redis_secret', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   minio:
     image: minio/minio:latest
@@ -38,20 +45,103 @@ services:
       MINIO_ROOT_PASSWORD: minioadmin
     command: server /data --console-address ':9001'
     ports:
-      - '9000:9000'
-      - '9001:9001'
+      - '9000:9000' # S3 API
+      - '9001:9001' # Web Console
     volumes:
       - minio_data:/data
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-  adminer:
-    image: adminer:latest
-    container_name: musicai_adminer
+  # One-time init container to create MinIO bucket with anonymous download access
+  minio-init:
+    image: minio/mc:latest
+    container_name: musicai_minio_init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      echo 'Waiting for MinIO...' &&
+      sleep 2 &&
+      mc alias set local http://minio:9000 admin minioadmin &&
+      mc mb --ignore-existing local/musicai-tracks-dev &&
+      mc anonymous set download local/musicai-tracks-dev &&
+      echo 'MinIO bucket musicai-tracks-dev ready with public download access'
+      "
+    restart: 'no'
+
+  # ─── Application Services ───────────────────────────────────────────────────
+
+  bot:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.dev
+      target: bot
+    container_name: musicai_bot
     restart: unless-stopped
-    ports:
-      - '8081:8080'
+    volumes:
+      - ./apps/bot/src:/app/apps/bot/src
+      - ./packages:/app/packages
+      # node_modules is NOT mounted - comes from image
+    env_file: .env.development
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.dev
+      target: api
+    container_name: musicai_api
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./apps/api/src:/app/apps/api/src
+      - ./packages:/app/packages
+    env_file: .env.development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+
+  worker:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.dev
+      target: worker
+    container_name: musicai_worker
+    restart: unless-stopped
+    volumes:
+      - ./apps/worker/src:/app/apps/worker/src
+      - ./packages:/app/packages
+    env_file: .env.development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+
+  # ─── Dev UI Tools ───────────────────────────────────────────────────────────
 
   bullboard:
     image: deadly0/bull-board:latest
@@ -60,13 +150,24 @@ services:
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      REDIS_PASSWORD: Seor#26
+      REDIS_PASSWORD: redis_secret
       REDIS_DB: 0
       PORT: 3000
     ports:
-      - '3001:3000'
+      - '3002:3000' # Remapped from 3001 to avoid conflict with API
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
+
+  adminer:
+    image: adminer:latest
+    container_name: musicai_adminer
+    restart: unless-stopped
+    ports:
+      - '8080:8080'
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   postgres_data:
