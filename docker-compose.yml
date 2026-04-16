@@ -122,7 +122,9 @@ services:
       - ./packages/shared-types/src:/app/packages/shared-types/src
       - ./packages/storage/src:/app/packages/storage/src
       - ./packages/vertex-ai/src:/app/packages/vertex-ai/src
-      # Note: packages/database is NOT mounted - uses image's generated client
+      # Database: mount only source files (NOT generated), preserve image's Prisma binaries
+      - ./packages/database/src/index.ts:/app/packages/database/src/index.ts
+      - ./packages/database/prisma:/app/packages/database/prisma
     env_file: .env.development
     depends_on:
       postgres:
@@ -149,7 +151,9 @@ services:
       - ./packages/shared-types/src:/app/packages/shared-types/src
       - ./packages/storage/src:/app/packages/storage/src
       - ./packages/vertex-ai/src:/app/packages/vertex-ai/src
-      # Note: packages/database is NOT mounted - uses image's generated client
+      # Database: mount only source files (NOT generated), preserve image's Prisma binaries
+      - ./packages/database/src/index.ts:/app/packages/database/src/index.ts
+      - ./packages/database/prisma:/app/packages/database/prisma
     env_file: .env.development
     depends_on:
       postgres:
