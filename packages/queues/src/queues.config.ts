@@ -26,3 +26,8 @@ export const WORKER_CONFIG = {
   [QUEUES.SYNTH_CLIP]: { concurrency: 5, limiter: { max: 9, duration: 60_000 } },
   [QUEUES.NOTIFY]: { concurrency: 10 },
 } as const;
+
+// Helper function to get queue options (used by API services)
+export function getQueueOptions() {
+  return QUEUE_OPTIONS;
+}
