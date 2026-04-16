@@ -16,7 +16,7 @@ export class TracksService {
   private synthJobProducer = new SynthJobProducer();
   private readonly env = loadEnv();
 
-  constructor(@Inject(CreditsService) private readonly creditsService: CreditsService) {
+  constructor(private readonly creditsService: CreditsService) {
     console.log('[TracksService] Queue options:', JSON.stringify(getQueueOptions(), null, 2));
   }
 
