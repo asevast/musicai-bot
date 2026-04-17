@@ -1,11 +1,18 @@
-import { Bot, Context, session, InlineKeyboard, InputFile } from 'grammy';
+import { Bot, session, InlineKeyboard, InputFile } from 'grammy';
+import type { Context } from 'grammy';
 import { conversations } from '@grammyjs/conversations';
 import { loadEnv } from '@musicai/config';
 import { prisma } from '@musicai/database';
 import { storageService } from '@musicai/storage';
 import { startCommand } from './commands/start.command';
 import { createCommand, createTrackScene } from './commands/create.command';
-import { historyCommand } from './commands/history.command';
+import {
+  historyCommand,
+  showHistoryPage,
+  handleHistoryPage,
+  handleHistorySummary,
+} from './commands/history.command';
+import { helpCommand } from './commands/help.command';
 import { profileCommand } from './commands/profile.command';
 import { buyCommand } from './commands/buy.command';
 import { settingsCommand } from './commands/settings.command';
@@ -84,6 +91,7 @@ export function setupBot(bot: Bot<BotContext>) {
   bot.command('library', libraryCommand);
   bot.command('delete_account', deleteAccountCommand);
   bot.command('menu', menuCommand);
+  bot.command('help', helpCommand);
   bot.command('flesh', fleshCommand);
 
   bot.callbackQuery('main_menu', async (ctx) => {
@@ -101,14 +109,7 @@ export function setupBot(bot: Bot<BotContext>) {
 
   bot.callbackQuery('history', async (ctx) => {
     await ctx.answerCallbackQuery();
-    try {
-      await ctx.editMessageText('📜 *My Tracks*\n\nView your track history:', {
-        parse_mode: 'Markdown',
-        reply_markup: historyMenuKeyboard(),
-      });
-    } catch {
-      // Message not modified - ignore
-    }
+    await showHistoryPage(ctx, { page: 1, filter: 'all' });
   });
 
   bot.callbackQuery('profile', async (ctx) => {
@@ -399,6 +400,93 @@ export function setupBot(bot: Bot<BotContext>) {
     await ctx.answerCallbackQuery();
   });
 
+  // History pagination handlers
+  bot.callbackQuery(/^history_page_/, handleHistoryPage);
+  bot.callbackQuery('history_summary', handleHistorySummary);
+
+  // Track action handlers
+  bot.callbackQuery(/^share_/, async (ctx) => {
+    await ctx.answerCallbackQuery('📤 Share feature coming soon!');
+  });
+
+  bot.callbackQuery(/^copy_prompt_/, async (ctx) => {
+    const trackId = ctx.callbackQuery.data.replace('copy_prompt_', '');
+    const user = ctx.user;
+    if (!user) return ctx.answerCallbackQuery('❌ User not found');
+
+    const track = await prisma.track.findFirst({
+      where: { id: trackId, userId: user.id },
+    });
+
+    if (track) {
+      await ctx.answerCallbackQuery();
+      await ctx.reply(`📋 *Original Prompt:*\n\n` + track.prompt, { parse_mode: 'Markdown' });
+    } else {
+      await ctx.answerCallbackQuery('❌ Track not found');
+    }
+  });
+
+  bot.callbackQuery(/^add_to_library_/, async (ctx) => {
+    const trackId = ctx.callbackQuery.data.replace('add_to_library_', '');
+    const user = ctx.user;
+    if (!user) return ctx.answerCallbackQuery('❌ User not found');
+
+    await prisma.track.updateMany({
+      where: { id: trackId, userId: user.id },
+      data: { isPublic: true },
+    });
+
+    await ctx.answerCallbackQuery('✅ Added to public library!');
+  });
+
+  bot.callbackQuery(/^extend_/, async (ctx) => {
+    await ctx.answerCallbackQuery('🎼 Extend feature coming soon!');
+  });
+
+  bot.callbackQuery(/^regen_/, async (ctx) => {
+    await ctx.answerCallbackQuery('🔄 Regenerate feature coming soon!');
+  });
+
+  bot.callbackQuery(/^refresh_track_/, async (ctx) => {
+    const trackId = ctx.callbackQuery.data.replace('refresh_track_', '');
+    const user = ctx.user;
+    if (!user) return ctx.answerCallbackQuery('❌ User not found');
+
+    const track = await prisma.track.findFirst({
+      where: { id: trackId, userId: user.id },
+    });
+
+    if (track) {
+      await ctx.answerCallbackQuery(
+        `${track.status === 'done' ? '✅' : '🔄'} Status: ${track.status}`
+      );
+      // Refresh the history page
+      await showHistoryPage(ctx, { page: 1, filter: 'all' });
+    } else {
+      await ctx.answerCallbackQuery('❌ Track not found');
+    }
+  });
+
+  bot.callbackQuery(/^retry_/, async (ctx) => {
+    await ctx.answerCallbackQuery('🔄 Retry feature coming soon!');
+  });
+
+  bot.callbackQuery(/^delete_track_/, async (ctx) => {
+    const trackId = ctx.callbackQuery.data.replace('delete_track_', '');
+    const user = ctx.user;
+    if (!user) return ctx.answerCallbackQuery('❌ User not found');
+
+    // Soft delete - mark as failed or add deleted flag
+    // For now, just remove the gcsUrl so it doesn't show download button
+    await prisma.track.updateMany({
+      where: { id: trackId, userId: user.id },
+      data: { gcsUrl: null },
+    });
+
+    await ctx.answerCallbackQuery('🗑️ Track removed from history');
+    await showHistoryPage(ctx, { page: 1, filter: 'all' });
+  });
+
   // Download track callback handler
   bot.callbackQuery(/^download_/, async (ctx) => {
     await ctx.answerCallbackQuery('⬇️ Preparing download...');
@@ -416,12 +504,24 @@ export function setupBot(bot: Bot<BotContext>) {
         where: { id: trackId, userId: user.id, status: 'done' },
       });
 
-      if (!track || !track.storageKey) {
+      if (!track || !track.gcsUrl) {
         return ctx.reply('❌ Track not found or not ready yet');
       }
 
+      // Extract storage key from gcsUrl
+      // URL format: http://minio:9000/bucket-name/tracks/trackId.mp3
+      // We need to extract: tracks/trackId.mp3 (everything after bucket name)
+      const gcsUrlObj = new URL(track.gcsUrl);
+      const pathParts = gcsUrlObj.pathname.split('/').filter(Boolean);
+      // pathParts = ['bucket-name', 'tracks', 'trackId.mp3']
+      // Remove bucket name (first part) to get storage key
+      if (pathParts.length < 2) {
+        throw new Error(`Invalid gcsUrl format: ${track.gcsUrl}`);
+      }
+      const storageKey = pathParts.slice(1).join('/');
+
       // Send the audio file
-      const audioBuffer = await storageService.getFileBuffer(track.storageKey);
+      const audioBuffer = await storageService.getFileBuffer(storageKey);
 
       await ctx.replyWithAudio(
         new InputFile(audioBuffer, `${track.type}_track_${track.id.slice(0, 8)}.mp3`),
