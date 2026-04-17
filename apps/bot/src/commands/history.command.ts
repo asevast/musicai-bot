@@ -49,8 +49,13 @@ const buildTrackText = (track: {
     year: 'numeric',
   });
 
+  // Escape Markdown special characters in prompt
+  const escapedPrompt =
+    track.prompt.replace(/([_*[\]()~`>#+-=|{}.!])/g, '\\$1').slice(0, 50) +
+    (track.prompt.length > 50 ? '...' : '');
+
   let text = `${emoji} #${track.index} — ${typeName}\n`;
-  text += `${typeIcon} ${track.prompt.slice(0, 50)}${track.prompt.length > 50 ? '...' : ''}\n`;
+  text += `${typeIcon} ${escapedPrompt}\n`;
   text += `⏱️ ${duration} · 📅 ${date}`;
 
   return text;
@@ -156,8 +161,8 @@ export const showHistoryPage = async (
 
   const totalPages = Math.ceil(totalCount / TRACKS_PER_PAGE);
 
-  // Build track list text
-  let messageText = `📜 *Your Tracks* (page ${page}/${totalPages})\n\n`;
+  // Build track list text (no Markdown parsing to avoid issues with user content)
+  let messageText = `📜 Your Tracks (page ${page}/${totalPages})\n\n`;
   messageText += `✅ Ready: ${readyCount} · 🔄 In Progress: ${inProgressCount} · 📊 Total: ${totalCount}\n\n`;
 
   tracks.forEach((track, index) => {
@@ -177,15 +182,13 @@ export const showHistoryPage = async (
 
   const paginationKeyboard = buildPaginationKeyboard(page, totalPages, filter);
 
-  // Send or edit message
+  // Send or edit message (no parse_mode to avoid Markdown issues)
   if (ctx.callbackQuery) {
     await ctx.editMessageText(messageText, {
-      parse_mode: 'Markdown',
       reply_markup: paginationKeyboard,
     });
   } else {
     await ctx.reply(messageText, {
-      parse_mode: 'Markdown',
       reply_markup: paginationKeyboard,
     });
   }

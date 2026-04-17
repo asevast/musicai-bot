@@ -94,6 +94,88 @@ export function setupBot(bot: Bot<BotContext>) {
   bot.command('help', helpCommand);
   bot.command('flesh', fleshCommand);
 
+  // Track detail command: /track_1, /track_2, etc.
+  bot.hears(/^\/track_(\d+)$/, async (ctx) => {
+    const match = ctx.message?.text?.match(/^\/track_(\d+)$/);
+    if (!match) return;
+    const trackNumber = parseInt(match[1], 10);
+    const user = ctx.user;
+    if (!user) {
+      return ctx.reply('❌ Error: User not found');
+    }
+
+    // Get all user's tracks to find the one at this position
+    const tracks = await prisma.track.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: 'desc' },
+      take: trackNumber,
+    });
+
+    if (tracks.length < trackNumber) {
+      return ctx.reply(`❌ Track #${trackNumber} not found. Use /history to see your tracks.`);
+    }
+
+    const track = tracks[trackNumber - 1];
+
+    // Build track detail message
+    const statusEmoji: Record<string, string> = {
+      queued: '⏳',
+      processing: '🔄',
+      done: '✅',
+      failed: '❌',
+    };
+
+    const typeLabel: Record<string, string> = {
+      full_song: 'Full Song',
+      clip: 'Clip',
+      instrumental: 'Instrumental',
+    };
+
+    const duration = track.durationSec ? `${track.durationSec}s` : 'N/A';
+    const date = track.createdAt.toLocaleDateString('en-US', {
+      month: 'numeric',
+      day: 'numeric',
+      year: 'numeric',
+    });
+
+    let message = `${statusEmoji[track.status] || '⏳'} *Track #${trackNumber}*\n\n`;
+    message += `*Type:* ${typeLabel[track.type] || track.type}\n`;
+    message += `*Status:* ${track.status}\n`;
+    message += `*Duration:* ${duration}\n`;
+    message += `*Created:* ${date}\n\n`;
+    message += `*Prompt:* ${track.prompt.slice(0, 200)}${track.prompt.length > 200 ? '...' : ''}\n`;
+
+    if (track.lyrics) {
+      message += `\n*Lyrics:* ${track.lyrics.slice(0, 200)}${track.lyrics.length > 200 ? '...' : ''}\n`;
+    }
+
+    // Build action keyboard
+    const keyboard = new InlineKeyboard();
+
+    if (track.status === 'done' && track.gcsUrl) {
+      keyboard.text('⬇️ Download', `download_${track.id}`).row();
+      keyboard
+        .text('🔄 Regen', `regen_${track.id}`)
+        .text('📤 Share', `share_${track.id}`)
+        .row()
+        .text('📋 Copy Prompt', `copy_prompt_${track.id}`)
+        .text('❤️ Library', `add_to_library_${track.id}`)
+        .row();
+      if (track.type === 'clip') {
+        keyboard.text('🎼 Extend to Full Song', `extend_${track.id}`).row();
+      }
+    } else if (track.status === 'failed') {
+      keyboard
+        .text('🔄 Retry', `retry_${track.id}`)
+        .text('🗑️ Delete', `delete_track_${track.id}`)
+        .row();
+    }
+
+    keyboard.text('⬅️ Back to History', 'history');
+
+    await ctx.reply(message, { reply_markup: keyboard });
+  });
+
   bot.callbackQuery('main_menu', async (ctx) => {
     await ctx.answerCallbackQuery();
     await ctx.editMessageText('🎵 *MusicAI Bot*', {
