@@ -181,13 +181,18 @@ export function setupBot(bot: Bot<BotContext>) {
       if (track.type === 'clip') {
         keyboard.text('🎼 Extend to Full Song', `extend_${track.id}`).row();
       }
+    } else if (track.status === 'done' && !track.gcsUrl) {
+      // Track marked as done but missing file - data issue
+      message += '\n\n⚠️ Track completed but file is missing. Please contact support.';
+      keyboard.text('🔄 Retry', `retry_${track.id}`).row();
     } else if (track.status === 'failed') {
       keyboard
         .text('🔄 Retry', `retry_${track.id}`)
         .text('🗑️ Delete', `delete_track_${track.id}`)
         .row();
     } else if (track.status === 'queued' || track.status === 'processing') {
-      message += '\n_This track is still being processed. Buttons will appear when it is ready._';
+      message +=
+        '\n\n⏳ This track is still being processed. Buttons will appear when it is ready.';
       keyboard.text('🔄 Refresh Status', `refresh_track_${track.id}`).row();
     }
 
