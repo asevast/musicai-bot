@@ -2,7 +2,7 @@ import { InlineKeyboard } from 'grammy';
 import { prisma } from '@musicai/database';
 import type { BotContext } from '../bot';
 
-const TRACKS_PER_PAGE = 2;
+const TRACKS_PER_PAGE = 5;
 
 interface HistoryOptions {
   page?: number;
@@ -26,46 +26,6 @@ const typeLabel: Record<string, string> = {
   full_song: 'Full Song',
   clip: 'Clip',
   instrumental: 'Instrumental',
-};
-
-/**
- * Build a single track's inline keyboard
- */
-const buildTrackKeyboard = (track: {
-  id: string;
-  type: string;
-  status: string;
-  gcsUrl?: string | null;
-}): InlineKeyboard => {
-  const keyboard = new InlineKeyboard();
-
-  if (track.status === 'done' && track.gcsUrl) {
-    // Download button (full width)
-    keyboard.text('⬇️ Download', `download_${track.id}`).row();
-
-    // Secondary actions (2x2 grid)
-    keyboard
-      .text('🔄 Regen', `regen_${track.id}`)
-      .text('📤 Share', `share_${track.id}`)
-      .row()
-      .text('📋 Copy Prompt', `copy_prompt_${track.id}`)
-      .text('❤️ Library', `add_to_library_${track.id}`)
-      .row();
-
-    // Extend button (only for clips)
-    if (track.type === 'clip') {
-      keyboard.text('🎼 Extend to Full Song', `extend_${track.id}`).row();
-    }
-  } else if (track.status === 'processing' || track.status === 'queued') {
-    keyboard.text('🔄 Refresh Status', `refresh_track_${track.id}`).row();
-  } else if (track.status === 'failed') {
-    keyboard
-      .text('🔄 Retry', `retry_${track.id}`)
-      .text('🗑️ Delete', `delete_track_${track.id}`)
-      .row();
-  }
-
-  return keyboard;
 };
 
 /**
@@ -196,19 +156,13 @@ export const showHistoryPage = async (
 
   const totalPages = Math.ceil(totalCount / TRACKS_PER_PAGE);
 
-  // Send header
-  const headerText =
-    `📜 *Your Tracks* (page ${page}/${totalPages})\n\n` +
-    `✅ Ready: ${readyCount} · 🔄 In Progress: ${inProgressCount} · 📊 Total: ${totalCount}`;
+  // Build track list text
+  let messageText = `📜 *Your Tracks* (page ${page}/${totalPages})\n\n`;
+  messageText += `✅ Ready: ${readyCount} · 🔄 In Progress: ${inProgressCount} · 📊 Total: ${totalCount}\n\n`;
 
-  await ctx.reply(headerText, { parse_mode: 'Markdown' });
-
-  // Send each track as a separate message with its own keyboard
-  for (let i = 0; i < tracks.length; i++) {
-    const track = tracks[i];
-    const trackIndex = skip + i + 1;
-
-    const trackText = buildTrackText({
+  tracks.forEach((track, index) => {
+    const trackIndex = skip + index + 1;
+    messageText += buildTrackText({
       index: trackIndex,
       type: track.type,
       status: track.status,
@@ -216,24 +170,25 @@ export const showHistoryPage = async (
       durationSec: track.durationSec,
       createdAt: track.createdAt,
     });
+    messageText += '\n\n';
+  });
 
-    const trackKeyboard = buildTrackKeyboard({
-      id: track.id,
-      type: track.type,
-      status: track.status,
-      gcsUrl: track.gcsUrl,
+  messageText += 'Use /track_<number> to download or manage a specific track.';
+
+  const paginationKeyboard = buildPaginationKeyboard(page, totalPages, filter);
+
+  // Send or edit message
+  if (ctx.callbackQuery) {
+    await ctx.editMessageText(messageText, {
+      parse_mode: 'Markdown',
+      reply_markup: paginationKeyboard,
     });
-
-    await ctx.reply(trackText, {
-      reply_markup: trackKeyboard,
+  } else {
+    await ctx.reply(messageText, {
+      parse_mode: 'Markdown',
+      reply_markup: paginationKeyboard,
     });
   }
-
-  // Send pagination controls as a separate message
-  const paginationKeyboard = buildPaginationKeyboard(page, totalPages, filter);
-  await ctx.reply('Use buttons below to navigate:', {
-    reply_markup: paginationKeyboard,
-  });
 };
 
 // Handler for history page navigation
