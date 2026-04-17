@@ -11,6 +11,8 @@ import {
   showHistoryPage,
   handleHistoryPage,
   handleHistorySummary,
+  handleViewTrack,
+  handleHistoryFilter,
 } from './commands/history.command';
 import { helpCommand } from './commands/help.command';
 import { profileCommand } from './commands/profile.command';
@@ -93,113 +95,6 @@ export function setupBot(bot: Bot<BotContext>) {
   bot.command('menu', menuCommand);
   bot.command('help', helpCommand);
   bot.command('flesh', fleshCommand);
-
-  // Track detail command: /track_1, /track_2, etc.
-  bot.hears(/^\/track_(\d+)$/, async (ctx) => {
-    const match = ctx.message?.text?.match(/^\/track_(\d+)$/);
-    if (!match) return;
-    const trackNumber = parseInt(match[1], 10);
-    const user = ctx.user;
-    if (!user) {
-      return ctx.reply('❌ Error: User not found');
-    }
-
-    console.log(`[TRACK_CMD] User ${user.telegramId} requested track #${trackNumber}`);
-
-    // Get total track count first
-    const totalTracks = await prisma.track.count({
-      where: { userId: user.id },
-    });
-
-    console.log(`[TRACK_CMD] User has ${totalTracks} total tracks`);
-
-    if (trackNumber > totalTracks) {
-      return ctx.reply(
-        `❌ Track #${trackNumber} not found. You have ${totalTracks} tracks. Use /history to see your tracks.`
-      );
-    }
-
-    // Get the specific track using skip/take
-    const tracks = await prisma.track.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: 'desc' },
-      skip: trackNumber - 1,
-      take: 1,
-    });
-
-    if (tracks.length === 0) {
-      return ctx.reply(`❌ Track #${trackNumber} not found. Use /history to see your tracks.`);
-    }
-
-    const track = tracks[0];
-    console.log(`[TRACK_CMD] Found track ${track.id} with status ${track.status}`);
-
-    // Build track detail message
-    const statusEmoji: Record<string, string> = {
-      queued: '⏳',
-      processing: '🔄',
-      done: '✅',
-      failed: '❌',
-    };
-
-    const typeLabel: Record<string, string> = {
-      full_song: 'Full Song',
-      clip: 'Clip',
-      instrumental: 'Instrumental',
-    };
-
-    const duration = track.durationSec ? `${track.durationSec}s` : 'N/A';
-    const date = track.createdAt.toLocaleDateString('en-US', {
-      month: 'numeric',
-      day: 'numeric',
-      year: 'numeric',
-    });
-
-    let message = `${statusEmoji[track.status] || '⏳'} *Track #${trackNumber}*\n\n`;
-    message += `*Type:* ${typeLabel[track.type] || track.type}\n`;
-    message += `*Status:* ${track.status}\n`;
-    message += `*Duration:* ${duration}\n`;
-    message += `*Created:* ${date}\n\n`;
-    message += `*Prompt:* ${track.prompt.slice(0, 200)}${track.prompt.length > 200 ? '...' : ''}\n`;
-
-    if (track.lyrics) {
-      message += `\n*Lyrics:* ${track.lyrics.slice(0, 200)}${track.lyrics.length > 200 ? '...' : ''}\n`;
-    }
-
-    // Build action keyboard
-    const keyboard = new InlineKeyboard();
-
-    if (track.status === 'done' && track.gcsUrl) {
-      keyboard.text('⬇️ Download', `download_${track.id}`).row();
-      keyboard
-        .text('🔄 Regen', `regen_${track.id}`)
-        .text('📤 Share', `share_${track.id}`)
-        .row()
-        .text('📋 Copy Prompt', `copy_prompt_${track.id}`)
-        .text('❤️ Library', `add_to_library_${track.id}`)
-        .row();
-      if (track.type === 'clip') {
-        keyboard.text('🎼 Extend to Full Song', `extend_${track.id}`).row();
-      }
-    } else if (track.status === 'done' && !track.gcsUrl) {
-      // Track marked as done but missing file - data issue
-      message += '\n\n⚠️ Track completed but file is missing. Please contact support.';
-      keyboard.text('🔄 Retry', `retry_${track.id}`).row();
-    } else if (track.status === 'failed') {
-      keyboard
-        .text('🔄 Retry', `retry_${track.id}`)
-        .text('🗑️ Delete', `delete_track_${track.id}`)
-        .row();
-    } else if (track.status === 'queued' || track.status === 'processing') {
-      message +=
-        '\n\n⏳ This track is still being processed. Buttons will appear when it is ready.';
-      keyboard.text('🔄 Refresh Status', `refresh_track_${track.id}`).row();
-    }
-
-    keyboard.text('⬅️ Back to History', 'history');
-
-    await ctx.reply(message, { reply_markup: keyboard });
-  });
 
   bot.callbackQuery('main_menu', async (ctx) => {
     await ctx.answerCallbackQuery();
@@ -510,6 +405,8 @@ export function setupBot(bot: Bot<BotContext>) {
   // History pagination handlers
   bot.callbackQuery(/^history_page_/, handleHistoryPage);
   bot.callbackQuery('history_summary', handleHistorySummary);
+  bot.callbackQuery(/^view_track_/, handleViewTrack);
+  bot.callbackQuery(/^history_filter_/, handleHistoryFilter);
 
   // Track action handlers
   bot.callbackQuery(/^share_/, async (ctx) => {
