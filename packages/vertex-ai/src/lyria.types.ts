@@ -6,11 +6,16 @@ export interface LyriaRequest {
   model: LyriaModel;
   vocal?: boolean;
   lyrics?: string;
+  /**
+   * When false, uses custom lyrics as-is without AI rewriting.
+   * When true (default), AI may modify lyrics for better musical flow.
+   * Should be set to false when user provides custom lyrics.
+   */
+  promptRewriter?: boolean;
   bpm?: number;
   intensity?: 'low' | 'medium' | 'high' | 'epic';
   durationSeconds?: number;
   language?: 'en' | 'de' | 'es' | 'fr' | 'hi' | 'ja' | 'ko' | 'pt';
-  promptRewriter?: boolean;
   imageBase64?: string;
   imageMimeType?: 'image/jpeg' | 'image/png';
 }

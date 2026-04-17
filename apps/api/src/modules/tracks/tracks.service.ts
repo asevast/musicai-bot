@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { loadEnv } from '@musicai/config';
-import { prisma, type Track } from '@musicai/database';
+import { prisma } from '@musicai/database';
 import { SynthJobProducer } from '@musicai/queues';
 import type { CreateTrackDto, SubscriptionTier } from '@musicai/shared-types';
 import { CreditsService } from '../credits/credits.service';
@@ -107,6 +107,8 @@ export class TracksService {
             negativePrompt: dto.negativePrompt,
             vocal: dto.type !== 'instrumental',
             lyrics: dto.lyrics,
+            // Disable prompt rewriter when custom lyrics are provided
+            promptRewriter: dto.lyrics ? false : dto.promptRewriter,
             bpm: dto.bpm,
             intensity: dto.intensity,
             durationSeconds: dto.durationSeconds,
