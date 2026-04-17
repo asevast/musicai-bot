@@ -51,6 +51,7 @@ export class SynthJobProcessor {
           | undefined,
         imageMimeType: lyriaRequest.imageMimeType as 'image/jpeg' | 'image/png' | undefined,
       };
+      console.log('[SynthJobProcessor] Lyria request:', JSON.stringify(request, null, 2));
       lyriaResponse = await this.lyriaClient.generate(request);
     } catch (err) {
       const errorCode = mapVertexError(err);
