@@ -104,18 +104,35 @@ export function setupBot(bot: Bot<BotContext>) {
       return ctx.reply('❌ Error: User not found');
     }
 
-    // Get all user's tracks to find the one at this position
+    console.log(`[TRACK_CMD] User ${user.telegramId} requested track #${trackNumber}`);
+
+    // Get total track count first
+    const totalTracks = await prisma.track.count({
+      where: { userId: user.id },
+    });
+
+    console.log(`[TRACK_CMD] User has ${totalTracks} total tracks`);
+
+    if (trackNumber > totalTracks) {
+      return ctx.reply(
+        `❌ Track #${trackNumber} not found. You have ${totalTracks} tracks. Use /history to see your tracks.`
+      );
+    }
+
+    // Get the specific track using skip/take
     const tracks = await prisma.track.findMany({
       where: { userId: user.id },
       orderBy: { createdAt: 'desc' },
-      take: trackNumber,
+      skip: trackNumber - 1,
+      take: 1,
     });
 
-    if (tracks.length < trackNumber) {
+    if (tracks.length === 0) {
       return ctx.reply(`❌ Track #${trackNumber} not found. Use /history to see your tracks.`);
     }
 
-    const track = tracks[trackNumber - 1];
+    const track = tracks[0];
+    console.log(`[TRACK_CMD] Found track ${track.id} with status ${track.status}`);
 
     // Build track detail message
     const statusEmoji: Record<string, string> = {
@@ -169,6 +186,9 @@ export function setupBot(bot: Bot<BotContext>) {
         .text('🔄 Retry', `retry_${track.id}`)
         .text('🗑️ Delete', `delete_track_${track.id}`)
         .row();
+    } else if (track.status === 'queued' || track.status === 'processing') {
+      message += '\n_This track is still being processed. Buttons will appear when it is ready._';
+      keyboard.text('🔄 Refresh Status', `refresh_track_${track.id}`).row();
     }
 
     keyboard.text('⬅️ Back to History', 'history');
