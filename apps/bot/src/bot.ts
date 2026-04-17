@@ -508,8 +508,17 @@ export function setupBot(bot: Bot<BotContext>) {
         return ctx.reply('❌ Track not found or not ready yet');
       }
 
-      // Extract storage key from gcsUrl (e.g., "http://minio:9000/bucket/tracks/id.mp3" -> "tracks/id.mp3")
-      const storageKey = track.gcsUrl.split('/').slice(-2).join('/');
+      // Extract storage key from gcsUrl
+      // URL format: http://minio:9000/bucket-name/tracks/trackId.mp3
+      // We need to extract: tracks/trackId.mp3 (everything after bucket name)
+      const gcsUrlObj = new URL(track.gcsUrl);
+      const pathParts = gcsUrlObj.pathname.split('/').filter(Boolean);
+      // pathParts = ['bucket-name', 'tracks', 'trackId.mp3']
+      // Remove bucket name (first part) to get storage key
+      if (pathParts.length < 2) {
+        throw new Error(`Invalid gcsUrl format: ${track.gcsUrl}`);
+      }
+      const storageKey = pathParts.slice(1).join('/');
 
       // Send the audio file
       const audioBuffer = await storageService.getFileBuffer(storageKey);

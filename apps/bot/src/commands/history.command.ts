@@ -110,11 +110,24 @@ const buildPaginationKeyboard = (
     const prevPage = currentPage > 1 ? currentPage - 1 : 1;
     const nextPage = currentPage < totalPages ? currentPage + 1 : totalPages;
 
-    keyboard
-      .text('⬅️ Prev', `history_page_${filter || 'all'}_${prevPage}`)
-      .text(`${currentPage} / ${totalPages}`, 'noop')
-      .text('Next ➡️', `history_page_${filter || 'all'}_${nextPage}`)
-      .row();
+    // Prev button - disabled on first page
+    if (currentPage > 1) {
+      keyboard.text('⬅️ Prev', `history_page_${filter || 'all'}_${prevPage}`);
+    } else {
+      keyboard.text('⏹️ Prev', 'noop');
+    }
+
+    // Page indicator (always disabled)
+    keyboard.text(`${currentPage} / ${totalPages}`, 'noop');
+
+    // Next button - disabled on last page
+    if (currentPage < totalPages) {
+      keyboard.text('Next ➡️', `history_page_${filter || 'all'}_${nextPage}`);
+    } else {
+      keyboard.text('Next ⏹️', 'noop');
+    }
+
+    keyboard.row();
   }
 
   keyboard.text('📊 Summary', `history_summary`).row();
@@ -168,7 +181,7 @@ export const showHistoryPage = async (
 
     return ctx.reply(
       '📜 *No Tracks Yet*\n\nYou have not created any tracks yet. Start your music journey now!',
-      { reply_markup: emptyKeyboard }
+      { parse_mode: 'Markdown', reply_markup: emptyKeyboard }
     );
   }
 
@@ -183,17 +196,12 @@ export const showHistoryPage = async (
 
   const totalPages = Math.ceil(totalCount / TRACKS_PER_PAGE);
 
-  // If this is a callback (pagination), delete previous messages and resend
-  if (ctx.callbackQuery) {
-    await ctx.answerCallbackQuery();
-  }
-
   // Send header
   const headerText =
     `📜 *Your Tracks* (page ${page}/${totalPages})\n\n` +
     `✅ Ready: ${readyCount} · 🔄 In Progress: ${inProgressCount} · 📊 Total: ${totalCount}`;
 
-  await ctx.reply(headerText);
+  await ctx.reply(headerText, { parse_mode: 'Markdown' });
 
   // Send each track as a separate message with its own keyboard
   for (let i = 0; i < tracks.length; i++) {
@@ -272,5 +280,5 @@ export const handleHistorySummary = async (ctx: BotContext) => {
     `📈 *Total*: ${total} tracks`;
 
   await ctx.answerCallbackQuery();
-  await ctx.reply(message);
+  await ctx.reply(message, { parse_mode: 'Markdown' });
 };
