@@ -272,6 +272,8 @@ export const createTrackScene = createConversation(async function createTrack(
         prompt: session.prompt,
         negativePrompt: session.negativePrompt,
         lyrics: session.lyrics,
+        // Explicitly disable prompt rewriter when custom lyrics are provided
+        promptRewriter: session.lyrics ? false : undefined,
         bpm: session.bpm,
         intensity: session.intensity,
         language: session.language,

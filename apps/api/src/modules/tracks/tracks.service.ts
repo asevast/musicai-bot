@@ -59,7 +59,7 @@ export class TracksService {
     this.assertAccess(tier, dto);
     await this.assertDailyLimit(userId, tier);
 
-    const cost = this.calcCharge(tier, dto.model, dto.durationSeconds);
+    const cost = this.calcCharge(tier, dto);
     if (cost > 0) {
       await this.creditsService.assertAndDeduct(userId, cost, 'Track generation');
     }
@@ -107,6 +107,8 @@ export class TracksService {
             negativePrompt: dto.negativePrompt,
             vocal: dto.type !== 'instrumental',
             lyrics: dto.lyrics,
+            // Disable prompt rewriter when custom lyrics are provided
+            promptRewriter: dto.lyrics ? false : dto.promptRewriter,
             bpm: dto.bpm,
             intensity: dto.intensity,
             durationSeconds: dto.durationSeconds,
@@ -268,14 +270,18 @@ export class TracksService {
     }
   }
 
-  private calcCharge(tier: SubscriptionTier, model: string, durationSec?: number): number {
+  private calcCharge(tier: SubscriptionTier, dto: CreateTrackDto): number {
     if (tier === 'unlimited') return 0;
-    return this.calcCost(model, durationSec);
+    return this.calcCost(dto);
   }
 
-  private calcCost(model: string, durationSec?: number): number {
-    if (model === 'lyria-3-clip-preview') return 1;
-    if (!durationSec || durationSec <= 60) return 3;
-    return 5;
+  private calcCost(dto: CreateTrackDto): number {
+    const base = (() => {
+      if (dto.model === 'lyria-3-clip-preview') return 1;
+      if (!dto.durationSeconds || dto.durationSeconds <= 60) return 3;
+      return 5;
+    })();
+    // Apply 50% discount for regenerations
+    return dto.isRegeneration ? Math.max(1, Math.floor(base * 0.5)) : base;
   }
 }

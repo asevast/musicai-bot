@@ -25,9 +25,13 @@ export class LyriaClient {
 
     // Add Lyria-specific parameters directly to the body
     if (req.lyrics) {
-      requestBody.lyrics = req.lyrics;
-    }
-    if (req.vocal !== undefined) {
+      // Ensure lyrics are properly formatted with section markers
+      requestBody.lyrics = req.lyrics.trim();
+      // When custom lyrics are provided, ensure vocal is true
+      requestBody.vocal = true;
+      // Disable prompt rewriter to use custom lyrics as-is
+      requestBody.promptRewriter = req.promptRewriter ?? false;
+    } else if (req.vocal !== undefined) {
       requestBody.vocal = req.vocal;
     }
     if (req.bpm) {
@@ -51,6 +55,9 @@ export class LyriaClient {
     if (req.imageMimeType) {
       requestBody.imageMimeType = req.imageMimeType;
     }
+
+    // Debug: Log the request body
+    console.log('[LyriaClient] Request body:', JSON.stringify(requestBody, null, 2));
 
     // Make the fetch request directly
     const response = await fetch(`${this.baseUrl}/chat/completions`, {
