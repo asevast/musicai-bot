@@ -633,6 +633,7 @@ export function setupBot(bot: Bot<BotContext>) {
         bpm: params.bpm,
         intensity: params.intensity,
         language: params.language,
+        durationSeconds: params.durationSeconds as number | undefined,
         telegramId: user.telegramId.toString(),
         chatId: ctx.chat?.id,
         isRegeneration: true,
