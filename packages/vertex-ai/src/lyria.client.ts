@@ -56,6 +56,9 @@ export class LyriaClient {
       requestBody.imageMimeType = req.imageMimeType;
     }
 
+    // Debug: Log the request body
+    console.log('[LyriaClient] Request body:', JSON.stringify(requestBody, null, 2));
+
     // Make the fetch request directly
     const response = await fetch(`${this.baseUrl}/chat/completions`, {
       method: 'POST',
