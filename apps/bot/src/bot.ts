@@ -12,6 +12,7 @@ import {
   handleHistoryPage,
   handleHistorySummary,
 } from './commands/history.command';
+import { helpCommand } from './commands/help.command';
 import { profileCommand } from './commands/profile.command';
 import { buyCommand } from './commands/buy.command';
 import { settingsCommand } from './commands/settings.command';
@@ -90,6 +91,7 @@ export function setupBot(bot: Bot<BotContext>) {
   bot.command('library', libraryCommand);
   bot.command('delete_account', deleteAccountCommand);
   bot.command('menu', menuCommand);
+  bot.command('help', helpCommand);
   bot.command('flesh', fleshCommand);
 
   bot.callbackQuery('main_menu', async (ctx) => {
