@@ -26,15 +26,22 @@ export const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   DIRECT_DATABASE_URL: z.string().optional(),
 
-  // Supabase
-  SUPABASE_URL: z.string().url().optional(),
+  // Supabase (optional - only needed for Supabase integration)
+  SUPABASE_URL: z.union([z.literal(''), z.string().url()]).optional(),
   SUPABASE_ANON_KEY: z.string().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
 
   // Redis
   REDIS_URL: z.string().min(1),
 
-  // MinIO (S3-compatible storage)
+  // Storage - Unified interface (MinIO for dev, GCS for prod)
+  STORAGE_ENDPOINT: z.string().optional(), // e.g., http://minio:9000
+  STORAGE_ACCESS_KEY: z.string().optional(),
+  STORAGE_SECRET_KEY: z.string().optional(),
+  STORAGE_BUCKET: z.string().optional(),
+  STORAGE_PUBLIC_URL: z.string().optional(), // Public URL for direct access
+
+  // Legacy MinIO vars (fallback compatibility)
   MINIO_ENDPOINT: z.string().default('localhost:9000'),
   MINIO_ROOT_USER: z.string().min(1),
   MINIO_ROOT_PASSWORD: z.string().min(1),

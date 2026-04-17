@@ -42,6 +42,23 @@ export const confirmKeyboard = () =>
     .row()
     .text('❌ Cancel', 'cancel_create');
 
+export const lyricsKeyboard = () =>
+  new InlineKeyboard()
+    .text('✍️ Enter custom lyrics', 'lyrics_custom')
+    .row()
+    .text('🤖 Auto-generate lyrics', 'lyrics_auto')
+    .row()
+    .text('⏭ Skip lyrics', 'lyrics_skip');
+
+export const additionalSettingsKeyboard = () =>
+  new InlineKeyboard()
+    .text('🎯 BPM', 'settings_bpm')
+    .text('🎚️ Intensity', 'settings_intensity')
+    .row()
+    .text('🚫 Negative Prompt', 'settings_negative')
+    .row()
+    .text('⏭ Skip Advanced', 'settings_skip');
+
 export const trackActionKeyboard = (trackId: string) =>
   new InlineKeyboard()
     .text('🔄 Regenerate', `regen_${trackId}`)

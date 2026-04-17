@@ -6,22 +6,67 @@
 
 ```bash
 pnpm install              # Install all dependencies
-pnpm dev                  # Start all apps in dev mode (turbo)
+pnpm dev                  # Start all apps in dev mode (turbo) - runs on HOST
 pnpm build                # Build all packages and apps
 pnpm format               # Format all files with prettier
-docker-compose up -d      # Start PostgreSQL + Redis locally
 ```
 
-### Per-Package Commands
+### Docker Compose Development (All Services in Containers)
+
+Use `.env.development` (Docker service names) instead of `.env` (localhost).
 
 ```bash
-pnpm --filter @musicai/bot dev        # Run bot app only
-pnpm --filter @musicai/api dev        # Run API app only
-pnpm --filter @musicai/worker dev     # Run worker app only
+# First time setup - build images and start all services
+docker compose up -d --build
+
+# Apply Prisma migrations (one-time after first start)
+docker compose exec api pnpm --filter @musicai/database migrate dev
+
+# Daily development workflow
+docker compose up -d          # Start all services (postgres, redis, bot, api, worker, minio, bullboard, adminer)
+docker compose down           # Stop all services (data preserved in volumes)
+docker compose down -v        # Stop and remove all data (full reset)
+
+# Individual service operations
+docker compose restart worker           # Restart single service
+docker compose stop bot                 # Stop without removing
+docker compose logs -f bot              # Follow bot logs
+docker compose logs -f api worker      # Follow multiple services
+
+# After changing package.json or adding dependencies
+docker compose build --no-cache         # Rebuild all images
+docker compose up -d                    # Start with new images
+
+# Prisma operations inside container
+docker compose exec api pnpm --filter @musicai/database generate   # Regenerate client
+docker compose exec api pnpm --filter @musicai/database studio    # Open Prisma Studio
+```
+
+### Per-Package Commands (Host-based development)
+
+```bash
+pnpm --filter @musicai/bot dev        # Run bot app only (on host)
+pnpm --filter @musicai/api dev        # Run API app only (on host)
+pnpm --filter @musicai/worker dev     # Run worker app only (on host)
 pnpm --filter @musicai/database generate  # Generate Prisma client
 pnpm --filter @musicai/database push      # Push schema to database
 pnpm --filter @musicai/database studio    # Open Prisma Studio
 ```
+
+### UI Tools (Docker Compose)
+
+| URL                   | Service       | Purpose                                                 |
+| --------------------- | ------------- | ------------------------------------------------------- |
+| http://localhost:8080 | Adminer       | PostgreSQL database UI                                  |
+| http://localhost:3002 | Bull Board    | BullMQ queue monitoring (was 3001)                      |
+| http://localhost:9001 | MinIO Console | S3-compatible storage browser (login: admin/minioadmin) |
+
+### Environment Files
+
+- **`.env`** - Host-based development (localhost:5433 for Postgres, localhost:6379 for Redis)
+- **`.env.development`** - Docker Compose development (service names: postgres, redis)
+
+Never commit `.env` files - both are gitignored.
 
 ### Testing
 

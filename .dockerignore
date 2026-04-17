@@ -1,0 +1,63 @@
+# Git
+.git
+.gitignore
+
+# Node.js
+node_modules
+**/node_modules
+.pnpm-store
+
+# Build outputs
+dist
+**/dist
+*.tsbuildinfo
+
+# Prisma generated files (will be regenerated in container)
+packages/database/src/generated
+packages/database/src/generated/**/*.node
+
+# Environment files (secrets)
+.env
+.env.*
+!.env.development
+
+# Logs
+*.log
+logs
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage
+.nyc_output
+
+# Temporary files
+tmp
+temp
+*.tmp
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Documentation
+README.md
+SPEC*.md
+AGENTS.md
+CLAUDE.md
+
+# CI/CD
+.github
+
+# Session files
+session-*.md

@@ -32,12 +32,14 @@ export class NotifyProcessor {
     if (trackId) {
       const track = (await this.prisma.track.findUnique({
         where: { id: trackId },
-      })) as { id: string; type: string; prompt: string; storageKey?: string | null } | null;
+      })) as { id: string; type: string; prompt: string; gcsUrl?: string | null } | null;
 
-      if (track && track.storageKey) {
+      if (track && track.gcsUrl) {
         try {
+          // Extract storage key from gcsUrl or construct it
+          const storageKey = `tracks/${trackId}.mp3`;
           // Download from MinIO and send directly to Telegram
-          const audioBuffer = await storageService.getFileBuffer(track.storageKey);
+          const audioBuffer = await storageService.getFileBuffer(storageKey);
 
           // Send audio file directly to Telegram
           await this.bot.api.sendAudio(

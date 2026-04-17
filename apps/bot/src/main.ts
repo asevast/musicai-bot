@@ -1,6 +1,14 @@
 import 'reflect-metadata';
 import dotenv from 'dotenv';
-dotenv.config({ path: '/home/asevast/musicbot/.env' });
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+// Load .env from project root only if env vars not already set (host dev)
+// In Docker, env vars are set via env_file in docker-compose.yml
+if (!process.env.BOT_TOKEN) {
+  const __dirname = dirname(fileURLToPath(import.meta.url));
+  dotenv.config({ path: resolve(__dirname, '../../../.env') });
+}
 
 import { Bot, MemorySessionStorage } from 'grammy';
 import { loadEnv } from '@musicai/config';
