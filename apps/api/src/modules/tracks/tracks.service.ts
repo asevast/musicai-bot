@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { loadEnv } from '@musicai/config';
-import { prisma } from '@musicai/database';
+import { prisma, type Track } from '@musicai/database';
 import { SynthJobProducer } from '@musicai/queues';
 import type { CreateTrackDto, SubscriptionTier } from '@musicai/shared-types';
 import { CreditsService } from '../credits/credits.service';
