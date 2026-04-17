@@ -490,7 +490,7 @@ export function setupBot(bot: Bot<BotContext>) {
     }
 
     // Parse parameters from the clip
-    const params = track.parameters as Record<string, unknown>;
+    // Parse parameters from the clip
 
     // Create confirmation message with cost
     const confirmKeyboard = new InlineKeyboard()
