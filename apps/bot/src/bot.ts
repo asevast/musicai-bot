@@ -427,24 +427,17 @@ export function setupBot(bot: Bot<BotContext>) {
     const storageKey = track.gcsUrl.split('/').slice(-2).join('/');
     const audioBuffer = await storageService.getFileBuffer(storageKey);
 
-    // Build share text
+    // Build share text (no Markdown to avoid parsing issues)
     const authorName = track.user.username || track.user.firstName || 'Anonymous';
     const shareText =
-      `🎵 *Track by ${authorName}*\n\n` +
+      `🎵 Track by ${authorName}\n\n` +
       `${track.prompt.slice(0, 100)}${track.prompt.length > 100 ? '...' : ''}\n\n` +
       `Created with @fleshmus_bot`;
 
-    // Send as inline share or copy link
-    const shareKeyboard = new InlineKeyboard()
-      .text('📤 Forward to Chat', `forward_${trackId}`)
-      .row()
-      .text('⬅️ Back', `history`);
-
     await ctx.answerCallbackQuery();
-    await ctx.reply(shareText, {
-      parse_mode: 'Markdown',
-      reply_markup: shareKeyboard,
-    });
+    await ctx.reply(shareText);
+
+    // Send the audio file for forwarding
 
     // Also send the audio file
     await ctx.replyWithAudio(new InputFile(audioBuffer, `track_${trackId}.mp3`), {
@@ -689,7 +682,55 @@ export function setupBot(bot: Bot<BotContext>) {
   });
 
   bot.callbackQuery(/^retry_/, async (ctx) => {
-    await ctx.answerCallbackQuery('🔄 Retry feature coming soon!');
+    const trackId = ctx.callbackQuery.data.replace('retry_', '');
+    const user = ctx.user;
+    if (!user) return ctx.answerCallbackQuery('❌ User not found');
+
+    const track = await prisma.track.findFirst({
+      where: { id: trackId, userId: user.id },
+    });
+
+    if (!track) {
+      return ctx.answerCallbackQuery('❌ Track not found');
+    }
+
+    if (track.status !== 'failed') {
+      return ctx.answerCallbackQuery('⚠️ Track is not failed, cannot retry');
+    }
+
+    // Reset track to queued status
+    await prisma.track.update({
+      where: { id: trackId },
+      data: {
+        status: 'queued',
+        gcsUrl: null,
+        durationSec: null,
+        revisedPrompt: null,
+      },
+    });
+
+    // Create new synth job
+    const API_URL = process.env.API_URL || 'http://api:3000';
+    const response = await fetch(`${API_URL}/tracks/${trackId}/retry`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Id': user.telegramId.toString(),
+      },
+      body: JSON.stringify({
+        chatId: ctx.chat?.id,
+        messageId: (await ctx.reply('🔄 Retrying track generation...')).message_id,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      await ctx.answerCallbackQuery('❌ Failed to retry');
+      return ctx.reply('❌ Retry failed: ' + error);
+    }
+
+    await ctx.answerCallbackQuery('✅ Track queued for retry!');
+    await ctx.reply('🎵 Your track is being regenerated. You will be notified when it is ready.');
   });
 
   bot.callbackQuery(/^delete_track_/, async (ctx) => {
