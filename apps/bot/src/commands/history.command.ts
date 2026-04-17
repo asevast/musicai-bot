@@ -133,15 +133,18 @@ export const showHistoryPage = async (
     where: { userId: user.id, ...statusFilter },
   });
 
-  const readyCount = await prisma.track.count({
+  // Get total counts (for all tracks)
+  const totalReady = await prisma.track.count({
     where: { userId: user.id, status: 'done' },
   });
-
-  const inProgressCount = await prisma.track.count({
+  const totalInProgress = await prisma.track.count({
     where: {
       userId: user.id,
       status: { in: ['queued', 'processing'] },
     },
+  });
+  const totalFailed = await prisma.track.count({
+    where: { userId: user.id, status: 'failed' },
   });
 
   if (totalCount === 0) {
@@ -168,8 +171,16 @@ export const showHistoryPage = async (
   const totalPages = Math.ceil(totalCount / TRACKS_PER_PAGE);
 
   // Build track list text
-  let messageText = `📜 *Your Tracks*\n\n`;
-  messageText += `✅ Ready: ${readyCount} · 🔄 In Progress: ${inProgressCount}\n\n`;
+  const filterLabel: Record<string, string> = {
+    all: 'All Tracks',
+    done: '✅ Ready Tracks',
+    progress: '🔄 In Progress',
+    failed: '❌ Failed Tracks',
+  };
+
+  let messageText = `📜 ${filterLabel[filter] || 'Your Tracks'}\n\n`;
+  messageText += `Showing ${tracks.length} of ${totalCount} tracks\n\n`;
+  messageText += `Total: ✅ ${totalReady} · 🔄 ${totalInProgress} · ❌ ${totalFailed}\n\n`;
 
   tracks.forEach((track, index) => {
     messageText +=
