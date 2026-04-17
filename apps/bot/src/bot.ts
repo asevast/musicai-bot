@@ -504,12 +504,15 @@ export function setupBot(bot: Bot<BotContext>) {
         where: { id: trackId, userId: user.id, status: 'done' },
       });
 
-      if (!track || !track.storageKey) {
+      if (!track || !track.gcsUrl) {
         return ctx.reply('❌ Track not found or not ready yet');
       }
 
+      // Extract storage key from gcsUrl (e.g., "http://minio:9000/bucket/tracks/id.mp3" -> "tracks/id.mp3")
+      const storageKey = track.gcsUrl.split('/').slice(-2).join('/');
+
       // Send the audio file
-      const audioBuffer = await storageService.getFileBuffer(track.storageKey);
+      const audioBuffer = await storageService.getFileBuffer(storageKey);
 
       await ctx.replyWithAudio(
         new InputFile(audioBuffer, `${track.type}_track_${track.id.slice(0, 8)}.mp3`),
