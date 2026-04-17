@@ -2,8 +2,9 @@ import { InlineKeyboard } from 'grammy';
 import { prisma } from '@musicai/database';
 import type { BotContext } from '../bot';
 import {
-  buildTrackCard,
-  buildPaginationKeyboard,
+  buildTrackCardText,
+  addTrackButtons,
+  buildPaginationRow,
   buildSummaryText,
 } from '../keyboards/track-card.keyboard';
 
@@ -75,12 +76,28 @@ export const showHistoryPage = async (
   // Calculate pagination
   const totalPages = Math.ceil(totalCount / TRACKS_PER_PAGE);
 
-  // Build track cards
+  // Build single keyboard for entire message
+  const keyboard = new InlineKeyboard();
+
+  // Build track cards text
   let messageText = '';
-  const messageKeyboard = new InlineKeyboard();
 
   tracks.forEach((track, index) => {
-    const trackCard = buildTrackCard({
+    // Add track card text
+    messageText +=
+      buildTrackCardText({
+        id: track.id,
+        index: skip + index + 1,
+        type: track.type,
+        status: track.status,
+        prompt: track.prompt,
+        durationSec: track.durationSec,
+        createdAt: track.createdAt,
+        gcsUrl: track.gcsUrl,
+      }) + '\n\n';
+
+    // Add buttons for this track to the shared keyboard
+    addTrackButtons(keyboard, {
       id: track.id,
       index: skip + index + 1,
       type: track.type,
@@ -89,14 +106,6 @@ export const showHistoryPage = async (
       durationSec: track.durationSec,
       createdAt: track.createdAt,
       gcsUrl: track.gcsUrl,
-    });
-
-    // Add card text
-    messageText += trackCard.text + '\n\n';
-
-    // Merge keyboards
-    trackCard.keyboard.inline_keyboard.forEach((row) => {
-      messageKeyboard.inline_keyboard.push(row);
     });
   });
 
@@ -110,19 +119,16 @@ export const showHistoryPage = async (
   );
 
   // Add pagination controls
-  const paginationKeyboard = buildPaginationKeyboard(page, totalPages, filter);
-  paginationKeyboard.inline_keyboard.forEach((row) => {
-    messageKeyboard.inline_keyboard.push(row);
-  });
+  buildPaginationRow(keyboard, page, totalPages, filter);
 
   // Send or edit message
   if (ctx.callbackQuery) {
     await ctx.editMessageText(messageText, {
-      reply_markup: messageKeyboard,
+      reply_markup: keyboard,
     });
   } else {
     await ctx.reply(messageText, {
-      reply_markup: messageKeyboard,
+      reply_markup: keyboard,
     });
   }
 };

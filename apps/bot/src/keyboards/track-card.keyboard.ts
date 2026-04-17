@@ -11,32 +11,29 @@ export interface TrackCardData {
   gcsUrl?: string | null;
 }
 
+const statusEmoji: Record<string, string> = {
+  queued: '⏳',
+  processing: '🔄',
+  done: '✅',
+  failed: '❌',
+};
+
+const typeEmoji: Record<string, string> = {
+  full_song: '🎵',
+  clip: '🎬',
+  instrumental: '🎹',
+};
+
+const typeLabel: Record<string, string> = {
+  full_song: 'Full Song',
+  clip: 'Clip',
+  instrumental: 'Instrumental',
+};
+
 /**
- * Build a rich track card with action buttons
- * Similar to the screenshot with Download, Regen, Share, Copy Prompt, Library, Extend buttons
+ * Build track card text (for display in message)
  */
-export const buildTrackCard = (
-  track: TrackCardData
-): { text: string; keyboard: InlineKeyboard } => {
-  const statusEmoji: Record<string, string> = {
-    queued: '⏳',
-    processing: '🔄',
-    done: '✅',
-    failed: '❌',
-  };
-
-  const typeEmoji: Record<string, string> = {
-    full_song: '🎵',
-    clip: '🎬',
-    instrumental: '🎹',
-  };
-
-  const typeLabel: Record<string, string> = {
-    full_song: 'Full Song',
-    clip: 'Clip',
-    instrumental: 'Instrumental',
-  };
-
+export const buildTrackCardText = (track: TrackCardData): string => {
   const emoji = statusEmoji[track.status] || '⏳';
   const typeIcon = typeEmoji[track.type] || '🎵';
   const typeName = typeLabel[track.type] || track.type;
@@ -47,19 +44,23 @@ export const buildTrackCard = (
     year: 'numeric',
   });
 
-  // Build card text
   let text = `${emoji} #${track.index} — ${typeName}\n`;
   text += `${typeIcon} ${track.prompt.slice(0, 50)}${track.prompt.length > 50 ? '...' : ''}\n`;
   text += `⏱️ ${duration} · 📅 ${date}`;
 
-  // Build action keyboard
-  const keyboard = new InlineKeyboard();
+  return text;
+};
 
+/**
+ * Add track action buttons to an existing keyboard
+ * This appends buttons for a single track to the keyboard
+ */
+export const addTrackButtons = (keyboard: InlineKeyboard, track: TrackCardData): void => {
   if (track.status === 'done' && track.gcsUrl) {
     // Download button (full width)
     keyboard.text('⬇️ Download', `download_${track.id}`).row();
 
-    // Secondary actions (2x2 grid)
+    // Secondary actions (2 columns)
     keyboard
       .text('🔄 Regen', `regen_${track.id}`)
       .text('📤 Share', `share_${track.id}`)
@@ -80,25 +81,21 @@ export const buildTrackCard = (
       .text('🗑️ Delete', `delete_track_${track.id}`)
       .row();
   }
-
-  return { text, keyboard };
 };
 
 /**
  * Build pagination controls for track list
  */
-export const buildPaginationKeyboard = (
+export const buildPaginationRow = (
+  keyboard: InlineKeyboard,
   currentPage: number,
   totalPages: number,
   filter?: string
-): InlineKeyboard => {
-  const keyboard = new InlineKeyboard();
-
-  // Page navigation
-  const prevPage = currentPage > 1 ? currentPage - 1 : 1;
-  const nextPage = currentPage < totalPages ? currentPage + 1 : totalPages;
-
+): void => {
   if (totalPages > 1) {
+    const prevPage = currentPage > 1 ? currentPage - 1 : 1;
+    const nextPage = currentPage < totalPages ? currentPage + 1 : totalPages;
+
     keyboard
       .text('⬅️ Prev', `history_page_${filter || 'all'}_${prevPage}`)
       .text(`${currentPage} / ${totalPages}`, 'noop')
@@ -106,17 +103,15 @@ export const buildPaginationKeyboard = (
       .row();
   }
 
-  // Summary text
-  keyboard.text(`📊 Summary`, `history_summary`).row();
+  // Summary button
+  keyboard.text('📊 Summary', `history_summary`).row();
 
   // Back to menu
   keyboard.text('⬅️ Back to Menu', 'main_menu');
-
-  return keyboard;
 };
 
 /**
- * Build summary footer showing track counts
+ * Build summary footer text showing track counts
  */
 export const buildSummaryText = (
   ready: number,
