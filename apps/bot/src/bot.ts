@@ -406,7 +406,47 @@ export function setupBot(bot: Bot<BotContext>) {
 
   // Track action handlers
   bot.callbackQuery(/^share_/, async (ctx) => {
-    await ctx.answerCallbackQuery('📤 Share feature coming soon!');
+    const trackId = ctx.callbackQuery.data.replace('share_', '');
+    const user = ctx.user;
+    if (!user) return ctx.answerCallbackQuery('❌ User not found');
+
+    const track = await prisma.track.findFirst({
+      where: { id: trackId, userId: user.id, status: 'done' },
+      include: { user: { select: { username: true, firstName: true } } },
+    });
+
+    if (!track || !track.gcsUrl) {
+      return ctx.answerCallbackQuery('❌ Track not found or not ready');
+    }
+
+    // Get audio file from storage
+    const storageKey = track.gcsUrl.split('/').slice(-2).join('/');
+    const audioBuffer = await storageService.getFileBuffer(storageKey);
+
+    // Build share text
+    const authorName = track.user.username || track.user.firstName || 'Anonymous';
+    const shareText =
+      `🎵 *Track by ${authorName}*\n\n` +
+      `${track.prompt.slice(0, 100)}${track.prompt.length > 100 ? '...' : ''}\n\n` +
+      `Created with @fleshmus_bot`;
+
+    // Send as inline share or copy link
+    const shareKeyboard = new InlineKeyboard()
+      .text('📤 Forward to Chat', `forward_${trackId}`)
+      .row()
+      .text('⬅️ Back', `history`);
+
+    await ctx.answerCallbackQuery();
+    await ctx.reply(shareText, {
+      parse_mode: 'Markdown',
+      reply_markup: shareKeyboard,
+    });
+
+    // Also send the audio file
+    await ctx.replyWithAudio(new InputFile(audioBuffer, `track_${trackId}.mp3`), {
+      title: track.prompt.slice(0, 50),
+      performer: 'MusicAI',
+    });
   });
 
   bot.callbackQuery(/^copy_prompt_/, async (ctx) => {
@@ -440,11 +480,188 @@ export function setupBot(bot: Bot<BotContext>) {
   });
 
   bot.callbackQuery(/^extend_/, async (ctx) => {
-    await ctx.answerCallbackQuery('🎼 Extend feature coming soon!');
+    const trackId = ctx.callbackQuery.data.replace('extend_', '');
+    const user = ctx.user;
+    if (!user) return ctx.answerCallbackQuery('❌ User not found');
+
+    const track = await prisma.track.findFirst({
+      where: { id: trackId, userId: user.id, status: 'done', type: 'clip' },
+    });
+
+    if (!track) {
+      return ctx.answerCallbackQuery('❌ Clip not found or already a full song');
+    }
+
+    // Parse parameters from the clip
+    const params = track.parameters as Record<string, unknown>;
+
+    // Create confirmation message with cost
+    const confirmKeyboard = new InlineKeyboard()
+      .text('✅ Extend (3 credits)', `confirm_extend_${trackId}`)
+      .row()
+      .text('❌ Cancel', 'cancel_extend');
+
+    await ctx.answerCallbackQuery();
+    await ctx.reply(
+      '🎼 *Extend to Full Song*\n\n' +
+        `This will create a full song version of your clip:\n` +
+        `• Original: 30 second clip\n` +
+        `• Extended: ~3 minute full song\n` +
+        `• Same prompt and style: ${track.prompt.slice(0, 50)}...\n\n` +
+        `Cost: 3 credits`,
+      { parse_mode: 'Markdown', reply_markup: confirmKeyboard }
+    );
+  });
+
+  bot.callbackQuery(/^confirm_extend_/, async (ctx) => {
+    const trackId = ctx.callbackQuery.data.replace('confirm_extend_', '');
+    const user = ctx.user;
+    if (!user) return ctx.answerCallbackQuery('❌ User not found');
+
+    const sourceTrack = await prisma.track.findFirst({
+      where: { id: trackId, userId: user.id, status: 'done', type: 'clip' },
+    });
+
+    if (!sourceTrack) {
+      return ctx.answerCallbackQuery('❌ Clip not found');
+    }
+
+    const params = sourceTrack.parameters as Record<string, unknown>;
+
+    // Create new full song track
+    const API_URL = process.env.API_URL || 'http://api:3000';
+    const response = await fetch(`${API_URL}/tracks`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Id': user.telegramId.toString(),
+      },
+      body: JSON.stringify({
+        model: 'lyria-3-pro-preview', // Full song requires pro model
+        type: 'full_song',
+        prompt: sourceTrack.prompt,
+        negativePrompt: sourceTrack.negativePrompt,
+        lyrics: sourceTrack.lyrics,
+        bpm: params.bpm,
+        intensity: params.intensity,
+        language: params.language,
+        durationSeconds: 180, // ~3 minutes
+        telegramId: user.telegramId.toString(),
+        chatId: ctx.chat?.id,
+        sourceTrackId: trackId,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      return ctx.reply('❌ Failed to extend clip: ' + error);
+    }
+
+    await ctx.answerCallbackQuery('✅ Full song creation started!');
+    await ctx.reply('🎼 Your clip is being extended to a full song!');
+  });
+
+  bot.callbackQuery('cancel_extend', async (ctx) => {
+    await ctx.answerCallbackQuery('Cancelled');
+    await ctx.deleteMessage();
   });
 
   bot.callbackQuery(/^regen_/, async (ctx) => {
-    await ctx.answerCallbackQuery('🔄 Regenerate feature coming soon!');
+    const trackId = ctx.callbackQuery.data.replace('regen_', '');
+    const user = ctx.user;
+    if (!user) return ctx.answerCallbackQuery('❌ User not found');
+
+    const track = await prisma.track.findFirst({
+      where: { id: trackId, userId: user.id, status: 'done' },
+    });
+
+    if (!track) {
+      return ctx.answerCallbackQuery('❌ Track not found');
+    }
+
+    // Parse parameters from the original track
+    const params = track.parameters as Record<string, unknown>;
+
+    // Create confirmation message with cost
+    const cost = track.model === 'lyria-3-clip-preview' ? 1 : 3;
+    const discount = Math.max(1, Math.floor(cost * 0.5));
+
+    const confirmKeyboard = new InlineKeyboard()
+      .text('✅ Create (50% off: ' + discount + ' credits)', `confirm_regen_${trackId}`)
+      .row()
+      .text('❌ Cancel', 'cancel_regen');
+
+    await ctx.answerCallbackQuery();
+    await ctx.reply(
+      '🔄 *Regenerate Track*\n\n' +
+        `This will create a new track with the same settings:\n` +
+        `• Type: ${track.type}\n` +
+        `• Model: ${track.model}\n` +
+        `• Prompt: ${track.prompt.slice(0, 50)}...\n\n` +
+        `You can edit the lyrics in the next step.\n` +
+        `Cost: ${discount} credits (50% discount)`,
+      { parse_mode: 'Markdown', reply_markup: confirmKeyboard }
+    );
+  });
+
+  bot.callbackQuery(/^confirm_regen_/, async (ctx) => {
+    const trackId = ctx.callbackQuery.data.replace('confirm_regen_', '');
+    const user = ctx.user;
+    if (!user) return ctx.answerCallbackQuery('❌ User not found');
+
+    const sourceTrack = await prisma.track.findFirst({
+      where: { id: trackId, userId: user.id, status: 'done' },
+    });
+
+    if (!sourceTrack) {
+      return ctx.answerCallbackQuery('❌ Track not found');
+    }
+
+    const params = sourceTrack.parameters as Record<string, unknown>;
+
+    // Create new track with same parameters
+    const API_URL = process.env.API_URL || 'http://api:3000';
+    const response = await fetch(`${API_URL}/tracks`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Id': user.telegramId.toString(),
+      },
+      body: JSON.stringify({
+        model: sourceTrack.model,
+        type: sourceTrack.type,
+        prompt: sourceTrack.prompt,
+        negativePrompt: sourceTrack.negativePrompt,
+        lyrics: sourceTrack.lyrics, // Can be edited
+        bpm: params.bpm,
+        intensity: params.intensity,
+        language: params.language,
+        telegramId: user.telegramId.toString(),
+        chatId: ctx.chat?.id,
+        isRegeneration: true,
+        sourceTrackId: trackId,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      return ctx.reply('❌ Failed to create track: ' + error);
+    }
+
+    await ctx.answerCallbackQuery('✅ New track created!');
+    await ctx.reply('🎵 Your track is being regenerated with a 50% discount!');
+  });
+
+  bot.callbackQuery('cancel_regen', async (ctx) => {
+    await ctx.answerCallbackQuery('Cancelled');
+    await ctx.deleteMessage();
+  });
+
+  // Forward track handler
+  bot.callbackQuery(/^forward_/, async (ctx) => {
+    const trackId = ctx.callbackQuery.data.replace('forward_', '');
+    await ctx.answerCallbackQuery('📤 Forward this track to any chat!');
+    // User needs to manually forward the audio message
   });
 
   bot.callbackQuery(/^refresh_track_/, async (ctx) => {
