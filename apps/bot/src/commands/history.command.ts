@@ -1,39 +1,175 @@
-import { Context } from 'grammy';
+import { InlineKeyboard } from 'grammy';
 import { prisma } from '@musicai/database';
+import type { BotContext } from '../bot';
+import {
+  buildTrackCard,
+  buildPaginationKeyboard,
+  buildSummaryText,
+} from '../keyboards/track-card.keyboard';
 
-export const historyCommand = async (ctx: Context) => {
+const TRACKS_PER_PAGE = 2; // Show 2 tracks per page (as in screenshot)
+
+interface HistoryOptions {
+  page?: number;
+  filter?: 'all' | 'done' | 'processing' | 'failed' | 'queued';
+}
+
+export const historyCommand = async (ctx: BotContext) => {
+  await showHistoryPage(ctx, { page: 1, filter: 'all' });
+};
+
+export const showHistoryPage = async (
+  ctx: BotContext,
+  options: HistoryOptions = { page: 1, filter: 'all' }
+) => {
   const user = ctx.user;
   if (!user) {
-    return ctx.reply('Error: User not found');
+    return ctx.reply('❌ Error: User not found');
   }
 
-  const tracks = await prisma.track.findMany({
-    where: { userId: user.id },
-    orderBy: { createdAt: 'desc' },
-    take: 5,
+  const { page = 1, filter = 'all' } = options;
+
+  // Build status filter
+  const statusFilter: any = {};
+  if (filter !== 'all') {
+    statusFilter.status = filter;
+  }
+
+  // Get total counts for summary
+  const totalCount = await prisma.track.count({
+    where: { userId: user.id, ...statusFilter },
   });
 
-  if (tracks.length === 0) {
-    return ctx.reply('📜 No tracks yet.\n\nUse /create to generate your first track!');
+  const readyCount = await prisma.track.count({
+    where: { userId: user.id, status: 'done' },
+  });
+
+  const inProgressCount = await prisma.track.count({
+    where: {
+      userId: user.id,
+      status: { in: ['queued', 'processing'] },
+    },
+  });
+
+  if (totalCount === 0) {
+    const emptyKeyboard = new InlineKeyboard()
+      .text('🎵 Create New Track', 'create_track')
+      .row()
+      .text('⬅️ Back to Menu', 'main_menu');
+
+    return ctx.reply(
+      '📜 *No Tracks Yet*\n\n' + "You haven't created any tracks. Start your music journey now!",
+      { reply_markup: emptyKeyboard }
+    );
   }
 
-  let message = '📜 Your Recent Tracks:\n\n';
+  // Fetch tracks for current page
+  const skip = (page - 1) * TRACKS_PER_PAGE;
+  const tracks = await prisma.track.findMany({
+    where: { userId: user.id, ...statusFilter },
+    orderBy: { createdAt: 'desc' },
+    take: TRACKS_PER_PAGE,
+    skip,
+  });
+
+  // Calculate pagination
+  const totalPages = Math.ceil(totalCount / TRACKS_PER_PAGE);
+
+  // Build track cards
+  let messageText = '';
+  const messageKeyboard = new InlineKeyboard();
 
   tracks.forEach((track, index) => {
-    const statusEmoji = {
-      queued: '⏳',
-      processing: '🔄',
-      done: '✅',
-      failed: '❌',
-    }[track.status];
+    const trackCard = buildTrackCard({
+      id: track.id,
+      index: skip + index + 1,
+      type: track.type,
+      status: track.status,
+      prompt: track.prompt,
+      durationSec: track.durationSec,
+      createdAt: track.createdAt,
+      gcsUrl: track.gcsUrl,
+    });
 
-    message += `${index + 1}. ${statusEmoji} ${track.type}\n`;
-    message += `   ${track.prompt.slice(0, 40)}...\n`;
-    if (track.status === 'done' && track.gcsUrl) {
-      message += `   🎧 Listen: ${track.gcsUrl}\n`;
-    }
-    message += '\n';
+    // Add card text
+    messageText += trackCard.text + '\n\n';
+
+    // Merge keyboards
+    trackCard.keyboard.inline_keyboard.forEach((row) => {
+      messageKeyboard.inline_keyboard.push(row);
+    });
   });
 
+  // Add summary footer
+  messageText += buildSummaryText(
+    readyCount,
+    inProgressCount,
+    await prisma.track.count({ where: { userId: user.id } }),
+    page,
+    totalPages
+  );
+
+  // Add pagination controls
+  const paginationKeyboard = buildPaginationKeyboard(page, totalPages, filter);
+  paginationKeyboard.inline_keyboard.forEach((row) => {
+    messageKeyboard.inline_keyboard.push(row);
+  });
+
+  // Send or edit message
+  if (ctx.callbackQuery) {
+    await ctx.editMessageText(messageText, {
+      reply_markup: messageKeyboard,
+    });
+  } else {
+    await ctx.reply(messageText, {
+      reply_markup: messageKeyboard,
+    });
+  }
+};
+
+// Handler for history page navigation
+export const handleHistoryPage = async (ctx: BotContext) => {
+  const match = ctx.callbackQuery?.data?.match(/history_page_(\w+)_(\d+)/);
+  if (!match) return;
+
+  const [, filter, pageStr] = match;
+  const page = parseInt(pageStr, 10);
+
+  await ctx.answerCallbackQuery();
+  await showHistoryPage(ctx, {
+    page,
+    filter: filter as any,
+  });
+};
+
+// Handler for history summary view
+export const handleHistorySummary = async (ctx: BotContext) => {
+  const user = ctx.user;
+  if (!user) {
+    return ctx.answerCallbackQuery('❌ User not found');
+  }
+
+  const counts = await prisma.track.groupBy({
+    by: ['status'],
+    where: { userId: user.id },
+    _count: { status: true },
+  });
+
+  const statusCounts: Record<string, number> = {};
+  let total = 0;
+  counts.forEach((c) => {
+    statusCounts[c.status] = c._count.status;
+    total += c._count.status;
+  });
+
+  const message =
+    '📊 *Track Summary*\n\n' +
+    `✅ *Ready*: ${statusCounts['done'] || 0} tracks\n` +
+    `🔄 *In Progress*: ${(statusCounts['queued'] || 0) + (statusCounts['processing'] || 0)} tracks\n` +
+    `❌ *Failed*: ${statusCounts['failed'] || 0} tracks\n` +
+    `⏳ *Queued*: ${statusCounts['queued'] || 0} tracks\n\n` +
+    `📈 *Total*: ${total} tracks`;
+
+  await ctx.answerCallbackQuery();
   await ctx.reply(message);
 };
