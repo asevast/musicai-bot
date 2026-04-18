@@ -12,11 +12,16 @@ if (!process.env.DATABASE_URL) {
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { loadEnv } from '@musicai/config';
+import { json, urlencoded } from 'express';
 
 const env = loadEnv();
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Increase body size limits for image uploads (max 5MB)
+  app.use(json({ limit: '5mb' }));
+  app.use(urlencoded({ limit: '5mb', extended: true }));
 
   app.enableCors({
     origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',

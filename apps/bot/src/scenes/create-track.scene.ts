@@ -106,9 +106,11 @@ export const createTrackScene = createConversation(async function createTrack(
       let fileId: string;
 
       if (imageCtx.message.photo && imageCtx.message.photo.length > 0) {
-        // Get the largest photo
-        fileId = imageCtx.message.photo[imageCtx.message.photo.length - 1].file_id;
-        console.log('[CREATE-TRACK] Photo file_id:', fileId);
+        // Get a medium-sized photo (not the largest to avoid size limits)
+        // Telegram provides multiple sizes: index 0 = smallest, last = largest
+        const photoIndex = Math.min(1, imageCtx.message.photo.length - 1);
+        fileId = imageCtx.message.photo[photoIndex].file_id;
+        console.log('[CREATE-TRACK] Photo file_id:', fileId, 'size index:', photoIndex);
       } else if (imageCtx.message.document) {
         fileId = imageCtx.message.document.file_id;
         console.log(
@@ -183,14 +185,30 @@ export const createTrackScene = createConversation(async function createTrack(
 
       console.log('[CREATE-TRACK] Image downloaded successfully');
 
-      // Convert to base64
-      console.log('[CREATE-TRACK] Image size:', imageBuffer.length, 'bytes');
+      // Convert to base64 with size limit (max ~500KB after base64 = ~375KB raw)
+      const MAX_IMAGE_SIZE = 375 * 1024; // 375KB max
 
-      session.imageBase64 = imageBuffer.toString('base64');
-      session.imageMimeType = 'image/jpeg';
-      console.log('[CREATE-TRACK] Image converted to base64, length:', session.imageBase64.length);
-
-      await ctx.reply('✅ Image uploaded successfully!');
+      if (imageBuffer.length > MAX_IMAGE_SIZE) {
+        console.log(
+          '[CREATE-TRACK] Image too large:',
+          imageBuffer.length,
+          'bytes >',
+          MAX_IMAGE_SIZE,
+          'max'
+        );
+        await ctx.reply('⚠️ Image is too large (max 375KB). Continuing without image...');
+        session.imageBase64 = undefined;
+        session.imageMimeType = undefined;
+      } else {
+        console.log('[CREATE-TRACK] Image size:', imageBuffer.length, 'bytes');
+        session.imageBase64 = imageBuffer.toString('base64');
+        session.imageMimeType = 'image/jpeg';
+        console.log(
+          '[CREATE-TRACK] Image converted to base64, length:',
+          session.imageBase64.length
+        );
+        await ctx.reply('✅ Image uploaded successfully!');
+      }
     } catch (error) {
       console.error('[CREATE-TRACK] Image upload error:', error);
       await ctx.reply('⚠️ Failed to process image. Continuing without image...');
