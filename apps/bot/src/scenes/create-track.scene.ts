@@ -60,7 +60,7 @@ export const createTrackScene = createConversation(async function createTrack(
     : ['type_clip'];
   const typeCtx = await conversation.waitForCallbackQuery(availableTypes);
   session.type = typeCtx.callbackQuery.data.replace('type_', '') as CreateTrackData['type'];
-  await typeCtx.answerCallbackQuery();
+  await typeCtx.answerCallbackQuery().catch(() => {});
 
   await ctx.reply(
     '📝 *Describe your track:*\n\n' +
@@ -95,7 +95,7 @@ export const createTrackScene = createConversation(async function createTrack(
 
   // Check if it's a skip callback
   if (imageCtx.callbackQuery?.data === 'image_skip') {
-    await imageCtx.answerCallbackQuery('Skipped image upload');
+    await imageCtx.answerCallbackQuery('Skipped image upload').catch(() => {});
   } else if (
     imageCtx.message?.photo ||
     imageCtx.message?.document?.mime_type?.startsWith('image/')
@@ -224,7 +224,7 @@ export const createTrackScene = createConversation(async function createTrack(
       'lang_pt',
     ]);
     session.language = langCtx.callbackQuery.data.replace('lang_', '');
-    await langCtx.answerCallbackQuery();
+    await langCtx.answerCallbackQuery().catch(() => {});
   } else {
     session.language = undefined;
   }
@@ -246,7 +246,7 @@ export const createTrackScene = createConversation(async function createTrack(
       'lyrics_skip',
     ]);
     const lyricsChoice = lyricsCtx.callbackQuery.data;
-    await lyricsCtx.answerCallbackQuery();
+    await lyricsCtx.answerCallbackQuery().catch(() => {});
 
     if (lyricsChoice === 'lyrics_custom') {
       await ctx.reply(
@@ -284,7 +284,7 @@ export const createTrackScene = createConversation(async function createTrack(
       'settings_skip',
     ]);
     const setting = settingsCtx.callbackQuery.data;
-    await settingsCtx.answerCallbackQuery();
+    await settingsCtx.answerCallbackQuery().catch(() => {});
 
     if (setting === 'settings_bpm') {
       await ctx.reply('🎯 *Enter BPM (60-200) or send "auto":*', { parse_mode: 'Markdown' });
@@ -321,7 +321,7 @@ export const createTrackScene = createConversation(async function createTrack(
         'intensity_',
         ''
       ) as CreateTrackData['intensity'];
-      await intensityCtx.answerCallbackQuery();
+      await intensityCtx.answerCallbackQuery().catch(() => {});
       // Show menu again
       await ctx.reply('⚙️ *Additional Settings*\n\nAnything else?', {
         parse_mode: 'Markdown',
@@ -373,7 +373,7 @@ export const createTrackScene = createConversation(async function createTrack(
   );
 
   const confirmCtx = await conversation.waitForCallbackQuery(['confirm_create', 'cancel_create']);
-  await confirmCtx.answerCallbackQuery();
+  await confirmCtx.answerCallbackQuery().catch(() => {});
 
   if (confirmCtx.callbackQuery.data === 'cancel_create') {
     await ctx.reply('❌ Track creation cancelled.');
