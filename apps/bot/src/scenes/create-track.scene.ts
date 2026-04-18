@@ -127,18 +127,63 @@ export const createTrackScene = createConversation(async function createTrack(
       }
       console.log('[CREATE-TRACK] File path:', file.file_path);
 
-      // Download the file
+      // Download the file using native https
       const fileUrl = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${file.file_path}`;
       console.log('[CREATE-TRACK] Downloading from:', fileUrl);
 
-      const imageResponse = await fetch(fileUrl);
-      if (!imageResponse.ok) {
-        throw new Error(`Failed to download image: ${imageResponse.status}`);
-      }
+      const imageBuffer = await new Promise<Buffer>((resolve, reject) => {
+        const https = require('https');
+        const url = new URL(fileUrl);
+
+        const options = {
+          hostname: url.hostname,
+          path: url.pathname,
+          method: 'GET',
+          timeout: 30000, // 30 second timeout
+        };
+
+        console.log('[CREATE-TRACK] Making HTTPS request...');
+
+        const req = https.request(options, (res: any) => {
+          if (res.statusCode !== 200) {
+            reject(new Error(`HTTP ${res.statusCode}`));
+            return;
+          }
+
+          const chunks: Buffer[] = [];
+          res.on('data', (chunk: Buffer) => {
+            chunks.push(chunk);
+            console.log('[CREATE-TRACK] Downloaded chunk:', chunk.length, 'bytes');
+          });
+
+          res.on('end', () => {
+            const buffer = Buffer.concat(chunks);
+            console.log('[CREATE-TRACK] Total downloaded:', buffer.length, 'bytes');
+            resolve(buffer);
+          });
+
+          res.on('error', (err: Error) => {
+            reject(err);
+          });
+        });
+
+        req.on('error', (err: Error) => {
+          console.error('[CREATE-TRACK] Request error:', err.message);
+          reject(err);
+        });
+
+        req.on('timeout', () => {
+          console.error('[CREATE-TRACK] Request timeout');
+          req.destroy();
+          reject(new Error('Request timeout'));
+        });
+
+        req.end();
+      });
+
       console.log('[CREATE-TRACK] Image downloaded successfully');
 
       // Convert to base64
-      const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
       console.log('[CREATE-TRACK] Image size:', imageBuffer.length, 'bytes');
 
       session.imageBase64 = imageBuffer.toString('base64');
