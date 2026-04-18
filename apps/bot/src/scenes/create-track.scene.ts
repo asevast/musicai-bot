@@ -354,10 +354,13 @@ export const createTrackScene = createConversation(async function createTrack(
 
   const cost = session.type === 'clip' ? 1 : session.type === 'instrumental' ? 3 : 5;
 
+  // Escape special Markdown characters in user content
+  const escapeMd = (text: string) => text.replace(/([_*[\]()~`>#+-=|{}.!])/g, '\\$1');
+
   await ctx.reply(
-    `📋 *Track Summary:*\n\n` +
+    `📋 Track Summary:\n\n` +
       `• Type: ${session.type}\n` +
-      `• Prompt: ${session.prompt}\n` +
+      `• Prompt: ${escapeMd(session.prompt.slice(0, 100))}${session.prompt.length > 100 ? '...' : ''}\n` +
       `• Language: ${session.language ?? 'N/A'}\n` +
       `• Intensity: ${session.intensity}\n` +
       `• BPM: ${session.bpm ?? 'Auto'}\n` +
@@ -365,9 +368,8 @@ export const createTrackScene = createConversation(async function createTrack(
       `• Negative Prompt: ${session.negativePrompt ? 'Yes' : 'No'}\n` +
       `• Image: ${session.imageBase64 ? '✅ Yes' : '⏭️ Skipped'}\n` +
       `• Cost: ${cost} credits\n\n` +
-      `*Proceed?*`,
+      `Proceed?`,
     {
-      parse_mode: 'Markdown',
       reply_markup: confirmKeyboard(),
     }
   );
