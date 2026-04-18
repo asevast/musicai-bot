@@ -90,46 +90,76 @@ export const createTrackScene = createConversation(async function createTrack(
   );
 
   // Wait for either an image or skip button
-  const imageCtx = await conversation.waitFor([
-    'message:photo',
-    'message:document',
-    'callback_query:data',
-  ]);
+  const imageCtx = await conversation.wait();
 
+  // Check if it's a skip callback
   if (imageCtx.callbackQuery?.data === 'image_skip') {
     await imageCtx.answerCallbackQuery('Skipped image upload');
-  } else if (imageCtx.msg?.photo || imageCtx.msg?.document?.mime_type?.startsWith('image/')) {
+  } else if (
+    imageCtx.message?.photo ||
+    imageCtx.message?.document?.mime_type?.startsWith('image/')
+  ) {
     // Image uploaded
     try {
+      console.log('[CREATE-TRACK] Processing uploaded image...');
       let fileId: string;
-      if (imageCtx.msg.photo && imageCtx.msg.photo.length > 0) {
-        fileId = imageCtx.msg.photo[imageCtx.msg.photo.length - 1].file_id;
-      } else if (imageCtx.msg.document) {
-        fileId = imageCtx.msg.document.file_id;
+
+      if (imageCtx.message.photo && imageCtx.message.photo.length > 0) {
+        // Get the largest photo
+        fileId = imageCtx.message.photo[imageCtx.message.photo.length - 1].file_id;
+        console.log('[CREATE-TRACK] Photo file_id:', fileId);
+      } else if (imageCtx.message.document) {
+        fileId = imageCtx.message.document.file_id;
+        console.log(
+          '[CREATE-TRACK] Document file_id:',
+          fileId,
+          'mime:',
+          imageCtx.message.document.mime_type
+        );
       } else {
-        throw new Error('No image found');
+        throw new Error('No image found in message');
       }
 
+      // Get file path from Telegram
       const file = await ctx.api.getFile(fileId);
       if (!file.file_path) {
-        throw new Error('Could not get file path');
+        throw new Error('Could not get file path from Telegram');
       }
+      console.log('[CREATE-TRACK] File path:', file.file_path);
 
+      // Download the file
       const fileUrl = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${file.file_path}`;
+      console.log('[CREATE-TRACK] Downloading from:', fileUrl);
+
       const imageResponse = await fetch(fileUrl);
       if (!imageResponse.ok) {
-        throw new Error('Failed to download image');
+        throw new Error(`Failed to download image: ${imageResponse.status}`);
       }
+      console.log('[CREATE-TRACK] Image downloaded successfully');
 
+      // Convert to base64
       const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+      console.log('[CREATE-TRACK] Image size:', imageBuffer.length, 'bytes');
+
       session.imageBase64 = imageBuffer.toString('base64');
       session.imageMimeType = 'image/jpeg';
+      console.log('[CREATE-TRACK] Image converted to base64, length:', session.imageBase64.length);
 
       await ctx.reply('✅ Image uploaded successfully!');
     } catch (error) {
       console.error('[CREATE-TRACK] Image upload error:', error);
       await ctx.reply('⚠️ Failed to process image. Continuing without image...');
+      session.imageBase64 = undefined;
+      session.imageMimeType = undefined;
     }
+  } else {
+    console.log(
+      '[CREATE-TRACK] Unknown response type:',
+      imageCtx.callbackQuery?.data || 'no callback',
+      'msg:',
+      !!imageCtx.message
+    );
+    await ctx.reply('⏭️ Continuing without image...');
   }
 
   if (session.type !== 'instrumental') {
