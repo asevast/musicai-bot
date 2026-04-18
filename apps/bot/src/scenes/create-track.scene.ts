@@ -1,5 +1,6 @@
 import { createConversation, type Conversation } from '@grammyjs/conversations';
 import { InlineKeyboard } from 'grammy';
+import https from 'https';
 import type { BotContext } from '../bot';
 import {
   trackTypeKeyboard,
@@ -132,7 +133,6 @@ export const createTrackScene = createConversation(async function createTrack(
       console.log('[CREATE-TRACK] Downloading from:', fileUrl);
 
       const imageBuffer = await new Promise<Buffer>((resolve, reject) => {
-        const https = require('https');
         const url = new URL(fileUrl);
 
         const options = {
