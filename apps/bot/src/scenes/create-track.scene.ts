@@ -1,4 +1,5 @@
 import { createConversation, type Conversation } from '@grammyjs/conversations';
+import { InlineKeyboard } from 'grammy';
 import type { BotContext } from '../bot';
 import {
   trackTypeKeyboard,
@@ -20,6 +21,8 @@ interface CreateTrackData {
   bpm?: number;
   negativePrompt?: string;
   lyrics?: string;
+  imageBase64?: string;
+  imageMimeType?: string;
 }
 
 type CreateTrackConversation = Conversation<BotContext>;
@@ -71,6 +74,62 @@ export const createTrackScene = createConversation(async function createTrack(
   if (session.prompt.length < 10 || session.prompt.length > 1000) {
     await ctx.reply('❌ Prompt must be between 10 and 1000 characters. Please try again.');
     return;
+  }
+
+  // Step 3.5: Optional image upload
+  session.imageBase64 = undefined;
+  session.imageMimeType = undefined;
+
+  await ctx.reply(
+    '📸 *Optional: Upload an image*\n\n' +
+      'Send a photo to inspire the music, or tap "Skip" to continue without an image.',
+    {
+      parse_mode: 'Markdown',
+      reply_markup: new InlineKeyboard().text('⏭️ Skip', 'image_skip').row(),
+    }
+  );
+
+  // Wait for either an image or skip button
+  const imageCtx = await conversation.waitFor([
+    'message:photo',
+    'message:document',
+    'callback_query:data',
+  ]);
+
+  if (imageCtx.callbackQuery?.data === 'image_skip') {
+    await imageCtx.answerCallbackQuery('Skipped image upload');
+  } else if (imageCtx.msg?.photo || imageCtx.msg?.document?.mime_type?.startsWith('image/')) {
+    // Image uploaded
+    try {
+      let fileId: string;
+      if (imageCtx.msg.photo && imageCtx.msg.photo.length > 0) {
+        fileId = imageCtx.msg.photo[imageCtx.msg.photo.length - 1].file_id;
+      } else if (imageCtx.msg.document) {
+        fileId = imageCtx.msg.document.file_id;
+      } else {
+        throw new Error('No image found');
+      }
+
+      const file = await ctx.api.getFile(fileId);
+      if (!file.file_path) {
+        throw new Error('Could not get file path');
+      }
+
+      const fileUrl = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${file.file_path}`;
+      const imageResponse = await fetch(fileUrl);
+      if (!imageResponse.ok) {
+        throw new Error('Failed to download image');
+      }
+
+      const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+      session.imageBase64 = imageBuffer.toString('base64');
+      session.imageMimeType = 'image/jpeg';
+
+      await ctx.reply('✅ Image uploaded successfully!');
+    } catch (error) {
+      console.error('[CREATE-TRACK] Image upload error:', error);
+      await ctx.reply('⚠️ Failed to process image. Continuing without image...');
+    }
   }
 
   if (session.type !== 'instrumental') {
@@ -229,6 +288,7 @@ export const createTrackScene = createConversation(async function createTrack(
       `• BPM: ${session.bpm ?? 'Auto'}\n` +
       `• Lyrics: ${session.lyrics ? 'Custom' : session.type !== 'instrumental' ? 'Auto' : 'N/A'}\n` +
       `• Negative Prompt: ${session.negativePrompt ? 'Yes' : 'No'}\n` +
+      `• Image: ${session.imageBase64 ? '✅ Yes' : '⏭️ Skipped'}\n` +
       `• Cost: ${cost} credits\n\n` +
       `*Proceed?*`,
     {
@@ -277,6 +337,8 @@ export const createTrackScene = createConversation(async function createTrack(
         bpm: session.bpm,
         intensity: session.intensity,
         language: session.language,
+        imageBase64: session.imageBase64,
+        imageMimeType: session.imageMimeType,
         telegramId: user.telegramId.toString(),
         chatId: ctx.chat?.id,
         messageId: statusMsg.message_id,

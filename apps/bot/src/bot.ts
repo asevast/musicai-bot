@@ -22,7 +22,7 @@ import { deleteAccountCommand, confirmDeleteAccount } from './commands/delete-ac
 import { libraryCommand } from './commands/library.command';
 import { menuCommand } from './commands/menu.command';
 import { fleshCommand } from './commands/flesh.command';
-import { imageToMusicCommand, imageToMusicConversation } from './commands/image-to-music.command';
+import { imageToMusicCommand } from './commands/image-to-music.command';
 import { buildPaymentInvoice, handleSuccessfulPayment } from './payments/stars.handler';
 import {
   mainMenuKeyboard,
@@ -97,9 +97,6 @@ export function setupBot(bot: Bot<BotContext>) {
   bot.command('help', helpCommand);
   bot.command('flesh', fleshCommand);
   bot.command('image', imageToMusicCommand);
-
-  // Image to music conversation
-  bot.use(imageToMusicConversation);
 
   bot.callbackQuery('main_menu', async (ctx) => {
     await ctx.answerCallbackQuery();
