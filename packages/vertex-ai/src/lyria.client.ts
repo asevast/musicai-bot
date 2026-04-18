@@ -16,10 +16,27 @@ export class LyriaClient {
         ? 'google/lyria-3-clip-preview'
         : 'google/lyria-3-pro-preview';
 
+    // Build messages array with text and optional image
+    const messageContent: Array<{
+      type: 'text' | 'image_url';
+      text?: string;
+      image_url?: { url: string };
+    }> = [{ type: 'text', text: req.prompt }];
+
+    // Add image if provided - use OpenAI vision format with data URL
+    if (req.imageBase64 && req.imageMimeType) {
+      messageContent.push({
+        type: 'image_url',
+        image_url: {
+          url: `data:${req.imageMimeType};base64,${req.imageBase64}`,
+        },
+      });
+    }
+
     // Build the request body with all Lyria-specific parameters
     const requestBody: Record<string, unknown> = {
       model,
-      messages: [{ role: 'user', content: req.prompt }],
+      messages: [{ role: 'user', content: messageContent }],
       stream: true,
     };
 
@@ -48,12 +65,6 @@ export class LyriaClient {
     }
     if (req.negativePrompt) {
       requestBody.negativePrompt = req.negativePrompt;
-    }
-    if (req.imageBase64) {
-      requestBody.imageBase64 = req.imageBase64;
-    }
-    if (req.imageMimeType) {
-      requestBody.imageMimeType = req.imageMimeType;
     }
 
     // Debug: Log the request body

@@ -105,6 +105,7 @@ export const createTrackScene = createConversation(async function createTrack(
       console.log('[CREATE-TRACK] Processing uploaded image...');
       let fileId: string;
 
+      let mimeType = 'image/jpeg'; // Default for photos
       if (imageCtx.message.photo && imageCtx.message.photo.length > 0) {
         // Get a medium-sized photo (not the largest to avoid size limits)
         // Telegram provides multiple sizes: index 0 = smallest, last = largest
@@ -113,11 +114,27 @@ export const createTrackScene = createConversation(async function createTrack(
         console.log('[CREATE-TRACK] Photo file_id:', fileId, 'size index:', photoIndex);
       } else if (imageCtx.message.document) {
         fileId = imageCtx.message.document.file_id;
+        // Use actual MIME type from document, or detect from file extension
+        const docMimeType = imageCtx.message.document.mime_type;
+        const fileName = imageCtx.message.document.file_name || '';
+        if (docMimeType && docMimeType.startsWith('image/')) {
+          mimeType = docMimeType;
+        } else {
+          // Try to detect from file extension
+          const ext = fileName.split('.').pop()?.toLowerCase();
+          if (ext === 'png') mimeType = 'image/png';
+          else if (ext === 'webp') mimeType = 'image/webp';
+          else if (ext === 'gif') mimeType = 'image/gif';
+          else if (ext === 'bmp') mimeType = 'image/bmp';
+          else mimeType = 'image/jpeg'; // Default
+        }
         console.log(
           '[CREATE-TRACK] Document file_id:',
           fileId,
           'mime:',
-          imageCtx.message.document.mime_type
+          mimeType,
+          'filename:',
+          fileName
         );
       } else {
         throw new Error('No image found in message');
@@ -128,11 +145,13 @@ export const createTrackScene = createConversation(async function createTrack(
       if (!file.file_path) {
         throw new Error('Could not get file path from Telegram');
       }
-      console.log('[CREATE-TRACK] File path:', file.file_path);
+    console.log('[CREATE-TRACK] File path:', file.file_path);
 
-      // Download the file using native https
-      const fileUrl = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${file.file_path}`;
-      console.log('[CREATE-TRACK] Downloading from:', fileUrl);
+    // Download the file using native https
+    const fileUrl = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${file.file_path}`;
+    // Log URL with masked token for security
+    const maskedUrl = fileUrl.replace(process.env.BOT_TOKEN || '', '***TOKEN***');
+    console.log('[CREATE-TRACK] Downloading from:', maskedUrl);
 
       const imageBuffer = await new Promise<Buffer>((resolve, reject) => {
         const url = new URL(fileUrl);
@@ -200,10 +219,11 @@ export const createTrackScene = createConversation(async function createTrack(
         session.imageBase64 = undefined;
         session.imageMimeType = undefined;
       } else {
-        console.log('[CREATE-TRACK] Image size:', imageBuffer.length, 'bytes');
-        session.imageBase64 = imageBuffer.toString('base64');
-        session.imageMimeType = 'image/jpeg';
-        console.log(
+      console.log('[CREATE-TRACK] Image size:', imageBuffer.length, 'bytes');
+      session.imageBase64 = imageBuffer.toString('base64');
+      // Use the detected MIME type from the upload
+      session.imageMimeType = mimeType || 'image/jpeg';
+      console.log(
           '[CREATE-TRACK] Image converted to base64, length:',
           session.imageBase64.length
         );

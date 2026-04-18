@@ -113,7 +113,7 @@ export function setupBot(bot: Bot<BotContext>) {
 
   bot.callbackQuery('image_to_music', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await (ctx as any).conversation?.enter('imageToMusic');
+    await imageToMusicCommand(ctx);
   });
 
   bot.callbackQuery('history', async (ctx) => {

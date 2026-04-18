@@ -123,6 +123,8 @@ services:
       - ./packages/vertex-ai/src:/app/packages/vertex-ai/src
       - ./packages/database/prisma:/app/packages/database/prisma
     env_file: .env.development
+    environment:
+      - BODY_PARSER_LIMIT=5mb
     depends_on:
       postgres:
         condition: service_healthy
