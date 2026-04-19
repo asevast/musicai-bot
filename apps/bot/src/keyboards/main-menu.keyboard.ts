@@ -5,6 +5,8 @@ export const mainMenuKeyboard = () =>
   new InlineKeyboard()
     .text('🎵 Create New Track', 'create_track')
     .row()
+    .text('📸 Image to Music', 'image_to_music')
+    .row()
     .text('📜 My Tracks', 'history')
     .text('🌍 Public Library', 'library')
     .row()
@@ -77,10 +79,7 @@ export const settingsIntensityKeyboard = (current?: UserSettings['intensity']) =
 export const settingsNotificationsKeyboard = (current?: NotificationMode) =>
   new InlineKeyboard()
     .text(`${current === 'all' ? '✓ ' : ''}All`, 'set_notifications_all')
-    .text(
-      `${current === 'important' ? '✓ ' : ''}Important`,
-      'set_notifications_important'
-    )
+    .text(`${current === 'important' ? '✓ ' : ''}Important`, 'set_notifications_important')
     .row()
     .text(`${current === 'off' ? '✓ ' : ''}Off`, 'set_notifications_off')
     .row()
@@ -88,15 +87,9 @@ export const settingsNotificationsKeyboard = (current?: NotificationMode) =>
 
 export const settingsModelKeyboard = (current?: UserSettings['model']) =>
   new InlineKeyboard()
-    .text(
-      `${current === 'lyria-3-clip-preview' ? '✓ ' : ''}Clip`,
-      'set_model_lyria-3-clip-preview'
-    )
+    .text(`${current === 'lyria-3-clip-preview' ? '✓ ' : ''}Clip`, 'set_model_lyria-3-clip-preview')
     .row()
-    .text(
-      `${current === 'lyria-3-pro-preview' ? '✓ ' : ''}Pro`,
-      'set_model_lyria-3-pro-preview'
-    )
+    .text(`${current === 'lyria-3-pro-preview' ? '✓ ' : ''}Pro`, 'set_model_lyria-3-pro-preview')
     .row()
     .text('⬅️ Back to Settings', 'settings');
 

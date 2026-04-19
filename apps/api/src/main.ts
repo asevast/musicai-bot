@@ -10,20 +10,33 @@ if (!process.env.DATABASE_URL) {
 }
 
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { json, urlencoded } from 'express';
 import { AppModule } from './app.module';
 import { loadEnv } from '@musicai/config';
 
 const env = loadEnv();
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // Get body parser limit from env or default to 5mb
+  const bodyParserLimit = process.env.BODY_PARSER_LIMIT || '5mb';
+
+  // Create app with rawBody option to handle large payloads
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    rawBody: true,
+  });
+
+  // Apply JSON body parser with increased limit BEFORE NestJS initializes
+  // This overrides the default body parser with our custom limits
+  app.use(json({ limit: bodyParserLimit }));
+  app.use(urlencoded({ limit: bodyParserLimit, extended: true }));
 
   app.enableCors({
     origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
   });
 
   await app.listen(env.PORT);
-  console.log(`API server running on port ${env.PORT}`);
+  console.log(`API server running on port ${env.PORT} (body parser limit: ${bodyParserLimit})`);
 }
 
 bootstrap();

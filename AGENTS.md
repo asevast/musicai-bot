@@ -1,134 +1,140 @@
 # AGENTS.md - Development Guide
 
-## Build & Run Commands
-
-### Root Level (pnpm monorepo + turbo)
+## Quick Start
 
 ```bash
-pnpm install              # Install all dependencies
-pnpm dev                  # Start all apps in dev mode (turbo) - runs on HOST
-pnpm build                # Build all packages and apps
-pnpm format               # Format all files with prettier
+pnpm install
+
+# Option A: Docker Compose (recommended)
+docker compose up -d --build          # First time
+docker compose exec api pnpm --filter @musicai/database migrate dev  # One-time
+
+# Option B: Host-based (requires local Postgres on 5433, Redis on 6379)
+pnpm db:generate && pnpm db:push
+pnpm dev                            # Starts all apps via Turbo
 ```
 
-### Docker Compose Development (All Services in Containers)
+## Dev Environments: Critical Distinction
 
-Use `.env.development` (Docker service names) instead of `.env` (localhost).
+|  | Host-based | Docker Compose |
+|---|---|---|
+| **Env file** | `.env` | `.env.development` |
+| **Postgres** | `localhost:5433` | `postgres:5432` (service name) |
+| **Redis** | `localhost:6379` | `redis:6379` (service name) |
+| **Command** | `pnpm --filter @musicai/bot dev` | `docker compose up -d` |
 
-```bash
-# First time setup - build images and start all services
-docker compose up -d --build
+**Never commit either `.env` file**—both are gitignored.
 
-# Apply Prisma migrations (one-time after first start)
-docker compose exec api pnpm --filter @musicai/database migrate dev
+## Services & Ports
 
-# Daily development workflow
-docker compose up -d          # Start all services (postgres, redis, bot, api, worker, minio, bullboard, adminer)
-docker compose down           # Stop all services (data preserved in volumes)
-docker compose down -v        # Stop and remove all data (full reset)
+| Service | Port | Command (host) |
+|---------|------|----------------|
+| API | 3000 | `pnpm --filter @musicai/api dev` |
+| Bot | — | `pnpm --filter @musicai/bot dev` |
+| Worker | — | `pnpm --filter @musicai/worker dev` |
+| Adminer | 8080 | Docker only |
+| Bull Board | 3002 | Docker only (was 3001, now remapped) |
+| MinIO Console | 9001 | `admin/minioadmin` |
 
-# Individual service operations
-docker compose restart worker           # Restart single service
-docker compose stop bot                 # Stop without removing
-docker compose logs -f bot              # Follow bot logs
-docker compose logs -f api worker      # Follow multiple services
+## Monorepo Structure
 
-# After changing package.json or adding dependencies
-docker compose build --no-cache         # Rebuild all images
-docker compose up -d                    # Start with new images
-
-# Prisma operations inside container
-docker compose exec api pnpm --filter @musicai/database generate   # Regenerate client
-docker compose exec api pnpm --filter @musicai/database studio    # Open Prisma Studio
+```
+apps/
+  api/       NestJS REST API (port 3000)
+  bot/       grammY Telegram bot (long polling dev, webhook prod)
+  worker/    BullMQ job processors
+packages/
+  config/    Zod env validation
+  database/  Prisma client + schema
+  queues/    BullMQ config + producers
+  storage/   GCS/MinIO uploads
+  vertex-ai/ Lyria 3 client
+  shared-types/
 ```
 
-### Per-Package Commands (Host-based development)
-
+**Package scripts** (all support `dev`, `build`, `test`):
 ```bash
-pnpm --filter @musicai/bot dev        # Run bot app only (on host)
-pnpm --filter @musicai/api dev        # Run API app only (on host)
-pnpm --filter @musicai/worker dev     # Run worker app only (on host)
-pnpm --filter @musicai/database generate  # Generate Prisma client
-pnpm --filter @musicai/database push      # Push schema to database
-pnpm --filter @musicai/database studio    # Open Prisma Studio
-```
-
-### UI Tools (Docker Compose)
-
-| URL                   | Service       | Purpose                                                 |
-| --------------------- | ------------- | ------------------------------------------------------- |
-| http://localhost:8080 | Adminer       | PostgreSQL database UI                                  |
-| http://localhost:3002 | Bull Board    | BullMQ queue monitoring (was 3001)                      |
-| http://localhost:9001 | MinIO Console | S3-compatible storage browser (login: admin/minioadmin) |
-
-### Environment Files
-
-- **`.env`** - Host-based development (localhost:5433 for Postgres, localhost:6379 for Redis)
-- **`.env.development`** - Docker Compose development (service names: postgres, redis)
-
-Never commit `.env` files - both are gitignored.
-
-### Testing
-
-No test framework is currently configured. When adding tests, use **Jest** or **Vitest**:
-
-```bash
-# Single test file (once configured):
-pnpm --filter @musicai/api test -- --testPathPattern=tracks.service
-# Or with vitest:
-pnpm vitest run path/to/file.spec.ts
+pnpm --filter @musicai/database generate   # Prisma client
+pnpm --filter @musicai/database migrate    # Migrations
+pnpm --filter @musicai/database studio     # Prisma Studio
 ```
 
 ## Code Style
 
-### Formatting (Prettier)
+```bash
+pnpm format   # Prettier: single quotes, semis, 2-space, 100 width
+```
 
-- Single quotes, semicolons required
-- 2-space indentation, 100 char print width
-- Trailing commas (ES5), arrow parens always
-- Run `pnpm format` before committing
+- **Files**: kebab-case with suffix (`tracks.service.ts`, `start.command.ts`)
+- **Imports**: external → `@musicai/*` → relative
+- **Types**: `strict: true` in base config, but bot app overrides to `strict: false`
 
-### TypeScript
+## Critical Gotchas
 
-- **Strict mode** enabled (`strict: true`)
-- `noUnusedLocals`, `noUnusedParameters`, `noImplicitReturns` enforced
-- Module resolution: `bundler`
-- Use `type` imports for type-only imports: `import type { Foo } from 'bar'`
-- Target: ES2022, Module: ESNext
+### NestJS DI Requires Explicit `@Inject()`
+`tsx` uses esbuild which does NOT emit decorator metadata. Always use:
+```typescript
+constructor(@Inject(SomeService) private readonly svc: SomeService)
+```
+Relying on type reflection causes `undefined` at runtime.
 
-### Naming Conventions
+### Stale `dist/` Builds
+Apps import compiled JS from packages' `dist/` folders. After editing `packages/*`, **must rebuild** before restarting services:
+```bash
+pnpm build   # Or: pnpm --filter @musicai/<package> build
+```
+The worker may silently run old compiled code.
 
-- **Files**: kebab-case with feature suffix (e.g., `tracks.service.ts`, `start.command.ts`, `main-menu.keyboard.ts`)
-- **Classes**: PascalCase (`TracksService`, `TelegramAuthGuard`)
-- **Functions/variables**: camelCase (`createTrack`, `calcCost`)
-- **Constants**: UPPER_SNAKE_CASE (`BOT_TOKEN`, `GCS_BUCKET_NAME`)
-- **Interfaces/Types**: PascalCase, prefixed with `I` only for interfaces if needed (`CreateTrackDto`)
+### Worker Startup Hang
+`pnpm --filter @musicai/worker dev` can hang due to stdin. Use instead:
+```bash
+cd apps/worker && npx tsx src/main.ts
+```
 
-### Imports
+### Prisma Query Engine in Docker
+Database package has native binaries. Mount only `prisma/` folder, not `node_modules/` or `dist/`, to preserve compiled query engine.
 
-- Group imports: external libs first, then `@musicai/*` packages, then relative imports
-- Use absolute path aliases from `@musicai/*` workspace packages
-- Default imports preferred; named imports for specific utilities
+### Vertex AI Quota
+**10 req/min per region** (hard limit). Queue rate limits respect this. Use `lyria-3-clip-preview` (30s) for testing, not Pro model.
 
-### Error Handling
+### BullMQ Prioritized Jobs
+Jobs with explicit priority go to `bull:<queue>:prioritized` sorted set, not `wait` list. Check the right key when debugging Redis.
 
-- Use custom error classes for domain errors (e.g., `InsufficientCreditsError`)
-- Use `findUniqueOrThrow` for required entities
-- Catch and log errors at boundaries (bot.catch, global filters)
-- Throw `UnauthorizedException` for auth failures in NestJS
-- Propagate unknown errors; handle known errors explicitly
+### Lyria API Uses Proxy
+Connects to `routerai.ru/api/v1`, not direct Vertex AI. `LYRIA_API_KEY` is the proxy key.
 
-### Architecture Patterns
+## Testing
 
-- **API (NestJS)**: Controller → Service → Prisma pattern
-- **Bot (grammY)**: Commands in `commands/*.command.ts`, keyboards in `keyboards/*.keyboard.ts`, scenes in `scenes/`
-- **Worker (BullMQ)**: Processors in `processors/*.processor.ts`
-- **Packages**: Each package exports from `index.ts` with ESM exports
-- Use `@musicai/config` for env validation (Zod schemas)
-- API auth via `X-Telegram-Id` header + `TelegramAuthGuard`
+```bash
+pnpm test:run                    # All tests once
+pnpm vitest run <path>           # Single file
+pnpm --filter @musicai/api test  # Per-package
+```
 
-### Key Constraints
+## Docker Compose Commands
 
-- Vertex AI quota: 10 req/min per region (hard limit)
-- Queue rate limits respect this quota
-- Use `SynthJobProducer` for adding jobs to queues
+```bash
+docker compose up -d              # Start all services
+docker compose down -v            # Full reset (removes volumes)
+docker compose restart worker     # Restart single service
+docker compose logs -f bot        # Follow logs
+docker compose build --no-cache   # Rebuild after dependency changes
+
+# Prisma inside container
+docker compose exec api pnpm --filter @musicai/database generate
+docker compose exec api pnpm --filter @musicai/database studio
+```
+
+## Architecture Patterns
+
+- **API**: Controller → Service → Repository → Prisma
+- **Bot**: Commands in `commands/*.command.ts`, keyboards in `keyboards/*.keyboard.ts`, scenes in `scenes/`
+- **Worker**: Processors in `processors/*.processor.ts`
+- **Auth**: `X-Telegram-Id` header + `TelegramAuthGuard`
+- **Queues**: `SynthJobProducer` for adding jobs (respects rate limits)
+
+## Environment Variables
+
+Key required: `BOT_TOKEN`, `GOOGLE_CLOUD_PROJECT`, `DATABASE_URL`, `REDIS_URL`
+
+See `.env.example` for full list. Validated at startup via `@musicai/config` Zod schema.

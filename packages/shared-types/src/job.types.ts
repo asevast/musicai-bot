@@ -12,6 +12,7 @@ export interface SynthJobPayload {
     negativePrompt?: string;
     vocal?: boolean;
     lyrics?: string;
+    promptRewriter?: boolean;
     bpm?: number;
     intensity?: 'low' | 'medium' | 'high' | 'epic';
     durationSeconds?: number;

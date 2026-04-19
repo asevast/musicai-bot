@@ -1,4 +1,6 @@
 import { createConversation, type Conversation } from '@grammyjs/conversations';
+import { InlineKeyboard } from 'grammy';
+import https from 'https';
 import type { BotContext } from '../bot';
 import {
   trackTypeKeyboard,
@@ -20,6 +22,8 @@ interface CreateTrackData {
   bpm?: number;
   negativePrompt?: string;
   lyrics?: string;
+  imageBase64?: string;
+  imageMimeType?: string;
 }
 
 type CreateTrackConversation = Conversation<BotContext>;
@@ -56,7 +60,7 @@ export const createTrackScene = createConversation(async function createTrack(
     : ['type_clip'];
   const typeCtx = await conversation.waitForCallbackQuery(availableTypes);
   session.type = typeCtx.callbackQuery.data.replace('type_', '') as CreateTrackData['type'];
-  await typeCtx.answerCallbackQuery();
+  await typeCtx.answerCallbackQuery().catch(() => {});
 
   await ctx.reply(
     '📝 *Describe your track:*\n\n' +
@@ -71,6 +75,174 @@ export const createTrackScene = createConversation(async function createTrack(
   if (session.prompt.length < 10 || session.prompt.length > 1000) {
     await ctx.reply('❌ Prompt must be between 10 and 1000 characters. Please try again.');
     return;
+  }
+
+  // Step 3.5: Optional image upload
+  session.imageBase64 = undefined;
+  session.imageMimeType = undefined;
+
+  await ctx.reply(
+    '📸 *Optional: Upload an image*\n\n' +
+      'Send a photo to inspire the music, or tap "Skip" to continue without an image.',
+    {
+      parse_mode: 'Markdown',
+      reply_markup: new InlineKeyboard().text('⏭️ Skip', 'image_skip').row(),
+    }
+  );
+
+  // Wait for either an image or skip button
+  const imageCtx = await conversation.wait();
+
+  // Check if it's a skip callback
+  if (imageCtx.callbackQuery?.data === 'image_skip') {
+    await imageCtx.answerCallbackQuery('Skipped image upload').catch(() => {});
+  } else if (
+    imageCtx.message?.photo ||
+    imageCtx.message?.document?.mime_type?.startsWith('image/')
+  ) {
+    // Image uploaded
+    try {
+      console.log('[CREATE-TRACK] Processing uploaded image...');
+      let fileId: string;
+
+      let mimeType = 'image/jpeg'; // Default for photos
+      if (imageCtx.message.photo && imageCtx.message.photo.length > 0) {
+        // Get a medium-sized photo (not the largest to avoid size limits)
+        // Telegram provides multiple sizes: index 0 = smallest, last = largest
+        const photoIndex = Math.min(1, imageCtx.message.photo.length - 1);
+        fileId = imageCtx.message.photo[photoIndex].file_id;
+        console.log('[CREATE-TRACK] Photo file_id:', fileId, 'size index:', photoIndex);
+      } else if (imageCtx.message.document) {
+        fileId = imageCtx.message.document.file_id;
+        // Use actual MIME type from document, or detect from file extension
+        const docMimeType = imageCtx.message.document.mime_type;
+        const fileName = imageCtx.message.document.file_name || '';
+        if (docMimeType && docMimeType.startsWith('image/')) {
+          mimeType = docMimeType;
+        } else {
+          // Try to detect from file extension
+          const ext = fileName.split('.').pop()?.toLowerCase();
+          if (ext === 'png') mimeType = 'image/png';
+          else if (ext === 'webp') mimeType = 'image/webp';
+          else if (ext === 'gif') mimeType = 'image/gif';
+          else if (ext === 'bmp') mimeType = 'image/bmp';
+          else mimeType = 'image/jpeg'; // Default
+        }
+        console.log(
+          '[CREATE-TRACK] Document file_id:',
+          fileId,
+          'mime:',
+          mimeType,
+          'filename:',
+          fileName
+        );
+      } else {
+        throw new Error('No image found in message');
+      }
+
+      // Get file path from Telegram
+      const file = await ctx.api.getFile(fileId);
+      if (!file.file_path) {
+        throw new Error('Could not get file path from Telegram');
+      }
+    console.log('[CREATE-TRACK] File path:', file.file_path);
+
+    // Download the file using native https
+    const fileUrl = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${file.file_path}`;
+    // Log URL with masked token for security
+    const maskedUrl = fileUrl.replace(process.env.BOT_TOKEN || '', '***TOKEN***');
+    console.log('[CREATE-TRACK] Downloading from:', maskedUrl);
+
+      const imageBuffer = await new Promise<Buffer>((resolve, reject) => {
+        const url = new URL(fileUrl);
+
+        const options = {
+          hostname: url.hostname,
+          path: url.pathname,
+          method: 'GET',
+          timeout: 30000, // 30 second timeout
+        };
+
+        console.log('[CREATE-TRACK] Making HTTPS request...');
+
+        const req = https.request(options, (res: any) => {
+          if (res.statusCode !== 200) {
+            reject(new Error(`HTTP ${res.statusCode}`));
+            return;
+          }
+
+          const chunks: Buffer[] = [];
+          res.on('data', (chunk: Buffer) => {
+            chunks.push(chunk);
+            console.log('[CREATE-TRACK] Downloaded chunk:', chunk.length, 'bytes');
+          });
+
+          res.on('end', () => {
+            const buffer = Buffer.concat(chunks);
+            console.log('[CREATE-TRACK] Total downloaded:', buffer.length, 'bytes');
+            resolve(buffer);
+          });
+
+          res.on('error', (err: Error) => {
+            reject(err);
+          });
+        });
+
+        req.on('error', (err: Error) => {
+          console.error('[CREATE-TRACK] Request error:', err.message);
+          reject(err);
+        });
+
+        req.on('timeout', () => {
+          console.error('[CREATE-TRACK] Request timeout');
+          req.destroy();
+          reject(new Error('Request timeout'));
+        });
+
+        req.end();
+      });
+
+      console.log('[CREATE-TRACK] Image downloaded successfully');
+
+      // Convert to base64 with size limit (max ~500KB after base64 = ~375KB raw)
+      const MAX_IMAGE_SIZE = 375 * 1024; // 375KB max
+
+      if (imageBuffer.length > MAX_IMAGE_SIZE) {
+        console.log(
+          '[CREATE-TRACK] Image too large:',
+          imageBuffer.length,
+          'bytes >',
+          MAX_IMAGE_SIZE,
+          'max'
+        );
+        await ctx.reply('⚠️ Image is too large (max 375KB). Continuing without image...');
+        session.imageBase64 = undefined;
+        session.imageMimeType = undefined;
+      } else {
+      console.log('[CREATE-TRACK] Image size:', imageBuffer.length, 'bytes');
+      session.imageBase64 = imageBuffer.toString('base64');
+      // Use the detected MIME type from the upload
+      session.imageMimeType = mimeType || 'image/jpeg';
+      console.log(
+          '[CREATE-TRACK] Image converted to base64, length:',
+          session.imageBase64.length
+        );
+        await ctx.reply('✅ Image uploaded successfully!');
+      }
+    } catch (error) {
+      console.error('[CREATE-TRACK] Image upload error:', error);
+      await ctx.reply('⚠️ Failed to process image. Continuing without image...');
+      session.imageBase64 = undefined;
+      session.imageMimeType = undefined;
+    }
+  } else {
+    console.log(
+      '[CREATE-TRACK] Unknown response type:',
+      imageCtx.callbackQuery?.data || 'no callback',
+      'msg:',
+      !!imageCtx.message
+    );
+    await ctx.reply('⏭️ Continuing without image...');
   }
 
   if (session.type !== 'instrumental') {
@@ -90,7 +262,7 @@ export const createTrackScene = createConversation(async function createTrack(
       'lang_pt',
     ]);
     session.language = langCtx.callbackQuery.data.replace('lang_', '');
-    await langCtx.answerCallbackQuery();
+    await langCtx.answerCallbackQuery().catch(() => {});
   } else {
     session.language = undefined;
   }
@@ -112,7 +284,7 @@ export const createTrackScene = createConversation(async function createTrack(
       'lyrics_skip',
     ]);
     const lyricsChoice = lyricsCtx.callbackQuery.data;
-    await lyricsCtx.answerCallbackQuery();
+    await lyricsCtx.answerCallbackQuery().catch(() => {});
 
     if (lyricsChoice === 'lyrics_custom') {
       await ctx.reply(
@@ -150,7 +322,7 @@ export const createTrackScene = createConversation(async function createTrack(
       'settings_skip',
     ]);
     const setting = settingsCtx.callbackQuery.data;
-    await settingsCtx.answerCallbackQuery();
+    await settingsCtx.answerCallbackQuery().catch(() => {});
 
     if (setting === 'settings_bpm') {
       await ctx.reply('🎯 *Enter BPM (60-200) or send "auto":*', { parse_mode: 'Markdown' });
@@ -187,7 +359,7 @@ export const createTrackScene = createConversation(async function createTrack(
         'intensity_',
         ''
       ) as CreateTrackData['intensity'];
-      await intensityCtx.answerCallbackQuery();
+      await intensityCtx.answerCallbackQuery().catch(() => {});
       // Show menu again
       await ctx.reply('⚙️ *Additional Settings*\n\nAnything else?', {
         parse_mode: 'Markdown',
@@ -220,25 +392,28 @@ export const createTrackScene = createConversation(async function createTrack(
 
   const cost = session.type === 'clip' ? 1 : session.type === 'instrumental' ? 3 : 5;
 
+  // Escape special Markdown characters in user content
+  const escapeMd = (text: string) => text.replace(/([_*[\]()~`>#+-=|{}.!])/g, '\\$1');
+
   await ctx.reply(
-    `📋 *Track Summary:*\n\n` +
+    `📋 Track Summary:\n\n` +
       `• Type: ${session.type}\n` +
-      `• Prompt: ${session.prompt}\n` +
+      `• Prompt: ${escapeMd(session.prompt.slice(0, 100))}${session.prompt.length > 100 ? '...' : ''}\n` +
       `• Language: ${session.language ?? 'N/A'}\n` +
       `• Intensity: ${session.intensity}\n` +
       `• BPM: ${session.bpm ?? 'Auto'}\n` +
       `• Lyrics: ${session.lyrics ? 'Custom' : session.type !== 'instrumental' ? 'Auto' : 'N/A'}\n` +
       `• Negative Prompt: ${session.negativePrompt ? 'Yes' : 'No'}\n` +
+      `• Image: ${session.imageBase64 ? '✅ Yes' : '⏭️ Skipped'}\n` +
       `• Cost: ${cost} credits\n\n` +
-      `*Proceed?*`,
+      `Proceed?`,
     {
-      parse_mode: 'Markdown',
       reply_markup: confirmKeyboard(),
     }
   );
 
   const confirmCtx = await conversation.waitForCallbackQuery(['confirm_create', 'cancel_create']);
-  await confirmCtx.answerCallbackQuery();
+  await confirmCtx.answerCallbackQuery().catch(() => {});
 
   if (confirmCtx.callbackQuery.data === 'cancel_create') {
     await ctx.reply('❌ Track creation cancelled.');
@@ -277,6 +452,8 @@ export const createTrackScene = createConversation(async function createTrack(
         bpm: session.bpm,
         intensity: session.intensity,
         language: session.language,
+        imageBase64: session.imageBase64,
+        imageMimeType: session.imageMimeType,
         telegramId: user.telegramId.toString(),
         chatId: ctx.chat?.id,
         messageId: statusMsg.message_id,

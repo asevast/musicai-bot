@@ -22,6 +22,7 @@ import { deleteAccountCommand, confirmDeleteAccount } from './commands/delete-ac
 import { libraryCommand } from './commands/library.command';
 import { menuCommand } from './commands/menu.command';
 import { fleshCommand } from './commands/flesh.command';
+import { imageToMusicCommand } from './commands/image-to-music.command';
 import { buildPaymentInvoice, handleSuccessfulPayment } from './payments/stars.handler';
 import {
   mainMenuKeyboard,
@@ -95,6 +96,7 @@ export function setupBot(bot: Bot<BotContext>) {
   bot.command('menu', menuCommand);
   bot.command('help', helpCommand);
   bot.command('flesh', fleshCommand);
+  bot.command('image', imageToMusicCommand);
 
   bot.callbackQuery('main_menu', async (ctx) => {
     await ctx.answerCallbackQuery();
@@ -107,6 +109,11 @@ export function setupBot(bot: Bot<BotContext>) {
   bot.callbackQuery('create_track', async (ctx) => {
     await ctx.answerCallbackQuery();
     await (ctx as any).conversation?.enter('createTrack');
+  });
+
+  bot.callbackQuery('image_to_music', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await imageToMusicCommand(ctx);
   });
 
   bot.callbackQuery('history', async (ctx) => {
@@ -305,51 +312,6 @@ export function setupBot(bot: Bot<BotContext>) {
     await updateUserSettings(ctx, { model }, `Default model set to ${formatModel(model)}`);
   });
 
-  // History filter handlers
-  const handleHistoryFilter = async (ctx: any, status: string | null, title: string) => {
-    await ctx.answerCallbackQuery();
-    const user = ctx.user;
-    if (!user) return ctx.reply('Error: User not found');
-
-    const where: any = { userId: user.id };
-    if (status) where.status = status;
-
-    const tracks = await prisma.track.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      take: 10,
-    });
-
-    if (tracks.length === 0) {
-      return ctx.editMessageText(`📜 ${title}\n\nNo tracks found.`, {
-        reply_markup: historyMenuKeyboard(),
-      });
-    }
-
-    let message = `📜 ${title}\n\n`;
-    tracks.forEach((track: any, i: number) => {
-      const statusEmoji = { queued: '⏳', processing: '🔄', done: '✅', failed: '❌' }[
-        track.status
-      ];
-      message += `${i + 1}. ${statusEmoji} ${track.type}\n`;
-      message += `   ${(track.prompt || '').slice(0, 40)}...\n\n`;
-    });
-
-    await ctx.editMessageText(message, {
-      reply_markup: historyMenuKeyboard(),
-    });
-  };
-
-  bot.callbackQuery('history_done', async (ctx) =>
-    handleHistoryFilter(ctx, 'done', '✅ Completed Tracks')
-  );
-  bot.callbackQuery('history_processing', async (ctx) =>
-    handleHistoryFilter(ctx, 'processing', '⏳ Processing Tracks')
-  );
-  bot.callbackQuery('history_failed', async (ctx) =>
-    handleHistoryFilter(ctx, 'failed', '❌ Failed Tracks')
-  );
-
   bot.callbackQuery(/^buy_pack_/, async (ctx) => {
     const user = ctx.user;
     if (!user) {
@@ -505,6 +467,7 @@ export function setupBot(bot: Bot<BotContext>) {
         `• Original: 30 second clip\n` +
         `• Extended: ~3 minute full song\n` +
         `• Same prompt and style: ${track.prompt.slice(0, 50)}...\n\n` +
+        `⚠️ *Note:* The extended song will be inspired by your clip but may have different lyrics and melody variations to fill the longer duration.\n\n` +
         `Cost: 3 credits`,
       { parse_mode: 'Markdown', reply_markup: confirmKeyboard }
     );
