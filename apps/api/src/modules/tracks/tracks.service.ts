@@ -36,11 +36,23 @@ export class TracksService {
   }
 
   async createTrack(telegramId: string, dto: CreateTrackDto): Promise<Track> {
+    console.log('[TracksService] createTrack called with telegramId:', telegramId, 'prompt:', dto.prompt.slice(0, 50));
     this.validateDto(dto);
 
-    let user = await prisma.user.findUniqueOrThrow({
-      where: { telegramId: Number(telegramId) },
-    });
+    console.log('[TracksService] Looking up user by telegramId:', telegramId, '(as number:', Number(telegramId), ')');
+    let user: any;
+    try {
+      user = await prisma.user.findUniqueOrThrow({
+        where: { telegramId: Number(telegramId) },
+      });
+      console.log('[TracksService] Found user:', user.id, 'subscription:', user.subscriptionTier);
+    } catch (error) {
+      console.error('[TracksService] User lookup failed:', error);
+      // Log all users telegramId for debugging (first few)
+      const allUsers = await prisma.user.findMany({ select: { id: true, telegramId: true }, take: 5 });
+      console.log('[TracksService] Sample users in DB:', allUsers);
+      throw error;
+    }
 
     if (
       user.subscriptionTier !== 'free' &&

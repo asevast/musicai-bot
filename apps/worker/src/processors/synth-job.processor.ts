@@ -17,6 +17,9 @@ export class SynthJobProcessor {
   }
 
   async process(job: Job<SynthJobPayload>): Promise<void> {
+    console.log('[SynthJobProcessor] *** PROCESS START ***');
+    console.log('  - Job ID:', job.id);
+    console.log('  - Attempts:', job.attemptsMade);
     const { trackId, lyriaRequest, chatId, messageId } = job.data;
 
     // Debug: Check if lyrics are present
@@ -60,8 +63,17 @@ export class SynthJobProcessor {
       };
       console.log('[SynthJobProcessor] Lyria request:', JSON.stringify(request, null, 2));
       lyriaResponse = await this.lyriaClient.generate(request);
-    } catch (err) {
+    } catch (err: any) {
+      console.error('[SynthJobProcessor] ERROR caught:', {
+        trackId,
+        errorMessage: err.message,
+        errorCode: err.error_code || err.code,
+        statusCode: err.status,
+        responseBody: err.responseBody,
+        fullError: err,
+      });
       const errorCode = mapVertexError(err);
+      console.error('[SynthJobProcessor] Mapped error code:', errorCode);
       const retryConfig = RETRY_CONFIG[errorCode];
 
       await this.prismaInstance.synthJob.update({
@@ -89,35 +101,67 @@ export class SynthJobProcessor {
         attemptsMade: job.attemptsMade,
         opts: { delay: retryConfig.delay },
       });
-    }
+     }
 
-    const audioBuffer = Buffer.from(lyriaResponse.audioBase64, 'base64');
-    const storageKey = await storageService.uploadTrack(audioBuffer, trackId);
-    const gcsUrl = storageService.getPublicUrl(storageKey);
+     // Post-Lyria processing (may throw)
+     try {
+       console.log('[SynthJobProcessor] Lyria success, processing audio...');
+       const audioBuffer = Buffer.from(lyriaResponse.audioBase64, 'base64');
+       console.log('[SynthJobProcessor] Audio buffer size:', audioBuffer.length, 'bytes');
 
-    const durationSec = this.estimateDuration(audioBuffer);
+       console.log('[SynthJobProcessor] Uploading to storage...');
+       const storageKey = await storageService.uploadTrack(audioBuffer, trackId);
+       console.log('[SynthJobProcessor] Storage key:', storageKey);
+       const gcsUrl = storageService.getPublicUrl(storageKey);
+       console.log('[SynthJobProcessor] Public URL:', gcsUrl);
 
-    await this.prismaInstance.track.update({
-      where: { id: trackId },
-      data: {
-        status: 'done',
-        gcsUrl,
-        revisedPrompt: lyriaResponse.revisedPrompt,
-        durationSec,
-      },
-    });
+       const durationSec = this.estimateDuration(audioBuffer);
+       console.log('[SynthJobProcessor] Estimated duration:', durationSec, 'seconds');
 
-    await this.prismaInstance.synthJob.update({
-      where: { trackId },
-      data: { finishedAt: new Date() },
-    });
+       console.log('[SynthJobProcessor] Updating track in database...');
+       await this.prismaInstance.track.update({
+         where: { id: trackId },
+         data: {
+           status: 'done',
+           gcsUrl,
+           revisedPrompt: lyriaResponse.revisedPrompt,
+           durationSec,
+         },
+       });
+       console.log('[SynthJobProcessor] Track updated to done');
 
-    await this.sendNotify({
-      chatId,
-      messageId,
-      text: '✅ Your track is ready!',
-      trackId,
-    });
+       await this.prismaInstance.synthJob.update({
+         where: { trackId },
+         data: { finishedAt: new Date() },
+       });
+       console.log('[SynthJobProcessor] SynthJob marked finished');
+
+       console.log('[SynthJobProcessor] Sending notification to user...');
+       await this.sendNotify({
+         chatId,
+         messageId,
+         text: '✅ Your track is ready!',
+         trackId,
+       });
+       console.log('[SynthJobProcessor] Job completed successfully!');
+     } catch (postError: any) {
+       console.error('[SynthJobProcessor] Post-Lyria error:', {
+         trackId,
+         errorMessage: postError.message,
+         stack: postError.stack,
+       });
+       // Refund credits on failure
+       await this.refund(trackId);
+       await this.prismaInstance.track.update({
+         where: { id: trackId },
+         data: { status: 'failed' },
+       });
+       await this.sendNotify({
+         chatId,
+         text: '❌ Track generation failed after audio generation. Credits have been refunded.',
+       });
+       return;
+     }
   }
 
   private async sendNotify(payload: NotifyPayload): Promise<void> {

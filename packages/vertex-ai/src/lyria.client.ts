@@ -16,29 +16,17 @@ export class LyriaClient {
         ? 'google/lyria-3-clip-preview'
         : 'google/lyria-3-pro-preview';
 
-    // Build messages array with text and optional image
-    const messageContent: Array<{
-      type: 'text' | 'image_url';
-      text?: string;
-      image_url?: { url: string };
-    }> = [{ type: 'text', text: req.prompt }];
-
-    // Add image if provided - use OpenAI vision format with data URL
-    if (req.imageBase64 && req.imageMimeType) {
-      messageContent.push({
-        type: 'image_url',
-        image_url: {
-          url: `data:${req.imageMimeType};base64,${req.imageBase64}`,
-        },
-      });
-    }
-
-    // Build the request body with all Lyria-specific parameters
-    const requestBody: Record<string, unknown> = {
-      model,
-      messages: [{ role: 'user', content: messageContent }],
-      stream: true,
-    };
+     // Build the request body - use simple text content (OpenAI format)
+     const requestBody: Record<string, unknown> = {
+       model,
+       messages: [
+         {
+           role: 'user',
+           content: req.prompt, // simple string
+         },
+       ],
+       stream: true,
+     };
 
     // Add Lyria-specific parameters directly to the body
     if (req.lyrics) {
@@ -112,15 +100,36 @@ export class LyriaClient {
             const data = trimmed.slice(6);
             if (data === '[DONE]') continue;
 
+            console.log('[LyriaClient] Received data line (first 200 chars):', data.slice(0, 200));
+
             try {
               const parsed = JSON.parse(data);
+
+              // Check for API errors
+              if (parsed.error) {
+                console.error('[LyriaClient] API returned error:', parsed.error);
+                throw new LyriaGenerationError(`Lyria API error: ${parsed.error.code || 'UNKNOWN'} - ${parsed.error.message || JSON.stringify(parsed.error)}`);
+              }
+
               const delta = parsed.choices?.[0]?.delta;
               const audio = delta?.audio as { data?: string } | undefined;
               if (audio?.data) {
                 audioChunks.push(audio.data);
+                console.log(`[LyriaClient] Received audio chunk ${audioChunks.length}: ${audio.data.length} chars`);
+              } else {
+                // Log if there's no audio data but we got a valid response
+                if (Object.keys(parsed).length > 0) {
+                  console.log('[LyriaClient] Chunk parsed but no audio:', JSON.stringify(parsed).slice(0, 200));
+                }
               }
-            } catch {
-              // Ignore parse errors for malformed chunks
+            } catch (e) {
+              // Log parse errors for malformed chunks
+              console.warn('[LyriaClient] Failed to parse chunk:', e, 'chunk:', trimmed.slice(0, 200));
+            }
+          } else {
+            // Log other lines for debugging
+            if (line.trim()) {
+              console.log('[LyriaClient] Non-data line:', line.trim().slice(0, 200));
             }
           }
         }
@@ -148,7 +157,9 @@ export class LyriaClient {
       reader.releaseLock();
     }
 
+    console.log(`[LyriaClient] Final check - audioChunks.length: ${audioChunks.length}`);
     if (audioChunks.length === 0) {
+      console.error('[LyriaClient] No audio chunks collected!');
       throw new LyriaGenerationError('No audio data received from Lyria API');
     }
 
