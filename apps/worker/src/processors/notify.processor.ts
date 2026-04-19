@@ -1,5 +1,5 @@
 import { Job } from 'bullmq';
-import { PrismaClient } from '@musicai/database';
+import { prisma } from '@musicai/database';
 import { storageService } from '@musicai/storage';
 import type { NotifyPayload } from '@musicai/shared-types';
 import { Bot, InputFile } from 'grammy';
@@ -8,7 +8,7 @@ import { loadEnv } from '@musicai/config';
 export class NotifyProcessor {
   private bot: Bot;
 
-  constructor(private readonly prisma: PrismaClient) {
+  constructor(private readonly prismaInstance: typeof prisma) {
     this.bot = new Bot(loadEnv().BOT_TOKEN);
   }
 
@@ -33,7 +33,7 @@ export class NotifyProcessor {
 
     // Send the completed track with audio file
     if (trackId) {
-      const track = (await this.prisma.track.findUnique({
+      const track = (await this.prismaInstance.track.findUnique({
         where: { id: trackId },
       })) as { id: string; type: string; prompt: string; gcsUrl?: string | null } | null;
 
