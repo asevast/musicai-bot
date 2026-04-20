@@ -20,7 +20,6 @@ interface CreateTrackData {
   language?: string;
   intensity?: 'low' | 'medium' | 'high' | 'epic';
   bpm?: number;
-  negativePrompt?: string;
   lyrics?: string;
   imageBase64?: string;
   imageMimeType?: string;
@@ -48,7 +47,6 @@ export const createTrackScene = createConversation(async function createTrack(
   session.language = settings.language;
   session.intensity = settings.intensity;
   session.bpm = undefined;
-  session.negativePrompt = undefined;
 
   await ctx.reply('🎵 *Select track type:*', {
     parse_mode: 'Markdown',
@@ -101,8 +99,7 @@ export const createTrackScene = createConversation(async function createTrack(
     imageCtx.message?.document?.mime_type?.startsWith('image/')
   ) {
     // Image uploaded
-    try {
-      console.log('[CREATE-TRACK] Processing uploaded image...');
+  try {
       let fileId: string;
 
       let mimeType = 'image/jpeg'; // Default for photos
@@ -111,7 +108,6 @@ export const createTrackScene = createConversation(async function createTrack(
         // Telegram provides multiple sizes: index 0 = smallest, last = largest
         const photoIndex = Math.min(1, imageCtx.message.photo.length - 1);
         fileId = imageCtx.message.photo[photoIndex].file_id;
-        console.log('[CREATE-TRACK] Photo file_id:', fileId, 'size index:', photoIndex);
       } else if (imageCtx.message.document) {
         fileId = imageCtx.message.document.file_id;
         // Use actual MIME type from document, or detect from file extension
@@ -128,14 +124,6 @@ export const createTrackScene = createConversation(async function createTrack(
           else if (ext === 'bmp') mimeType = 'image/bmp';
           else mimeType = 'image/jpeg'; // Default
         }
-        console.log(
-          '[CREATE-TRACK] Document file_id:',
-          fileId,
-          'mime:',
-          mimeType,
-          'filename:',
-          fileName
-        );
       } else {
         throw new Error('No image found in message');
       }
@@ -145,13 +133,9 @@ export const createTrackScene = createConversation(async function createTrack(
       if (!file.file_path) {
         throw new Error('Could not get file path from Telegram');
       }
-    console.log('[CREATE-TRACK] File path:', file.file_path);
 
-    // Download the file using native https
-    const fileUrl = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${file.file_path}`;
-    // Log URL with masked token for security
-    const maskedUrl = fileUrl.replace(process.env.BOT_TOKEN || '', '***TOKEN***');
-    console.log('[CREATE-TRACK] Downloading from:', maskedUrl);
+      // Download the file using native https
+      const fileUrl = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${file.file_path}`;
 
       const imageBuffer = await new Promise<Buffer>((resolve, reject) => {
         const url = new URL(fileUrl);
@@ -163,8 +147,6 @@ export const createTrackScene = createConversation(async function createTrack(
           timeout: 30000, // 30 second timeout
         };
 
-        console.log('[CREATE-TRACK] Making HTTPS request...');
-
         const req = https.request(options, (res: any) => {
           if (res.statusCode !== 200) {
             reject(new Error(`HTTP ${res.statusCode}`));
@@ -174,12 +156,10 @@ export const createTrackScene = createConversation(async function createTrack(
           const chunks: Buffer[] = [];
           res.on('data', (chunk: Buffer) => {
             chunks.push(chunk);
-            console.log('[CREATE-TRACK] Downloaded chunk:', chunk.length, 'bytes');
           });
 
           res.on('end', () => {
             const buffer = Buffer.concat(chunks);
-            console.log('[CREATE-TRACK] Total downloaded:', buffer.length, 'bytes');
             resolve(buffer);
           });
 
@@ -194,7 +174,6 @@ export const createTrackScene = createConversation(async function createTrack(
         });
 
         req.on('timeout', () => {
-          console.error('[CREATE-TRACK] Request timeout');
           req.destroy();
           reject(new Error('Request timeout'));
         });
@@ -202,31 +181,17 @@ export const createTrackScene = createConversation(async function createTrack(
         req.end();
       });
 
-      console.log('[CREATE-TRACK] Image downloaded successfully');
-
       // Convert to base64 with size limit (max ~500KB after base64 = ~375KB raw)
       const MAX_IMAGE_SIZE = 375 * 1024; // 375KB max
 
       if (imageBuffer.length > MAX_IMAGE_SIZE) {
-        console.log(
-          '[CREATE-TRACK] Image too large:',
-          imageBuffer.length,
-          'bytes >',
-          MAX_IMAGE_SIZE,
-          'max'
-        );
         await ctx.reply('⚠️ Image is too large (max 375KB). Continuing without image...');
         session.imageBase64 = undefined;
         session.imageMimeType = undefined;
       } else {
-      console.log('[CREATE-TRACK] Image size:', imageBuffer.length, 'bytes');
-      session.imageBase64 = imageBuffer.toString('base64');
-      // Use the detected MIME type from the upload
-      session.imageMimeType = mimeType || 'image/jpeg';
-      console.log(
-          '[CREATE-TRACK] Image converted to base64, length:',
-          session.imageBase64.length
-        );
+        session.imageBase64 = imageBuffer.toString('base64');
+        // Use the detected MIME type from the upload
+        session.imageMimeType = mimeType || 'image/jpeg';
         await ctx.reply('✅ Image uploaded successfully!');
       }
     } catch (error) {
@@ -236,12 +201,6 @@ export const createTrackScene = createConversation(async function createTrack(
       session.imageMimeType = undefined;
     }
   } else {
-    console.log(
-      '[CREATE-TRACK] Unknown response type:',
-      imageCtx.callbackQuery?.data || 'no callback',
-      'msg:',
-      !!imageCtx.message
-    );
     await ctx.reply('⏭️ Continuing without image...');
   }
 
@@ -306,11 +265,11 @@ export const createTrackScene = createConversation(async function createTrack(
   // Step 5: Additional Settings
   await ctx.reply(
     '⚙️ *Additional Settings*\n\n' +
-      'You can customize BPM, intensity, and negative prompt, or skip to use defaults.',
+    'You can customize BPM and intensity, or skip to use defaults.',
     {
       parse_mode: 'Markdown',
       reply_markup: additionalSettingsKeyboard(),
-    }
+    },
   );
 
   let settingsDone = false;
@@ -318,7 +277,6 @@ export const createTrackScene = createConversation(async function createTrack(
     const settingsCtx = await conversation.waitForCallbackQuery([
       'settings_bpm',
       'settings_intensity',
-      'settings_negative',
       'settings_skip',
     ]);
     const setting = settingsCtx.callbackQuery.data;
@@ -339,7 +297,6 @@ export const createTrackScene = createConversation(async function createTrack(
           session.bpm = bpm;
         }
       }
-      // Show menu again
       await ctx.reply('⚙️ *Additional Settings*\n\nAnything else?', {
         parse_mode: 'Markdown',
         reply_markup: additionalSettingsKeyboard(),
@@ -356,24 +313,9 @@ export const createTrackScene = createConversation(async function createTrack(
         'intensity_epic',
       ]);
       session.intensity = intensityCtx.callbackQuery.data.replace(
-        'intensity_',
-        ''
+        'intensity_', '',
       ) as CreateTrackData['intensity'];
       await intensityCtx.answerCallbackQuery().catch(() => {});
-      // Show menu again
-      await ctx.reply('⚙️ *Additional Settings*\n\nAnything else?', {
-        parse_mode: 'Markdown',
-        reply_markup: additionalSettingsKeyboard(),
-      });
-    } else if (setting === 'settings_negative') {
-      await ctx.reply('🚫 *Enter negative prompt (what to avoid) or send "skip":*', {
-        parse_mode: 'Markdown',
-      });
-      const negCtx = await conversation.waitFor('message:text');
-      if (negCtx.msg.text.toLowerCase() !== 'skip') {
-        session.negativePrompt = negCtx.msg.text.slice(0, 300);
-      }
-      // Show menu again
       await ctx.reply('⚙️ *Additional Settings*\n\nAnything else?', {
         parse_mode: 'Markdown',
         reply_markup: additionalSettingsKeyboard(),
@@ -402,9 +344,8 @@ export const createTrackScene = createConversation(async function createTrack(
       `• Language: ${session.language ?? 'N/A'}\n` +
       `• Intensity: ${session.intensity}\n` +
       `• BPM: ${session.bpm ?? 'Auto'}\n` +
-      `• Lyrics: ${session.lyrics ? 'Custom' : session.type !== 'instrumental' ? 'Auto' : 'N/A'}\n` +
-      `• Negative Prompt: ${session.negativePrompt ? 'Yes' : 'No'}\n` +
-      `• Image: ${session.imageBase64 ? '✅ Yes' : '⏭️ Skipped'}\n` +
+    `• Lyrics: ${session.lyrics ? 'Custom' : session.type !== 'instrumental' ? 'Auto' : 'N/A'}\n` +
+    `• Image: ${session.imageBase64 ? '✅ Yes' : '⏭️ Skipped'}\n` +
       `• Cost: ${cost} credits\n\n` +
       `Proceed?`,
     {
@@ -427,15 +368,7 @@ export const createTrackScene = createConversation(async function createTrack(
   try {
     const model = session.type === 'clip' ? 'lyria-3-clip-preview' : 'lyria-3-pro-preview';
 
-    console.log('[CREATE-TRACK] Fetching:', API_URL, '/tracks');
-    console.log('[CREATE-TRACK] Payload:', {
-      model,
-      type: session.type,
-      prompt: session.prompt,
-      telegramId: user.telegramId.toString(),
-    });
-
-    const response = await fetch(`${API_URL}/tracks`, {
+      const response = await fetch(`${API_URL}/tracks`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -445,9 +378,7 @@ export const createTrackScene = createConversation(async function createTrack(
         model,
         type: session.type,
         prompt: session.prompt,
-        negativePrompt: session.negativePrompt,
         lyrics: session.lyrics,
-        // Explicitly disable prompt rewriter when custom lyrics are provided
         promptRewriter: session.lyrics ? false : undefined,
         bpm: session.bpm,
         intensity: session.intensity,
@@ -458,11 +389,9 @@ export const createTrackScene = createConversation(async function createTrack(
         chatId: ctx.chat?.id,
         messageId: statusMsg.message_id,
       }),
-    });
+      });
 
-    console.log('[CREATE-TRACK] Response status:', response.status);
-
-    if (!response.ok) {
+      if (!response.ok) {
       const error = await response.text();
       throw new Error(error);
     }

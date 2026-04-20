@@ -22,7 +22,7 @@ import { deleteAccountCommand, confirmDeleteAccount } from './commands/delete-ac
 import { libraryCommand } from './commands/library.command';
 import { menuCommand } from './commands/menu.command';
 import { fleshCommand } from './commands/flesh.command';
-import { imageToMusicCommand } from './commands/image-to-music.command';
+import { imageToMusicCommand, imageToMusicScene } from './commands/image-to-music.command';
 import { buildPaymentInvoice, handleSuccessfulPayment } from './payments/stars.handler';
 import {
   mainMenuKeyboard,
@@ -84,6 +84,7 @@ export function setupBot(bot: Bot<BotContext>) {
   });
 
   bot.use(createTrackScene);
+  bot.use(imageToMusicScene);
 
   bot.command('start', startCommand);
   bot.command('create', createCommand);
@@ -113,7 +114,7 @@ export function setupBot(bot: Bot<BotContext>) {
 
   bot.callbackQuery('image_to_music', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await imageToMusicCommand(ctx);
+    await (ctx as any).conversation?.enter('imageToMusic');
   });
 
   bot.callbackQuery('history', async (ctx) => {
@@ -362,6 +363,11 @@ export function setupBot(bot: Bot<BotContext>) {
 
   bot.callbackQuery('noop', async (ctx) => {
     await ctx.answerCallbackQuery();
+  });
+
+  bot.callbackQuery('cancel_image_music', async (ctx) => {
+    await ctx.answerCallbackQuery('Cancelled');
+    await ctx.reply('❌ Image to Music cancelled.');
   });
 
   // History pagination handlers

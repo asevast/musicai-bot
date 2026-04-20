@@ -55,8 +55,6 @@ export const additionalSettingsKeyboard = () =>
     .text('🎯 BPM', 'settings_bpm')
     .text('🎚️ Intensity', 'settings_intensity')
     .row()
-    .text('🚫 Negative Prompt', 'settings_negative')
-    .row()
     .text('⏭ Skip Advanced', 'settings_skip');
 
 export const trackActionKeyboard = (trackId: string) =>
