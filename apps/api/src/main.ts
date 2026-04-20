@@ -14,6 +14,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { json, urlencoded } from 'express';
 import { AppModule } from './app.module';
 import { loadEnv } from '@musicai/config';
+import { IoAdapter } from './ws-adapter.js';
 
 const env = loadEnv();
 
@@ -34,6 +35,9 @@ async function bootstrap() {
   app.enableCors({
     origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
   });
+
+  // Setup WebSocket adapter for real-time notifications
+  app.useWebSocketAdapter(new IoAdapter(app));
 
   await app.listen(env.PORT);
   console.log(`API server running on port ${env.PORT} (body parser limit: ${bodyParserLimit})`);

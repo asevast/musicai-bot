@@ -10,6 +10,7 @@ export const envSchema = z.object({
   TELEGRAM_CHAT_ID: z.string().optional(),
   WEBHOOK_URL: z.string().optional(),
   WEBHOOK_SECRET: z.string().optional(),
+  WEBAPP_URL: z.string().optional(),
 
   // Google Cloud
   GOOGLE_CLOUD_PROJECT: z.string().optional(),
