@@ -102,7 +102,7 @@ export function setupBot(bot: Bot<BotContext>) {
     await ctx.answerCallbackQuery();
     await ctx.editMessageText('🎵 *MusicAI Bot*', {
       parse_mode: 'Markdown',
-      reply_markup: mainMenuKeyboard(),
+      reply_markup: mainMenuKeyboard(loadEnv().WEBAPP_URL || 'https://app.musicai.bot'),
     });
   });
 

@@ -1,4 +1,5 @@
 import { Context } from 'grammy';
+import { loadEnv } from '@musicai/config';
 import { mainMenuKeyboard } from '../keyboards/main-menu.keyboard';
 
 export const startCommand = async (ctx: Context) => {
@@ -28,7 +29,7 @@ export const startCommand = async (ctx: Context) => {
       `May the Force be with you! 🌟`,
     {
       parse_mode: 'Markdown',
-      reply_markup: mainMenuKeyboard(),
+      reply_markup: mainMenuKeyboard(loadEnv().WEBAPP_URL || 'https://app.musicai.bot'),
     }
   );
 };
