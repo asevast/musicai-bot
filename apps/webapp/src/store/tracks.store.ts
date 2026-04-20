@@ -1,9 +1,10 @@
 import { create } from 'zustand';
 
-interface Track {
+export interface Track {
   id: string;
   title: string;
   status: 'queued' | 'processing' | 'done' | 'failed';
+  type: string;
   audioUrl?: string;
   duration?: number;
   createdAt: string;

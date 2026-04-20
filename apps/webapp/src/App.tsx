@@ -1,23 +1,11 @@
 import { BrowserRouter, Routes, Route } from 'react-router';
+import { Create } from './pages/Create';
+import { Library } from './pages/Library';
+import { Profile } from './pages/Profile';
+import { Track } from './pages/Track';
 
 function HomePage() {
   return <div>Home Page</div>;
-}
-
-function CreatePage() {
-  return <div>Create Track Page</div>;
-}
-
-function LibraryPage() {
-  return <div>Library Page</div>;
-}
-
-function ProfilePage() {
-  return <div>Profile Page</div>;
-}
-
-function TrackPage() {
-  return <div>Track Detail Page</div>;
 }
 
 function App() {
@@ -25,10 +13,10 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/create" element={<CreatePage />} />
-        <Route path="/library" element={<LibraryPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/track/:id" element={<TrackPage />} />
+        <Route path="/create" element={<Create />} />
+        <Route path="/library" element={<Library />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/track/:id" element={<Track />} />
       </Routes>
     </BrowserRouter>
   );
