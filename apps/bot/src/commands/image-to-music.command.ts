@@ -12,9 +12,10 @@ import {
 } from '../keyboards/track-options.keyboard';
 import { parseUserSettings } from '../utils/user-settings';
 
-const API_URL = process.env.API_URL || 'http://localhost:3000';
+const API_URL = process.env.API_URL || 'http://api:3000';
+const MAX_IMAGE_SIZE = 375 * 1024;
 
-interface CreateTrackData {
+interface ImageToMusicData {
   type?: 'full_song' | 'clip' | 'instrumental';
   prompt?: string;
   language?: string;
@@ -25,14 +26,50 @@ interface CreateTrackData {
   imageMimeType?: string;
 }
 
-type CreateTrackConversation = Conversation<BotContext>;
+type ImageToMusicConversation = Conversation<BotContext>;
 
-export const createTrackScene = createConversation(async function createTrack(
-  conversation: CreateTrackConversation,
+async function downloadImage(
+  ctx: BotContext,
+  fileId: string
+): Promise<{ base64: string; mimeType: string } | null> {
+  const file = await ctx.api.getFile(fileId);
+  if (!file.file_path) throw new Error('Could not get file path from Telegram');
+
+  const fileUrl = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${file.file_path}`;
+
+  const imageBuffer = await new Promise<Buffer>((resolve, reject) => {
+    const url = new URL(fileUrl);
+    const req = https.request(
+      { hostname: url.hostname, path: url.pathname, method: 'GET', timeout: 30000 },
+      (res) => {
+        if (res.statusCode !== 200) {
+          reject(new Error(`HTTP ${res.statusCode}`));
+          return;
+        }
+        const chunks: Buffer[] = [];
+        res.on('data', (chunk: Buffer) => chunks.push(chunk));
+        res.on('end', () => resolve(Buffer.concat(chunks)));
+        res.on('error', reject);
+      }
+    );
+    req.on('error', reject);
+    req.on('timeout', () => {
+      req.destroy();
+      reject(new Error('Request timeout'));
+    });
+    req.end();
+  });
+
+  if (imageBuffer.length > MAX_IMAGE_SIZE) return null;
+
+  return { base64: imageBuffer.toString('base64'), mimeType: 'image/jpeg' };
+}
+
+export const imageToMusicScene = createConversation(async function imageToMusic(
+  conversation: ImageToMusicConversation,
   ctx: BotContext
 ) {
   const user = ctx.user;
-
   if (!user) {
     await ctx.reply('❌ Error: User not found');
     return;
@@ -47,6 +84,84 @@ export const createTrackScene = createConversation(async function createTrack(
   session.language = settings.language;
   session.intensity = settings.intensity;
   session.bpm = undefined;
+  session.lyrics = undefined;
+  session.imageBase64 = undefined;
+  session.imageMimeType = undefined;
+
+  await ctx.reply(
+    '📸 *Image to Music*\n\n' +
+      "Send me a photo and I'll generate music inspired by it!\n\n" +
+      'The AI will analyze the image and combine it with your style preferences.',
+    {
+      parse_mode: 'Markdown',
+      reply_markup: new InlineKeyboard().text('❌ Cancel', 'cancel_image_music'),
+    }
+  );
+
+  const imageCtx = await conversation.wait();
+
+  if (imageCtx.callbackQuery?.data === 'cancel_image_music') {
+    await imageCtx.answerCallbackQuery('Cancelled');
+    await imageCtx.reply('❌ Image to Music cancelled.');
+    return;
+  }
+
+  if (!imageCtx.message?.photo && !imageCtx.message?.document?.mime_type?.startsWith('image/')) {
+    await imageCtx.reply("❌ That wasn't an image. Please use /image to try again.");
+    return;
+  }
+
+  const processingMsg = await imageCtx.reply('🔄 Processing your image...');
+
+  try {
+    let fileId: string;
+    let mimeType = 'image/jpeg';
+
+    if (imageCtx.message.photo && imageCtx.message.photo.length > 0) {
+      const photoIndex = Math.min(1, imageCtx.message.photo.length - 1);
+      fileId = imageCtx.message.photo[photoIndex].file_id;
+    } else if (imageCtx.message.document) {
+      fileId = imageCtx.message.document.file_id;
+      const docMimeType = imageCtx.message.document.mime_type;
+      if (docMimeType && docMimeType.startsWith('image/')) {
+        mimeType = docMimeType;
+      } else {
+        const ext = (imageCtx.message.document.file_name || '').split('.').pop()?.toLowerCase();
+        if (ext === 'png') mimeType = 'image/png';
+        else if (ext === 'webp') mimeType = 'image/webp';
+      }
+    } else {
+      throw new Error('No image found');
+    }
+
+    const result = await downloadImage(imageCtx, fileId);
+
+    if (!result) {
+      await imageCtx.api.editMessageText(
+        processingMsg.chat.id,
+        processingMsg.message_id,
+        '⚠️ Image is too large (max 375KB). Please send a smaller image or use /image to try again.'
+      );
+      return;
+    }
+
+    session.imageBase64 = result.base64;
+    session.imageMimeType = mimeType;
+
+    await imageCtx.api.editMessageText(
+      processingMsg.chat.id,
+      processingMsg.message_id,
+      "✅ Image received! Now let's set up your track."
+    );
+  } catch (error) {
+    console.error('[IMAGE-TO-MUSIC] Image processing error:', error);
+    await imageCtx.api.editMessageText(
+      processingMsg.chat.id,
+      processingMsg.message_id,
+      '❌ Failed to process image. Please try again with /image.'
+    );
+    return;
+  }
 
   await ctx.reply('🎵 *Select track type:*', {
     parse_mode: 'Markdown',
@@ -57,13 +172,13 @@ export const createTrackScene = createConversation(async function createTrack(
     ? ['type_full_song', 'type_clip', 'type_instrumental']
     : ['type_clip'];
   const typeCtx = await conversation.waitForCallbackQuery(availableTypes);
-  session.type = typeCtx.callbackQuery.data.replace('type_', '') as CreateTrackData['type'];
+  session.type = typeCtx.callbackQuery.data.replace('type_', '') as ImageToMusicData['type'];
   await typeCtx.answerCallbackQuery().catch(() => {});
 
   await ctx.reply(
-    '📝 *Describe your track:*\n\n' +
-      'Genre, mood, instruments, atmosphere...\n\n' +
-      '*Example:* Lo-fi hip hop, soft piano, vinyl crackle, 75 BPM, study mood',
+    '📝 *Describe the music style you want:*\n\n' +
+      'Genre, mood, instruments, atmosphere inspired by the image...\n\n' +
+      '*Example:* Cinematic orchestral, epic strings, dark ambient, 80 BPM, dramatic mood',
     { parse_mode: 'Markdown' }
   );
 
@@ -73,135 +188,6 @@ export const createTrackScene = createConversation(async function createTrack(
   if (session.prompt.length < 10 || session.prompt.length > 1000) {
     await ctx.reply('❌ Prompt must be between 10 and 1000 characters. Please try again.');
     return;
-  }
-
-  // Step 3.5: Optional image upload
-  session.imageBase64 = undefined;
-  session.imageMimeType = undefined;
-
-  await ctx.reply(
-    '📸 *Optional: Upload an image*\n\n' +
-      'Send a photo to inspire the music, or tap "Skip" to continue without an image.',
-    {
-      parse_mode: 'Markdown',
-      reply_markup: new InlineKeyboard().text('⏭️ Skip', 'image_skip').row(),
-    }
-  );
-
-  // Wait for either an image or skip button
-  const imageCtx = await conversation.wait();
-
-  // Check if it's a skip callback
-  if (imageCtx.callbackQuery?.data === 'image_skip') {
-    await imageCtx.answerCallbackQuery('Skipped image upload').catch(() => {});
-  } else if (
-    imageCtx.message?.photo ||
-    imageCtx.message?.document?.mime_type?.startsWith('image/')
-  ) {
-    // Image uploaded
-    try {
-      let fileId: string;
-
-      let mimeType = 'image/jpeg'; // Default for photos
-      if (imageCtx.message.photo && imageCtx.message.photo.length > 0) {
-        // Get a medium-sized photo (not the largest to avoid size limits)
-        // Telegram provides multiple sizes: index 0 = smallest, last = largest
-        const photoIndex = Math.min(1, imageCtx.message.photo.length - 1);
-        fileId = imageCtx.message.photo[photoIndex].file_id;
-      } else if (imageCtx.message.document) {
-        fileId = imageCtx.message.document.file_id;
-        // Use actual MIME type from document, or detect from file extension
-        const docMimeType = imageCtx.message.document.mime_type;
-        const fileName = imageCtx.message.document.file_name || '';
-        if (docMimeType && docMimeType.startsWith('image/')) {
-          mimeType = docMimeType;
-        } else {
-          // Try to detect from file extension
-          const ext = fileName.split('.').pop()?.toLowerCase();
-          if (ext === 'png') mimeType = 'image/png';
-          else if (ext === 'webp') mimeType = 'image/webp';
-          else if (ext === 'gif') mimeType = 'image/gif';
-          else if (ext === 'bmp') mimeType = 'image/bmp';
-          else mimeType = 'image/jpeg'; // Default
-        }
-      } else {
-        throw new Error('No image found in message');
-      }
-
-      // Get file path from Telegram
-      const file = await ctx.api.getFile(fileId);
-      if (!file.file_path) {
-        throw new Error('Could not get file path from Telegram');
-      }
-
-      // Download the file using native https
-      const fileUrl = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${file.file_path}`;
-
-      const imageBuffer = await new Promise<Buffer>((resolve, reject) => {
-        const url = new URL(fileUrl);
-
-        const options = {
-          hostname: url.hostname,
-          path: url.pathname,
-          method: 'GET',
-          timeout: 30000, // 30 second timeout
-        };
-
-        const req = https.request(options, (res: any) => {
-          if (res.statusCode !== 200) {
-            reject(new Error(`HTTP ${res.statusCode}`));
-            return;
-          }
-
-          const chunks: Buffer[] = [];
-          res.on('data', (chunk: Buffer) => {
-            chunks.push(chunk);
-          });
-
-          res.on('end', () => {
-            const buffer = Buffer.concat(chunks);
-            resolve(buffer);
-          });
-
-          res.on('error', (err: Error) => {
-            reject(err);
-          });
-        });
-
-        req.on('error', (err: Error) => {
-          console.error('[CREATE-TRACK] Request error:', err.message);
-          reject(err);
-        });
-
-        req.on('timeout', () => {
-          req.destroy();
-          reject(new Error('Request timeout'));
-        });
-
-        req.end();
-      });
-
-      // Convert to base64 with size limit (max ~500KB after base64 = ~375KB raw)
-      const MAX_IMAGE_SIZE = 375 * 1024; // 375KB max
-
-      if (imageBuffer.length > MAX_IMAGE_SIZE) {
-        await ctx.reply('⚠️ Image is too large (max 375KB). Continuing without image...');
-        session.imageBase64 = undefined;
-        session.imageMimeType = undefined;
-      } else {
-        session.imageBase64 = imageBuffer.toString('base64');
-        // Use the detected MIME type from the upload
-        session.imageMimeType = mimeType || 'image/jpeg';
-        await ctx.reply('✅ Image uploaded successfully!');
-      }
-    } catch (error) {
-      console.error('[CREATE-TRACK] Image upload error:', error);
-      await ctx.reply('⚠️ Failed to process image. Continuing without image...');
-      session.imageBase64 = undefined;
-      session.imageMimeType = undefined;
-    }
-  } else {
-    await ctx.reply('⏭️ Continuing without image...');
   }
 
   if (session.type !== 'instrumental') {
@@ -226,11 +212,10 @@ export const createTrackScene = createConversation(async function createTrack(
     session.language = undefined;
   }
 
-  // Step 4: Lyrics (for vocal tracks)
   if (session.type !== 'instrumental') {
     await ctx.reply(
       '✍️ *Lyrics*\n\n' +
-        'Would you like to provide your own lyrics text, have AI generate them automatically, or skip?',
+        'Would you like to provide your own lyrics, have AI generate them, or skip?',
       {
         parse_mode: 'Markdown',
         reply_markup: lyricsKeyboard(),
@@ -253,19 +238,13 @@ export const createTrackScene = createConversation(async function createTrack(
       );
       const lyricsMsg = await conversation.waitFor('message:text');
       session.lyrics = lyricsMsg.msg.text.slice(0, 2000);
-    } else if (lyricsChoice === 'lyrics_auto') {
-      // AI will generate lyrics automatically - no user input needed
-      session.lyrics = undefined; // Will be handled by API
     } else {
-      // Skip lyrics
       session.lyrics = undefined;
     }
   }
 
-  // Step 5: Additional Settings
   await ctx.reply(
-    '⚙️ *Additional Settings*\n\n' +
-      'You can customize BPM and intensity, or skip to use defaults.',
+    '⚙️ *Additional Settings*\n\n' + 'Customize BPM and intensity, or skip to use defaults.',
     {
       parse_mode: 'Markdown',
       reply_markup: additionalSettingsKeyboard(),
@@ -315,7 +294,7 @@ export const createTrackScene = createConversation(async function createTrack(
       session.intensity = intensityCtx.callbackQuery.data.replace(
         'intensity_',
         ''
-      ) as CreateTrackData['intensity'];
+      ) as ImageToMusicData['intensity'];
       await intensityCtx.answerCallbackQuery().catch(() => {});
       await ctx.reply('⚙️ *Additional Settings*\n\nAnything else?', {
         parse_mode: 'Markdown',
@@ -326,16 +305,14 @@ export const createTrackScene = createConversation(async function createTrack(
     }
   }
 
-  // Ensure intensity has a value
   if (!session.intensity && settings.intensity) {
-    session.intensity = settings.intensity as CreateTrackData['intensity'];
+    session.intensity = settings.intensity as ImageToMusicData['intensity'];
   } else if (!session.intensity) {
     session.intensity = 'medium';
   }
 
   const cost = session.type === 'clip' ? 1 : session.type === 'instrumental' ? 3 : 5;
 
-  // Escape special Markdown characters in user content
   const escapeMd = (text: string) => text.replace(/([_*[\]()~`>#+-=|{}.!])/g, '\\$1');
 
   await ctx.reply(
@@ -346,7 +323,7 @@ export const createTrackScene = createConversation(async function createTrack(
       `• Intensity: ${session.intensity}\n` +
       `• BPM: ${session.bpm ?? 'Auto'}\n` +
       `• Lyrics: ${session.lyrics ? 'Custom' : session.type !== 'instrumental' ? 'Auto' : 'N/A'}\n` +
-      `• Image: ${session.imageBase64 ? '✅ Yes' : '⏭️ Skipped'}\n` +
+      `• Image: ✅ Yes\n` +
       `• Cost: ${cost} credits\n\n` +
       `Proceed?`,
     {
@@ -406,9 +383,14 @@ export const createTrackScene = createConversation(async function createTrack(
         `You will be notified when your track is ready.`,
       { parse_mode: 'Markdown' }
     );
-  } catch (err) {
+  } catch (error) {
+    console.error('[IMAGE-TO-MUSIC] Error:', error);
     await ctx.reply(
-      `❌ Failed to create track: ${err instanceof Error ? err.message : String(err)}`
+      `❌ Failed to create track: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 });
+
+export const imageToMusicCommand = async (ctx: BotContext & { conversation?: any }) => {
+  await ctx.conversation!.enter('imageToMusic');
+};

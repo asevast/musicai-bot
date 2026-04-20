@@ -24,16 +24,22 @@ export const RETRY_CONFIG: Record<LyriaErrorCode, RetryConfig> = {
 
 export function mapVertexError(error: unknown): LyriaErrorCode {
   const msg = String(error);
-  if (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED')) return LyriaErrorCode.QUOTA_EXCEEDED;
-  if (msg.includes('400') || msg.includes('INVALID_ARGUMENT')) return LyriaErrorCode.INVALID_ARGUMENT;
-  if (msg.includes('403') || msg.includes('PERMISSION_DENIED')) return LyriaErrorCode.PERMISSION_DENIED;
+  if (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED'))
+    return LyriaErrorCode.QUOTA_EXCEEDED;
+  if (msg.includes('400') || msg.includes('INVALID_ARGUMENT'))
+    return LyriaErrorCode.INVALID_ARGUMENT;
+  if (msg.includes('403') || msg.includes('PERMISSION_DENIED'))
+    return LyriaErrorCode.PERMISSION_DENIED;
   if (msg.includes('recitation')) return LyriaErrorCode.RECITATION_FILTER;
   if (msg.includes('vocal_likeness')) return LyriaErrorCode.VOCAL_LIKENESS;
   return LyriaErrorCode.INTERNAL;
 }
 
 export class LyriaGenerationError extends Error {
-  constructor(message: string, public code?: LyriaErrorCode) {
+  constructor(
+    message: string,
+    public code?: LyriaErrorCode
+  ) {
     super(message);
     this.name = 'LyriaGenerationError';
   }

@@ -49,3 +49,22 @@ terraform.*.tfvars
 *service-account*.json
 *service_account*.json
 infra/service-account.json
+
+# AI tool artifacts
+.claude/
+.kilo/
+.opencode/
+.playwright-mcp/
+.turbo/
+
+# Prisma native engine binaries (platform-specific)
+packages/database/src/generated/client/*.so.node
+
+# Temp/session files
+*.png
+CR report*.md
+PRIORITIZED_PLAN.md
+Plan_*.md
+SPEC1*.md
+pr_body*.md
+session-ses_*.md

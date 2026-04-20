@@ -1,5 +1,5 @@
 import { Job } from 'bullmq';
-import { PrismaClient } from '@musicai/database';
+import { prisma } from '@musicai/database';
 import { storageService } from '@musicai/storage';
 import type { NotifyPayload } from '@musicai/shared-types';
 import { Bot, InputFile } from 'grammy';
@@ -8,7 +8,7 @@ import { loadEnv } from '@musicai/config';
 export class NotifyProcessor {
   private bot: Bot;
 
-  constructor(private readonly prisma: PrismaClient) {
+  constructor(private readonly prismaInstance: typeof prisma) {
     this.bot = new Bot(loadEnv().BOT_TOKEN);
   }
 
@@ -22,7 +22,10 @@ export class NotifyProcessor {
       } catch (err: any) {
         if (err?.description?.includes('message is not modified')) {
           console.log('[Notify] Message unchanged, skipping edit');
-        } else if (err?.error_code === 404 || err?.description?.includes('message to edit not found')) {
+        } else if (
+          err?.error_code === 404 ||
+          err?.description?.includes('message to edit not found')
+        ) {
           // Message was deleted or never existed - just log and continue
           console.log('[Notify] Message not found (404), continuing with notification');
         } else {
@@ -33,7 +36,7 @@ export class NotifyProcessor {
 
     // Send the completed track with audio file
     if (trackId) {
-      const track = (await this.prisma.track.findUnique({
+      const track = (await this.prismaInstance.track.findUnique({
         where: { id: trackId },
       })) as { id: string; type: string; prompt: string; gcsUrl?: string | null } | null;
 

@@ -16,39 +16,38 @@ export class LyriaClient {
         ? 'google/lyria-3-clip-preview'
         : 'google/lyria-3-pro-preview';
 
-    // Build messages array with text and optional image
-    const messageContent: Array<{
-      type: 'text' | 'image_url';
-      text?: string;
-      image_url?: { url: string };
-    }> = [{ type: 'text', text: req.prompt }];
-
-    // Add image if provided - use OpenAI vision format with data URL
-    if (req.imageBase64 && req.imageMimeType) {
-      messageContent.push({
-        type: 'image_url',
-        image_url: {
-          url: `data:${req.imageMimeType};base64,${req.imageBase64}`,
-        },
-      });
+    // Build prompt text — embed custom lyrics directly in the prompt.
+    // The proxy does NOT pass top-level `lyrics` / `promptRewriter` params
+    // through to Lyria's generationConfig, so we embed them in the text.
+    let promptText = req.prompt;
+    if (req.lyrics && req.promptRewriter === false) {
+      promptText = `${req.prompt}\n\nLyrics:\n${req.lyrics.trim()}`;
     }
 
-    // Build the request body with all Lyria-specific parameters
+    // Build message content — use array format when image is provided
+    // (OpenAI vision format). Note: the proxy currently does NOT pass images
+    // through to Lyria's image analysis — only the text prompt affects output.
+    // We still send images in case the proxy adds support later.
+    const userContent: string | object[] =
+      req.imageBase64 && req.imageMimeType
+        ? [
+            { type: 'text', text: promptText },
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:${req.imageMimeType};base64,${req.imageBase64}`,
+              },
+            },
+          ]
+        : promptText;
+
     const requestBody: Record<string, unknown> = {
       model,
-      messages: [{ role: 'user', content: messageContent }],
+      messages: [{ role: 'user', content: userContent }],
       stream: true,
     };
 
-    // Add Lyria-specific parameters directly to the body
-    if (req.lyrics) {
-      // Ensure lyrics are properly formatted with section markers
-      requestBody.lyrics = req.lyrics.trim();
-      // When custom lyrics are provided, ensure vocal is true
-      requestBody.vocal = true;
-      // Disable prompt rewriter to use custom lyrics as-is
-      requestBody.promptRewriter = req.promptRewriter ?? false;
-    } else if (req.vocal !== undefined) {
+    if (req.vocal !== undefined) {
       requestBody.vocal = req.vocal;
     }
     if (req.bpm) {
@@ -63,14 +62,7 @@ export class LyriaClient {
     if (req.language) {
       requestBody.language = req.language;
     }
-    if (req.negativePrompt) {
-      requestBody.negativePrompt = req.negativePrompt;
-    }
 
-    // Debug: Log the request body
-    console.log('[LyriaClient] Request body:', JSON.stringify(requestBody, null, 2));
-
-    // Make the fetch request directly
     const response = await fetch(`${this.baseUrl}/chat/completions`, {
       method: 'POST',
       signal: AbortSignal.timeout(200_000),
@@ -102,7 +94,6 @@ export class LyriaClient {
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
-        // Keep the last potentially incomplete line in the buffer
         buffer = lines.pop() ?? '';
 
         for (const line of lines) {
@@ -114,19 +105,25 @@ export class LyriaClient {
 
             try {
               const parsed = JSON.parse(data);
+
+              if (parsed.error) {
+                throw new LyriaGenerationError(
+                  `Lyria API error: ${parsed.error.code || 'UNKNOWN'} - ${parsed.error.message || JSON.stringify(parsed.error)}`
+                );
+              }
+
               const delta = parsed.choices?.[0]?.delta;
               const audio = delta?.audio as { data?: string } | undefined;
               if (audio?.data) {
                 audioChunks.push(audio.data);
               }
-            } catch {
-              // Ignore parse errors for malformed chunks
+            } catch (e) {
+              if (e instanceof LyriaGenerationError) throw e;
             }
           }
         }
       }
 
-      // Process any remaining data in buffer
       if (buffer.trim()) {
         const trimmed = buffer.trim();
         if (trimmed.startsWith('data: ')) {

@@ -1,5 +1,4 @@
 import type { BotContext } from '../bot';
-import type { BotContext } from '../bot';
 import { mainMenuKeyboard } from '../keyboards/main-menu.keyboard';
 
 export const helpCommand = async (ctx: BotContext) => {

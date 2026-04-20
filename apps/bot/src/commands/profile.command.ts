@@ -32,6 +32,6 @@ export const profileCommand = async (ctx: Context) => {
       `• Completed: ${doneTracks}\n` +
       `• Credits spent: ${totalCreditsSpent._sum.creditsCharged ?? 0}\n\n` +
       `Use /buy to get more credits!`,
-    { parse_mode: 'Markdown' },
+    { parse_mode: 'Markdown' }
   );
 };
