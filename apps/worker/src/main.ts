@@ -19,7 +19,7 @@ import { NotifyProcessor } from './processors/notify.processor';
 const env = loadEnv();
 
 const lyriaClient = new LyriaClient(env.LYRIA_API_KEY, env.LYRIA_BASE_URL);
-const synthProcessor = new SynthJobProcessor(prisma, lyriaClient);
+const synthProcessor = new SynthJobProcessor(prisma, lyriaClient, env.REDIS_URL);
 const notifyProcessor = new NotifyProcessor(prisma);
 
 const synthQueues = [QUEUES.SYNTH_PRO_URGENT, QUEUES.SYNTH_PRO_NORMAL, QUEUES.SYNTH_CLIP];

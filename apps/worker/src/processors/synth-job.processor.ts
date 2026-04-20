@@ -1,23 +1,35 @@
 import { Job, Queue } from 'bullmq';
+import IORedis from 'ioredis';
 import { PrismaClient } from '@musicai/database';
 import { LyriaClient } from '@musicai/vertex-ai';
 import { mapVertexError, RETRY_CONFIG } from '@musicai/vertex-ai';
 import { QUEUES, QUEUE_OPTIONS } from '@musicai/queues';
 import { storageService } from '@musicai/storage';
-import type { SynthJobPayload, NotifyPayload } from '@musicai/shared-types';
+import type { SynthJobPayload, NotifyPayload, TrackProgressEvent } from '@musicai/shared-types';
 
 export class SynthJobProcessor {
   private notifyQueue: Queue;
+  private redisPublisher: IORedis;
 
   constructor(
     private readonly prisma: PrismaClient,
-    private readonly lyriaClient: LyriaClient
+    private readonly lyriaClient: LyriaClient,
+    redisUrl: string
   ) {
     this.notifyQueue = new Queue(QUEUES.NOTIFY, QUEUE_OPTIONS);
+    this.redisPublisher = new IORedis(redisUrl);
+  }
+
+  private async publishProgress(event: TrackProgressEvent): Promise<void> {
+    try {
+      await this.redisPublisher.publish('track:progress', JSON.stringify(event));
+    } catch (error) {
+      console.error('[SynthJobProcessor] Failed to publish progress:', error);
+    }
   }
 
   async process(job: Job<SynthJobPayload>): Promise<void> {
-    const { trackId, lyriaRequest, chatId, messageId } = job.data;
+    const { trackId, userId, lyriaRequest, chatId, messageId } = job.data;
 
     await this.prisma.track.update({
       where: { id: trackId },
@@ -27,6 +39,13 @@ export class SynthJobProcessor {
     await this.prisma.synthJob.update({
       where: { trackId },
       data: { startedAt: new Date(), bullJobId: job.id },
+    });
+
+    await this.publishProgress({
+      userId,
+      trackId,
+      status: 'processing',
+      etaSec: 60,
     });
 
     await this.sendNotify({
@@ -69,6 +88,13 @@ export class SynthJobProcessor {
           data: { status: 'failed' },
         });
 
+        await this.publishProgress({
+          userId,
+          trackId,
+          status: 'failed',
+          etaSec: 0,
+        });
+
         await this.sendNotify({
           chatId,
           text: '❌ Track generation failed. Credits have been refunded.',
@@ -103,6 +129,14 @@ export class SynthJobProcessor {
     await this.prisma.synthJob.update({
       where: { trackId },
       data: { finishedAt: new Date() },
+    });
+
+    await this.publishProgress({
+      userId,
+      trackId,
+      status: 'done',
+      gcsUrl,
+      etaSec: 0,
     });
 
     await this.sendNotify({

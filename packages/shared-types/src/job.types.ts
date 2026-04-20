@@ -33,3 +33,12 @@ export interface NotifyPayload {
   gcsUrl?: string;
   errorCode?: string;
 }
+
+export interface TrackProgressEvent {
+  userId: string;
+  trackId: string;
+  status: import('./track.types').TrackStatus;
+  queuePos?: number;
+  etaSec?: number;
+  gcsUrl?: string;
+}
