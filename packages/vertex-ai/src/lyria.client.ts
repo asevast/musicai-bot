@@ -108,7 +108,7 @@ export class LyriaClient {
 
               if (parsed.error) {
                 throw new LyriaGenerationError(
-                  `Lyria API error: ${parsed.error.code || 'UNKNOWN'} - ${parsed.error.message || JSON.stringify(parsed.error)}`,
+                  `Lyria API error: ${parsed.error.code || 'UNKNOWN'} - ${parsed.error.message || JSON.stringify(parsed.error)}`
                 );
               }
 

@@ -30,7 +30,7 @@ type ImageToMusicConversation = Conversation<BotContext>;
 
 async function downloadImage(
   ctx: BotContext,
-  fileId: string,
+  fileId: string
 ): Promise<{ base64: string; mimeType: string } | null> {
   const file = await ctx.api.getFile(fileId);
   if (!file.file_path) throw new Error('Could not get file path from Telegram');
@@ -50,7 +50,7 @@ async function downloadImage(
         res.on('data', (chunk: Buffer) => chunks.push(chunk));
         res.on('end', () => resolve(Buffer.concat(chunks)));
         res.on('error', reject);
-      },
+      }
     );
     req.on('error', reject);
     req.on('timeout', () => {
@@ -67,7 +67,7 @@ async function downloadImage(
 
 export const imageToMusicScene = createConversation(async function imageToMusic(
   conversation: ImageToMusicConversation,
-  ctx: BotContext,
+  ctx: BotContext
 ) {
   const user = ctx.user;
   if (!user) {
@@ -90,12 +90,12 @@ export const imageToMusicScene = createConversation(async function imageToMusic(
 
   await ctx.reply(
     '📸 *Image to Music*\n\n' +
-    'Send me a photo and I\'ll generate music inspired by it!\n\n' +
-    'The AI will analyze the image and combine it with your style preferences.',
+      "Send me a photo and I'll generate music inspired by it!\n\n" +
+      'The AI will analyze the image and combine it with your style preferences.',
     {
       parse_mode: 'Markdown',
       reply_markup: new InlineKeyboard().text('❌ Cancel', 'cancel_image_music'),
-    },
+    }
   );
 
   const imageCtx = await conversation.wait();
@@ -106,11 +106,8 @@ export const imageToMusicScene = createConversation(async function imageToMusic(
     return;
   }
 
-  if (
-    !imageCtx.message?.photo &&
-    !imageCtx.message?.document?.mime_type?.startsWith('image/')
-  ) {
-    await imageCtx.reply('❌ That wasn\'t an image. Please use /image to try again.');
+  if (!imageCtx.message?.photo && !imageCtx.message?.document?.mime_type?.startsWith('image/')) {
+    await imageCtx.reply("❌ That wasn't an image. Please use /image to try again.");
     return;
   }
 
@@ -143,7 +140,7 @@ export const imageToMusicScene = createConversation(async function imageToMusic(
       await imageCtx.api.editMessageText(
         processingMsg.chat.id,
         processingMsg.message_id,
-        '⚠️ Image is too large (max 375KB). Please send a smaller image or use /image to try again.',
+        '⚠️ Image is too large (max 375KB). Please send a smaller image or use /image to try again.'
       );
       return;
     }
@@ -154,14 +151,14 @@ export const imageToMusicScene = createConversation(async function imageToMusic(
     await imageCtx.api.editMessageText(
       processingMsg.chat.id,
       processingMsg.message_id,
-      '✅ Image received! Now let\'s set up your track.',
+      "✅ Image received! Now let's set up your track."
     );
   } catch (error) {
     console.error('[IMAGE-TO-MUSIC] Image processing error:', error);
     await imageCtx.api.editMessageText(
       processingMsg.chat.id,
       processingMsg.message_id,
-      '❌ Failed to process image. Please try again with /image.',
+      '❌ Failed to process image. Please try again with /image.'
     );
     return;
   }
@@ -180,9 +177,9 @@ export const imageToMusicScene = createConversation(async function imageToMusic(
 
   await ctx.reply(
     '📝 *Describe the music style you want:*\n\n' +
-    'Genre, mood, instruments, atmosphere inspired by the image...\n\n' +
-    '*Example:* Cinematic orchestral, epic strings, dark ambient, 80 BPM, dramatic mood',
-    { parse_mode: 'Markdown' },
+      'Genre, mood, instruments, atmosphere inspired by the image...\n\n' +
+      '*Example:* Cinematic orchestral, epic strings, dark ambient, 80 BPM, dramatic mood',
+    { parse_mode: 'Markdown' }
   );
 
   const promptCtx = await conversation.waitFor('message:text');
@@ -200,8 +197,14 @@ export const imageToMusicScene = createConversation(async function imageToMusic(
     });
 
     const langCtx = await conversation.waitForCallbackQuery([
-      'lang_en', 'lang_de', 'lang_es', 'lang_fr',
-      'lang_ja', 'lang_ko', 'lang_hi', 'lang_pt',
+      'lang_en',
+      'lang_de',
+      'lang_es',
+      'lang_fr',
+      'lang_ja',
+      'lang_ko',
+      'lang_hi',
+      'lang_pt',
     ]);
     session.language = langCtx.callbackQuery.data.replace('lang_', '');
     await langCtx.answerCallbackQuery().catch(() => {});
@@ -212,15 +215,17 @@ export const imageToMusicScene = createConversation(async function imageToMusic(
   if (session.type !== 'instrumental') {
     await ctx.reply(
       '✍️ *Lyrics*\n\n' +
-      'Would you like to provide your own lyrics, have AI generate them, or skip?',
+        'Would you like to provide your own lyrics, have AI generate them, or skip?',
       {
         parse_mode: 'Markdown',
         reply_markup: lyricsKeyboard(),
-      },
+      }
     );
 
     const lyricsCtx = await conversation.waitForCallbackQuery([
-      'lyrics_custom', 'lyrics_auto', 'lyrics_skip',
+      'lyrics_custom',
+      'lyrics_auto',
+      'lyrics_skip',
     ]);
     const lyricsChoice = lyricsCtx.callbackQuery.data;
     await lyricsCtx.answerCallbackQuery().catch(() => {});
@@ -228,8 +233,8 @@ export const imageToMusicScene = createConversation(async function imageToMusic(
     if (lyricsChoice === 'lyrics_custom') {
       await ctx.reply(
         '📝 *Enter your lyrics:*\n\n' +
-        'Write your lyrics below. Use line breaks between verses and chorus.',
-        { parse_mode: 'Markdown' },
+          'Write your lyrics below. Use line breaks between verses and chorus.',
+        { parse_mode: 'Markdown' }
       );
       const lyricsMsg = await conversation.waitFor('message:text');
       session.lyrics = lyricsMsg.msg.text.slice(0, 2000);
@@ -239,18 +244,19 @@ export const imageToMusicScene = createConversation(async function imageToMusic(
   }
 
   await ctx.reply(
-    '⚙️ *Additional Settings*\n\n' +
-    'Customize BPM and intensity, or skip to use defaults.',
+    '⚙️ *Additional Settings*\n\n' + 'Customize BPM and intensity, or skip to use defaults.',
     {
       parse_mode: 'Markdown',
       reply_markup: additionalSettingsKeyboard(),
-    },
+    }
   );
 
   let settingsDone = false;
   while (!settingsDone) {
     const settingsCtx = await conversation.waitForCallbackQuery([
-      'settings_bpm', 'settings_intensity', 'settings_skip',
+      'settings_bpm',
+      'settings_intensity',
+      'settings_skip',
     ]);
     const setting = settingsCtx.callbackQuery.data;
     await settingsCtx.answerCallbackQuery().catch(() => {});
@@ -280,10 +286,14 @@ export const imageToMusicScene = createConversation(async function imageToMusic(
         reply_markup: intensityKeyboard(),
       });
       const intensityCtx = await conversation.waitForCallbackQuery([
-        'intensity_low', 'intensity_medium', 'intensity_high', 'intensity_epic',
+        'intensity_low',
+        'intensity_medium',
+        'intensity_high',
+        'intensity_epic',
       ]);
       session.intensity = intensityCtx.callbackQuery.data.replace(
-        'intensity_', '',
+        'intensity_',
+        ''
       ) as ImageToMusicData['intensity'];
       await intensityCtx.answerCallbackQuery().catch(() => {});
       await ctx.reply('⚙️ *Additional Settings*\n\nAnything else?', {
@@ -307,18 +317,18 @@ export const imageToMusicScene = createConversation(async function imageToMusic(
 
   await ctx.reply(
     `📋 Track Summary:\n\n` +
-    `• Type: ${session.type}\n` +
-    `• Prompt: ${escapeMd(session.prompt.slice(0, 100))}${session.prompt.length > 100 ? '...' : ''}\n` +
-    `• Language: ${session.language ?? 'N/A'}\n` +
-    `• Intensity: ${session.intensity}\n` +
-    `• BPM: ${session.bpm ?? 'Auto'}\n` +
-    `• Lyrics: ${session.lyrics ? 'Custom' : session.type !== 'instrumental' ? 'Auto' : 'N/A'}\n` +
-    `• Image: ✅ Yes\n` +
-    `• Cost: ${cost} credits\n\n` +
-    `Proceed?`,
+      `• Type: ${session.type}\n` +
+      `• Prompt: ${escapeMd(session.prompt.slice(0, 100))}${session.prompt.length > 100 ? '...' : ''}\n` +
+      `• Language: ${session.language ?? 'N/A'}\n` +
+      `• Intensity: ${session.intensity}\n` +
+      `• BPM: ${session.bpm ?? 'Auto'}\n` +
+      `• Lyrics: ${session.lyrics ? 'Custom' : session.type !== 'instrumental' ? 'Auto' : 'N/A'}\n` +
+      `• Image: ✅ Yes\n` +
+      `• Cost: ${cost} credits\n\n` +
+      `Proceed?`,
     {
       reply_markup: confirmKeyboard(),
-    },
+    }
   );
 
   const confirmCtx = await conversation.waitForCallbackQuery(['confirm_create', 'cancel_create']);
@@ -330,12 +340,11 @@ export const imageToMusicScene = createConversation(async function imageToMusic(
   }
 
   const statusMsg = await ctx.reply(
-    '🎵 Patience you must have, young padawan... Creating your track...',
+    '🎵 Patience you must have, young padawan... Creating your track...'
   );
 
   try {
-    const model =
-      session.type === 'clip' ? 'lyria-3-clip-preview' : 'lyria-3-pro-preview';
+    const model = session.type === 'clip' ? 'lyria-3-clip-preview' : 'lyria-3-pro-preview';
 
     const response = await fetch(`${API_URL}/tracks`, {
       method: 'POST',
@@ -369,15 +378,15 @@ export const imageToMusicScene = createConversation(async function imageToMusic(
 
     await ctx.reply(
       `✅ *Track queued!*\n\n` +
-      `Track ID: \`${track.id.slice(0, 8)}...\`\n` +
-      `Estimated time: ~45 seconds\n\n` +
-      `You will be notified when your track is ready.`,
-      { parse_mode: 'Markdown' },
+        `Track ID: \`${track.id.slice(0, 8)}...\`\n` +
+        `Estimated time: ~45 seconds\n\n` +
+        `You will be notified when your track is ready.`,
+      { parse_mode: 'Markdown' }
     );
   } catch (error) {
     console.error('[IMAGE-TO-MUSIC] Error:', error);
     await ctx.reply(
-      `❌ Failed to create track: ${error instanceof Error ? error.message : String(error)}`,
+      `❌ Failed to create track: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 });

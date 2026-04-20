@@ -122,54 +122,54 @@ export function setupBot(bot: Bot<BotContext>) {
     await showHistoryPage(ctx, { page: 1, filter: 'all' });
   });
 
-bot.callbackQuery('profile', async (ctx) => {
-  await ctx.answerCallbackQuery();
-  try {
-    await ctx.editMessageText('👤 *My Profile*\n\nView your stats and info:', {
-      parse_mode: 'Markdown',
-      reply_markup: profileMenuKeyboard(),
-    });
-  } catch {
-    // Message not modified - ignore
-  }
-});
-
-bot.callbackQuery('profile_stats', async (ctx) => {
-  const user = ctx.user;
-  if (!user) return ctx.answerCallbackQuery('❌ User not found');
-
-  const totalTracks = await prisma.track.count({ where: { userId: user.id } });
-  const doneTracks = await prisma.track.count({
-    where: { userId: user.id, status: 'done' },
-  });
-  const totalCreditsSpent = await prisma.track.aggregate({
-    where: { userId: user.id, status: 'done' },
-    _sum: { creditsCharged: true },
-  });
-
-  const tierEmoji = { free: '🌟', pro: '💎', unlimited: '👑' }[user.subscriptionTier];
-
-  await ctx.answerCallbackQuery();
-  try {
-    await ctx.editMessageText(
-      `📊 *Stats*\n\n` +
-        `${tierEmoji} Tier: ${user.subscriptionTier}\n` +
-        `💰 Credits: ${user.credits}\n\n` +
-        `• Total tracks: ${totalTracks}\n` +
-        `• Completed: ${doneTracks}\n` +
-        `• Credits spent: ${totalCreditsSpent._sum.creditsCharged ?? 0}\n\n` +
-        `Use /buy to get more credits!`,
-      {
+  bot.callbackQuery('profile', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    try {
+      await ctx.editMessageText('👤 *My Profile*\n\nView your stats and info:', {
         parse_mode: 'Markdown',
         reply_markup: profileMenuKeyboard(),
-      },
-    );
-  } catch {
-    // Message not modified - ignore
-  }
-});
+      });
+    } catch {
+      // Message not modified - ignore
+    }
+  });
 
-bot.callbackQuery('settings', async (ctx) => {
+  bot.callbackQuery('profile_stats', async (ctx) => {
+    const user = ctx.user;
+    if (!user) return ctx.answerCallbackQuery('❌ User not found');
+
+    const totalTracks = await prisma.track.count({ where: { userId: user.id } });
+    const doneTracks = await prisma.track.count({
+      where: { userId: user.id, status: 'done' },
+    });
+    const totalCreditsSpent = await prisma.track.aggregate({
+      where: { userId: user.id, status: 'done' },
+      _sum: { creditsCharged: true },
+    });
+
+    const tierEmoji = { free: '🌟', pro: '💎', unlimited: '👑' }[user.subscriptionTier];
+
+    await ctx.answerCallbackQuery();
+    try {
+      await ctx.editMessageText(
+        `📊 *Stats*\n\n` +
+          `${tierEmoji} Tier: ${user.subscriptionTier}\n` +
+          `💰 Credits: ${user.credits}\n\n` +
+          `• Total tracks: ${totalTracks}\n` +
+          `• Completed: ${doneTracks}\n` +
+          `• Credits spent: ${totalCreditsSpent._sum.creditsCharged ?? 0}\n\n` +
+          `Use /buy to get more credits!`,
+        {
+          parse_mode: 'Markdown',
+          reply_markup: profileMenuKeyboard(),
+        }
+      );
+    } catch {
+      // Message not modified - ignore
+    }
+  });
+
+  bot.callbackQuery('settings', async (ctx) => {
     await ctx.answerCallbackQuery();
     const user = ctx.user;
     if (!user) {

@@ -81,53 +81,53 @@ export class SynthJobProcessor {
         attemptsMade: job.attemptsMade,
         opts: { delay: retryConfig.delay },
       });
-     }
+    }
 
-  // Post-Lyria processing (may throw)
-  try {
-    const audioBuffer = Buffer.from(lyriaResponse.audioBase64, 'base64');
-    const storageKey = await storageService.uploadTrack(audioBuffer, trackId);
-    const gcsUrl = storageService.getPublicUrl(storageKey);
-    const durationSec = this.estimateDuration(audioBuffer);
+    // Post-Lyria processing (may throw)
+    try {
+      const audioBuffer = Buffer.from(lyriaResponse.audioBase64, 'base64');
+      const storageKey = await storageService.uploadTrack(audioBuffer, trackId);
+      const gcsUrl = storageService.getPublicUrl(storageKey);
+      const durationSec = this.estimateDuration(audioBuffer);
 
-    await this.prismaInstance.track.update({
-      where: { id: trackId },
-      data: {
-        status: 'done',
-        gcsUrl,
-        revisedPrompt: lyriaResponse.revisedPrompt,
-        durationSec,
-      },
-    });
+      await this.prismaInstance.track.update({
+        where: { id: trackId },
+        data: {
+          status: 'done',
+          gcsUrl,
+          revisedPrompt: lyriaResponse.revisedPrompt,
+          durationSec,
+        },
+      });
 
-    await this.prismaInstance.synthJob.update({
-      where: { trackId },
-      data: { finishedAt: new Date() },
-    });
+      await this.prismaInstance.synthJob.update({
+        where: { trackId },
+        data: { finishedAt: new Date() },
+      });
 
-    await this.sendNotify({
-      chatId,
-      messageId,
-      text: '✅ Your track is ready!',
-      trackId,
-    });
-  } catch (postError: any) {
-    console.error('[SynthJobProcessor] Post-Lyria error:', {
-      trackId,
-      errorMessage: postError.message,
-    });
-    await this.refund(trackId);
-    await this.prismaInstance.track.update({
-      where: { id: trackId },
-      data: { status: 'failed' },
-    });
-    await this.sendNotify({
-      chatId,
-      messageId,
-      text: '❌ Track generation failed after audio generation. Credits have been refunded.',
-    });
-    return;
-  }
+      await this.sendNotify({
+        chatId,
+        messageId,
+        text: '✅ Your track is ready!',
+        trackId,
+      });
+    } catch (postError: any) {
+      console.error('[SynthJobProcessor] Post-Lyria error:', {
+        trackId,
+        errorMessage: postError.message,
+      });
+      await this.refund(trackId);
+      await this.prismaInstance.track.update({
+        where: { id: trackId },
+        data: { status: 'failed' },
+      });
+      await this.sendNotify({
+        chatId,
+        messageId,
+        text: '❌ Track generation failed after audio generation. Credits have been refunded.',
+      });
+      return;
+    }
   }
 
   private async sendNotify(payload: NotifyPayload): Promise<void> {

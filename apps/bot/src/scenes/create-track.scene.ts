@@ -99,7 +99,7 @@ export const createTrackScene = createConversation(async function createTrack(
     imageCtx.message?.document?.mime_type?.startsWith('image/')
   ) {
     // Image uploaded
-  try {
+    try {
       let fileId: string;
 
       let mimeType = 'image/jpeg'; // Default for photos
@@ -265,11 +265,11 @@ export const createTrackScene = createConversation(async function createTrack(
   // Step 5: Additional Settings
   await ctx.reply(
     '⚙️ *Additional Settings*\n\n' +
-    'You can customize BPM and intensity, or skip to use defaults.',
+      'You can customize BPM and intensity, or skip to use defaults.',
     {
       parse_mode: 'Markdown',
       reply_markup: additionalSettingsKeyboard(),
-    },
+    }
   );
 
   let settingsDone = false;
@@ -313,7 +313,8 @@ export const createTrackScene = createConversation(async function createTrack(
         'intensity_epic',
       ]);
       session.intensity = intensityCtx.callbackQuery.data.replace(
-        'intensity_', '',
+        'intensity_',
+        ''
       ) as CreateTrackData['intensity'];
       await intensityCtx.answerCallbackQuery().catch(() => {});
       await ctx.reply('⚙️ *Additional Settings*\n\nAnything else?', {
@@ -344,8 +345,8 @@ export const createTrackScene = createConversation(async function createTrack(
       `• Language: ${session.language ?? 'N/A'}\n` +
       `• Intensity: ${session.intensity}\n` +
       `• BPM: ${session.bpm ?? 'Auto'}\n` +
-    `• Lyrics: ${session.lyrics ? 'Custom' : session.type !== 'instrumental' ? 'Auto' : 'N/A'}\n` +
-    `• Image: ${session.imageBase64 ? '✅ Yes' : '⏭️ Skipped'}\n` +
+      `• Lyrics: ${session.lyrics ? 'Custom' : session.type !== 'instrumental' ? 'Auto' : 'N/A'}\n` +
+      `• Image: ${session.imageBase64 ? '✅ Yes' : '⏭️ Skipped'}\n` +
       `• Cost: ${cost} credits\n\n` +
       `Proceed?`,
     {
@@ -368,7 +369,7 @@ export const createTrackScene = createConversation(async function createTrack(
   try {
     const model = session.type === 'clip' ? 'lyria-3-clip-preview' : 'lyria-3-pro-preview';
 
-      const response = await fetch(`${API_URL}/tracks`, {
+    const response = await fetch(`${API_URL}/tracks`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -389,9 +390,9 @@ export const createTrackScene = createConversation(async function createTrack(
         chatId: ctx.chat?.id,
         messageId: statusMsg.message_id,
       }),
-      });
+    });
 
-      if (!response.ok) {
+    if (!response.ok) {
       const error = await response.text();
       throw new Error(error);
     }

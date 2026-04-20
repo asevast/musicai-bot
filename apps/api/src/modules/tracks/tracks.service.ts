@@ -38,16 +38,11 @@ export class TracksService {
   async createTrack(telegramId: string, dto: CreateTrackDto): Promise<Track> {
     this.validateDto(dto);
 
-    let user: any;
-    try {
-      user = await prisma.user.findUniqueOrThrow({
-        where: { telegramId: Number(telegramId) },
-      });
-    } catch (error) {
-      throw error;
-    }
+  let user = await prisma.user.findUniqueOrThrow({
+    where: { telegramId: Number(telegramId) },
+  });
 
-    if (
+  if (
       user.subscriptionTier !== 'free' &&
       user.subscriptionExpiresAt &&
       user.subscriptionExpiresAt <= new Date()
@@ -71,12 +66,12 @@ export class TracksService {
 
     const track = await prisma.$transaction(async (tx) => {
       const createdTrack = await tx.track.create({
-      data: {
-        userId,
-        model: dto.model,
-        type: dto.type,
-        prompt: dto.prompt,
-        lyrics: dto.lyrics,
+        data: {
+          userId,
+          model: dto.model,
+          type: dto.type,
+          prompt: dto.prompt,
+          lyrics: dto.lyrics,
           parameters: {
             bpm: dto.bpm,
             intensity: dto.intensity,
