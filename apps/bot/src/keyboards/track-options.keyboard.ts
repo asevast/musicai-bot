@@ -62,5 +62,5 @@ export const trackActionKeyboard = (trackId: string) =>
     .text('🔄 Regenerate', `regen_${trackId}`)
     .text('📤 Share', `share_${trackId}`)
     .row()
-    .text('📋 Copy Prompt', `copy_${trackId}`)
+    .text('📋 Copy Prompt', `copy_prompt_${trackId}`)
     .text('❤️ To Library', `library_${trackId}`);
