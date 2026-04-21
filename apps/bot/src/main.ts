@@ -13,7 +13,7 @@ if (!process.env.BOT_TOKEN) {
 import { Bot, MemorySessionStorage } from 'grammy';
 import { loadEnv } from '@musicai/config';
 import { prisma } from '@musicai/database';
-import { setupBot } from './bot';
+import { setupBot, type BotContext } from './bot';
 import { createServer } from 'http';
 
 interface TelegramUpdate {
@@ -40,7 +40,7 @@ async function main() {
   console.log('[MAIN] DATABASE_URL:', env.DATABASE_URL ? 'set' : 'MISSING');
   console.log('[MAIN] WEBHOOK_URL:', env.WEBHOOK_URL || 'not set (polling)');
 
-  const bot = new Bot(env.BOT_TOKEN);
+  const bot = new Bot<BotContext>(env.BOT_TOKEN);
   console.log('[MAIN] Bot instance created');
 
   console.log('[MAIN] Calling setupBot...');

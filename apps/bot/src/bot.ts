@@ -1,5 +1,5 @@
 import { Bot, session, InlineKeyboard, InputFile } from 'grammy';
-import type { Context } from 'grammy';
+import type { Context, SessionFlavor } from 'grammy';
 import { conversations } from '@grammyjs/conversations';
 import { loadEnv } from '@musicai/config';
 import { prisma } from '@musicai/database';
@@ -44,7 +44,12 @@ import {
   parseUserSettings,
 } from './utils/user-settings';
 
-export type BotContext = Context;
+// Define session data interface
+interface SessionData {
+  awaitingRegenLyrics?: string;
+}
+
+export type BotContext = Context & SessionFlavor<SessionData>;
 
 const renderSettingsText = (settings: ReturnType<typeof parseUserSettings>) =>
   `⚙️ *Settings*\n\n${buildSettingsSummary(settings)}\n\nConfigure your preferences:`;
@@ -587,22 +592,123 @@ await ctx.reply(
     const cost = track.model === 'lyria-3-clip-preview' ? 1 : 3;
     const discount = Math.max(1, Math.floor(cost * 0.5));
 
+    // Show current lyrics if any
+    const lyricsInfo = track.lyrics
+      ? `\n📝 <b>Current lyrics:</b>\n<i>${track.lyrics.slice(0, 100)}${track.lyrics.length > 100 ? '...' : ''}</i>\n`
+      : '\n🎵 <i>No custom lyrics (auto-generated)</i>\n';
+
     const confirmKeyboard = new InlineKeyboard()
       .text('✅ Create (50% off: ' + discount + ' credits)', `confirm_regen_${trackId}`)
+      .row()
+      .text('✏️ Edit Lyrics', `edit_regen_lyrics_${trackId}`)
       .row()
       .text('❌ Cancel', 'cancel_regen');
 
     await ctx.answerCallbackQuery();
-await ctx.reply(
-  '🔄 <b>Regenerate Track</b>\n\n' +
-    `This will create a new track with the same settings:\n` +
-    `• Type: ${track.type}\n` +
-    `• Model: ${track.model}\n` +
-    `• Prompt: ${track.prompt.slice(0, 50)}...\n\n` +
-    `You can edit the lyrics in the next step.\n` +
-    `Cost: ${discount} credits (50% discount)`,
-  { parse_mode: 'HTML', reply_markup: confirmKeyboard },
-);
+    await ctx.reply(
+      '🔄 <b>Regenerate Track</b>\n\n' +
+        `This will create a new track with the same settings:\n` +
+        `• Type: ${track.type}\n` +
+        `• Model: ${track.model}\n` +
+        `• Prompt: ${track.prompt.slice(0, 50)}...\n` +
+        lyricsInfo +
+        `\nCost: ${discount} credits (50% discount)`,
+      { parse_mode: 'HTML', reply_markup: confirmKeyboard },
+    );
+  });
+
+  // Handle edit lyrics for regeneration
+  bot.callbackQuery(/^edit_regen_lyrics_/, async (ctx) => {
+    const trackId = ctx.callbackQuery.data.replace('edit_regen_lyrics_', '');
+    const user = ctx.user;
+    if (!user) return ctx.answerCallbackQuery('❌ User not found');
+
+    const track = await prisma.track.findFirst({
+      where: { id: trackId, userId: user.id, status: 'done' },
+    });
+
+    if (!track) {
+      return ctx.answerCallbackQuery('❌ Track not found');
+    }
+
+    await ctx.answerCallbackQuery();
+
+    // Ask for new lyrics
+    const cancelKeyboard = new InlineKeyboard().text('❌ Cancel', 'cancel_regen_lyrics');
+
+    await ctx.reply(
+      '📝 <b>Edit Lyrics for Regeneration</b>\n\n' +
+        `Current lyrics:\n<i>${track.lyrics || '(auto-generated)'}</i>\n\n` +
+        `Send me the new lyrics, or click Cancel to keep the current ones.`,
+      { parse_mode: 'HTML', reply_markup: cancelKeyboard },
+    );
+
+    // Store the trackId in session for the next message handler
+    ctx.session.awaitingRegenLyrics = trackId;
+  });
+
+  // Handle lyrics input for regeneration
+  bot.on('message:text', async (ctx, next) => {
+    const trackId = ctx.session.awaitingRegenLyrics;
+    if (!trackId) return next();
+
+    // Clear the awaiting state
+    delete ctx.session.awaitingRegenLyrics;
+
+    const user = ctx.user;
+    if (!user) {
+      return ctx.reply('❌ User not found');
+    }
+
+    const track = await prisma.track.findFirst({
+      where: { id: trackId, userId: user.id, status: 'done' },
+    });
+
+    if (!track) {
+      return ctx.reply('❌ Track not found');
+    }
+
+    const newLyrics = ctx.message.text.trim();
+    const params = track.parameters as Record<string, unknown>;
+    const cost = track.model === 'lyria-3-clip-preview' ? 1 : 3;
+    const discount = Math.max(1, Math.floor(cost * 0.5));
+
+    // Create track with new lyrics
+    const API_URL = process.env.API_URL || 'http://api:3000';
+    const response = await fetch(`${API_URL}/tracks`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Id': user.telegramId.toString(),
+      },
+      body: JSON.stringify({
+        model: track.model,
+        type: track.type,
+        prompt: track.prompt,
+        lyrics: newLyrics || undefined,
+        bpm: params.bpm,
+        intensity: params.intensity,
+        language: params.language,
+        promptRewriter: newLyrics ? false : undefined,
+        telegramId: user.telegramId.toString(),
+        chatId: ctx.chat?.id,
+        isRegeneration: true,
+        sourceTrackId: trackId,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      return ctx.reply('❌ Failed to create track: ' + error);
+    }
+
+    await ctx.reply('🎵 Your track is being regenerated with new lyrics and a 50% discount!');
+  });
+
+  bot.callbackQuery('cancel_regen_lyrics', async (ctx) => {
+    delete ctx.session.awaitingRegenLyrics;
+    await ctx.answerCallbackQuery('Cancelled');
+    await ctx.reply('❌ Lyrics edit cancelled. You can still regenerate with current settings.');
   });
 
   bot.callbackQuery(/^confirm_regen_/, async (ctx) => {
