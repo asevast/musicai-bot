@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:e2e": "vitest run e2e/",
+    "smoke": "pnpm build && echo \"Build OK - ready for Cloudflare Pages\""
   },
   "dependencies": {
     "@musicai/shared-types": "workspace:*",
