@@ -52,7 +52,7 @@ Requirements:
 Format your response with clear section markers.`;
 
     const requestBody = {
-      model: 'gemini-2.0-flash-exp',
+      model: 'google/gemini-2.5-flash',
       messages: [{ role: 'user', content: prompt }],
       stream: false,
       temperature: 0.8,
