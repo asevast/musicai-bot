@@ -1,0 +1,480 @@
+# Instincts generated from https://github.com/asevast/musicai-bot
+# Generated: 2026-04-21T21:20:40.852Z
+# Version: 2.0
+# NOTE: This file supplements (does not replace) any existing curated instincts.
+# High-confidence manually curated instincts should be preserved alongside these.
+
+---
+id: musicai-bot-commit-conventional
+trigger: "when writing a commit message"
+confidence: 0.85
+domain: git
+source: repo-analysis
+source_repo: https://github.com/asevast/musicai-bot
+---
+
+# Musicai Bot Commit Conventional
+
+## Action
+
+Use conventional commit format with prefixes: feat, fix
+
+## Evidence
+
+- 9 commits analyzed
+- Detected conventional commit pattern
+- Examples: fix: switch to HTML parse mode for messages containing user prompts, feat: add lyrics editing to Regen flow
+
+---
+id: musicai-bot-commit-length
+trigger: "when writing a commit message"
+confidence: 0.6
+domain: git
+source: repo-analysis
+source_repo: https://github.com/asevast/musicai-bot
+---
+
+# Musicai Bot Commit Length
+
+## Action
+
+Write moderate-length commit messages (~52 characters)
+
+## Evidence
+
+- Average commit message length: 52 chars
+- Based on 9 commits
+
+---
+id: musicai-bot-naming-files
+trigger: "when creating a new file"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/asevast/musicai-bot
+---
+
+# Musicai Bot Naming Files
+
+## Action
+
+Use camelCase naming convention
+
+## Evidence
+
+- Analyzed file naming patterns in repository
+- Dominant pattern: camelCase
+
+---
+id: musicai-bot-import-relative
+trigger: "when importing modules"
+confidence: 0.75
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/asevast/musicai-bot
+---
+
+# Musicai Bot Import Relative
+
+## Action
+
+Use relative imports for project files
+
+## Evidence
+
+- Import analysis shows relative import pattern
+- Example: import { x } from '../lib/x'
+
+---
+id: musicai-bot-export-style
+trigger: "when exporting from a module"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/asevast/musicai-bot
+---
+
+# Musicai Bot Export Style
+
+## Action
+
+Prefer named exports
+
+## Evidence
+
+- Export pattern analysis
+- Dominant style: named
+
+---
+id: musicai-bot-arch-feature-based
+trigger: "when adding a new feature"
+confidence: 0.85
+domain: architecture
+source: repo-analysis
+source_repo: https://github.com/asevast/musicai-bot
+---
+
+# Musicai Bot Arch Feature Based
+
+## Action
+
+Create a new folder in src/features/ with all related code colocated
+
+## Evidence
+
+- Feature-based module organization detected
+- Structure: src/features/[feature-name]/
+
+---
+id: musicai-bot-workflow-feature-development
+trigger: "when implementing a new feature"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/asevast/musicai-bot
+---
+
+# Musicai Bot Workflow Feature Development
+
+## Action
+
+Follow the feature-development workflow:
+1. Add feature implementation
+2. Add tests for feature
+3. Update documentation
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~20x per month
+- Files: apps/bot/src/*, apps/bot/src/commands/*, packages/vertex-ai/src/*
+
+---
+id: musicai-bot-workflow-add-new-bot-command
+trigger: "when doing add new bot command"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/asevast/musicai-bot
+---
+
+# Musicai Bot Workflow Add New Bot Command
+
+## Action
+
+Follow the add-new-bot-command workflow:
+1. Create or update command handler file in apps/bot/src/commands or apps/bot/src/inline
+2. Update apps/bot/src/bot.ts to register the new command or handler
+3. Update session or state handling as needed in apps/bot/src/main.ts or related files
+4. Implement user interaction logic (callbacks, button handlers, etc.)
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: apps/bot/src/bot.ts, apps/bot/src/commands/*.ts, apps/bot/src/inline/*.ts
+
+---
+id: musicai-bot-workflow-integrate-external-ai-api
+trigger: "when doing integrate external ai api"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/asevast/musicai-bot
+---
+
+# Musicai Bot Workflow Integrate External Ai Api
+
+## Action
+
+Follow the integrate-external-ai-api workflow:
+1. Create or update client class in packages/vertex-ai/src (e.g., gemini.client.ts, lyria.client.ts)
+2. Export client in packages/vertex-ai/src/index.ts
+3. Update or add error handling (e.g., circuit breaker, error mapping)
+4. Update dependencies in relevant package.json files
+5. Update bot command handlers to use new/updated client
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: packages/vertex-ai/src/*.ts, packages/vertex-ai/src/index.ts, packages/vertex-ai/package.json
+
+---
+id: musicai-bot-workflow-fix-ai-api-integration
+trigger: "when doing fix ai api integration"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/asevast/musicai-bot
+---
+
+# Musicai Bot Workflow Fix Ai Api Integration
+
+## Action
+
+Follow the fix-ai-api-integration workflow:
+1. Update client implementation or configuration in packages/vertex-ai/src/*.ts
+2. Update package.json if module resolution or dependencies are affected
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: packages/vertex-ai/src/*.ts, packages/vertex-ai/package.json
+
+---
+id: musicai-bot-instinct-file-naming
+trigger: "When creating a new file in the codebase"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: asevast/musicai-bot
+---
+
+# Musicai Bot Instinct File Naming
+
+## Action
+
+Name the file using camelCase (e.g., lyricsCommand.ts)
+
+## Evidence
+
+- Pattern in namingConventions.files
+- apps/bot/src/commands/lyrics.command.ts
+
+---
+id: musicai-bot-instinct-function-naming
+trigger: "When defining a new function"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: asevast/musicai-bot
+---
+
+# Musicai Bot Instinct Function Naming
+
+## Action
+
+Name the function using camelCase (e.g., generateLyrics)
+
+## Evidence
+
+- Pattern in namingConventions.functions
+
+---
+id: musicai-bot-instinct-class-naming
+trigger: "When defining a new class"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: asevast/musicai-bot
+---
+
+# Musicai Bot Instinct Class Naming
+
+## Action
+
+Name the class using PascalCase (e.g., GeminiClient)
+
+## Evidence
+
+- Pattern in namingConventions.classes
+- packages/vertex-ai/src/gemini.client.ts
+
+---
+id: musicai-bot-instinct-constant-naming
+trigger: "When defining a constant"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: asevast/musicai-bot
+---
+
+# Musicai Bot Instinct Constant Naming
+
+## Action
+
+Name the constant using SCREAMING_SNAKE_CASE (e.g., DEFAULT_TIMEOUT)
+
+## Evidence
+
+- Pattern in namingConventions.constants
+
+---
+id: musicai-bot-instinct-import-style
+trigger: "When importing modules"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: asevast/musicai-bot
+---
+
+# Musicai Bot Instinct Import Style
+
+## Action
+
+Use relative import paths (e.g., import { X } from './file')
+
+## Evidence
+
+- Pattern in importStyle: relative
+
+---
+id: musicai-bot-instinct-export-style
+trigger: "When exporting modules or functions"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: asevast/musicai-bot
+---
+
+# Musicai Bot Instinct Export Style
+
+## Action
+
+Use named exports (e.g., export { X })
+
+## Evidence
+
+- Pattern in exportStyle: named
+
+---
+id: musicai-bot-instinct-test-location
+trigger: "When adding tests for new or existing features"
+confidence: 0.7
+domain: testing
+source: repo-analysis
+source_repo: asevast/musicai-bot
+---
+
+# Musicai Bot Instinct Test Location
+
+## Action
+
+Place test files alongside implementation files (mixed location)
+
+## Evidence
+
+- testLocation: mixed
+- Pattern in files: **/*.test.*
+
+---
+id: musicai-bot-instinct-test-feature
+trigger: "When implementing a new feature"
+confidence: 0.8
+domain: testing
+source: repo-analysis
+source_repo: asevast/musicai-bot
+---
+
+# Musicai Bot Instinct Test Feature
+
+## Action
+
+Add corresponding test files to verify the feature works as intended
+
+## Evidence
+
+- feature-development workflow: Add tests for feature
+- Pattern in files: **/*.test.*
+
+---
+id: musicai-bot-instinct-git-commit-format
+trigger: "When writing a commit message"
+confidence: 0.9
+domain: git
+source: repo-analysis
+source_repo: asevast/musicai-bot
+---
+
+# Musicai Bot Instinct Git Commit Format
+
+## Action
+
+Use conventional commit format with 'feat' or 'fix' prefix (e.g., feat: add lyrics editing to Regen flow)
+
+## Evidence
+
+- Pattern in commits.prefixes
+- Examples: 'feat: ...', 'fix: ...'
+
+---
+id: musicai-bot-instinct-git-commit-length
+trigger: "When composing a commit message"
+confidence: 0.7
+domain: git
+source: repo-analysis
+source_repo: asevast/musicai-bot
+---
+
+# Musicai Bot Instinct Git Commit Length
+
+## Action
+
+Keep the commit message concise, around 52 characters on average
+
+## Evidence
+
+- commits.averageLength: 52
+
+---
+id: musicai-bot-instinct-add-bot-command
+trigger: "When someone wants to add a new command or feature to the bot"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: asevast/musicai-bot
+---
+
+# Musicai Bot Instinct Add Bot Command
+
+## Action
+
+Follow the add-new-bot-command workflow: create/update command handler in apps/bot/src/commands or apps/bot/src/inline, register in apps/bot/src/bot.ts, update session/state in apps/bot/src/main.ts, implement user interaction logic
+
+## Evidence
+
+- add-new-bot-command workflow
+- Commits: feat: add /lyrics command for standalone lyrics generation
+
+---
+id: musicai-bot-instinct-integrate-ai-api
+trigger: "When someone wants to add or update an external AI service for text or music generation"
+confidence: 0.85
+domain: workflow
+source: repo-analysis
+source_repo: asevast/musicai-bot
+---
+
+# Musicai Bot Instinct Integrate Ai Api
+
+## Action
+
+Follow the integrate-external-ai-api workflow: create/update client in packages/vertex-ai/src, export in index.ts, update error handling, update dependencies, update bot command handlers
+
+## Evidence
+
+- integrate-external-ai-api workflow
+- Commits: feat: implement real lyrics generation via Gemini API
+
+---
+id: musicai-bot-instinct-fix-ai-api
+trigger: "When someone needs to resolve bugs or update configuration for AI API clients"
+confidence: 0.85
+domain: workflow
+source: repo-analysis
+source_repo: asevast/musicai-bot
+---
+
+# Musicai Bot Instinct Fix Ai Api
+
+## Action
+
+Follow the fix-ai-api-integration workflow: update client implementation/config in packages/vertex-ai/src/*.ts, update package.json if needed
+
+## Evidence
+
+- fix-ai-api-integration workflow
+- Commits: fix: use correct Gemini model name for lyrics generation
+
