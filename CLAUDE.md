@@ -50,17 +50,20 @@ Telegram → Bot (grammY, webhook port 3001)
 ```
 
 **Design principles:**
+
 - **CQRS** — Commands (generation, purchase) go through BullMQ; Queries (history, profile) read directly via Prisma
 - **Event-driven** — track completion published via Redis Pub/Sub → Bot sends audio
 - **Repository pattern** — all DB access through `*.repository.ts`, never directly from services
 - **Circuit breaker** — wraps Vertex AI client; 3 consecutive 500s → open state for 30s
 
 **Apps** (`apps/`):
+
 - `bot/` — grammY Telegram bot. Commands in `commands/*.command.ts`, keyboards in `keyboards/*.keyboard.ts`, scenes in `scenes/`, middleware in `middleware/`. Uses `ConversationScene` for multi-step flows.
 - `api/` — NestJS REST API. Modules: `tracks`, `users`, `credits`, `payments`. Auth via `TelegramAuthGuard` reading `X-Telegram-Id` header. Controllers use guards, services contain business logic.
 - `worker/` — BullMQ processors in `processors/*.processor.ts`. `SynthJobProcessor` handles generation; `NotifyProcessor` handles Telegram notifications.
 
 **Packages** (`packages/`):
+
 - `config` — Zod-based env validation via `loadEnv()`
 - `database` — Prisma schema + singleton client (global caching for dev hot-reload)
 - `queues` — BullMQ queue config, `SynthJobProducer`, `NotifyJobProducer`
@@ -74,14 +77,15 @@ Telegram → Bot (grammY, webhook port 3001)
 
 Two models with a hard quota of **10 req/min per region**:
 
-| Model | Max duration | Use case |
-|---|---|---|
-| `lyria-3-pro-preview` | 184s | Full songs, duration controls |
-| `lyria-3-clip-preview` | 30s | Fast previews, no duration controls |
+| Model                  | Max duration | Use case                            |
+| ---------------------- | ------------ | ----------------------------------- |
+| `lyria-3-pro-preview`  | 184s         | Full songs, duration controls       |
+| `lyria-3-clip-preview` | 30s          | Fast previews, no duration controls |
 
 Capabilities: text-to-music, image-to-music, vocal generation, instrumental mode, lyrics (AI or user-provided), negative prompting, BPM/intensity controls, prompt rewriter. Output: audio/mp3, 44100 Hz, 192 kbps.
 
 **Lyria 3 limitations** (see SPEC12 §13 for workarounds):
+
 - No multi-turn editing — any change requires full regeneration
 - No inpainting — can't edit a section
 - No audio-to-audio — text/image input only
@@ -92,6 +96,7 @@ Capabilities: text-to-music, image-to-music, vocal generation, instrumental mode
 ## Database
 
 Prisma schema at `packages/database/prisma/schema.prisma`. Key models:
+
 - `User` — Telegram users, `subscriptionTier` (free/pro/unlimited), credits balance, referral support
 - `Track` — Generated tracks with `status` (queued/processing/done/failed), `type` (full_song/clip/instrumental), stored parameters as JSON
 - `SynthJob` — Links to Track, stores BullMQ job ID, attempt count, error codes, timing
@@ -103,19 +108,20 @@ Prisma transactions are used for atomic credit deduction + track creation.
 
 BullMQ queues in `packages/queues/src/queues.config.ts`. Queue selection by model and user tier:
 
-| Queue | Concurrency | Rate limit | Purpose |
-|---|---|---|---|
-| `synth-pro-urgent` | 2 | max 8/60s | Paid users (priority 10) |
-| `synth-pro-normal` | 3 | max 8/60s | Free users (priority 1) |
-| `synth-clip` | 5 | max 9/60s | Clip generation |
-| `notify` | 10 | — | Telegram notifications |
-| `synth-dlq` | — | — | Dead letter queue |
+| Queue              | Concurrency | Rate limit | Purpose                  |
+| ------------------ | ----------- | ---------- | ------------------------ |
+| `synth-pro-urgent` | 2           | max 8/60s  | Paid users (priority 10) |
+| `synth-pro-normal` | 3           | max 8/60s  | Free users (priority 1)  |
+| `synth-clip`       | 5           | max 9/60s  | Clip generation          |
+| `notify`           | 10          | —          | Telegram notifications   |
+| `synth-dlq`        | —           | —          | Dead letter queue        |
 
 Sum of rate limits must not exceed Vertex AI quota (10 req/min). Jobs retry 5 times with exponential backoff (5s base). Non-retryable errors (invalid argument, permission denied, recitation filter, vocal likeness) → immediate fail + credit refund. Failed jobs after max attempts → DLQ + refund.
 
 ## Credits & Monetization
 
 **Cost per operation:**
+
 - Clip 30s: 1 credit
 - Pro <=60s: 3 credits
 - Pro 61-184s: 5 credits

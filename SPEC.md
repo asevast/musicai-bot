@@ -27,23 +27,23 @@
 
 ## 1. Технологический стек
 
-| Слой | Технология | Версия | Пакет |
-|---|---|---|---|
-| **Telegram Bot** | grammY | `^1.30` | `grammy` |
-| **Backend** | NestJS | `^11` | `@nestjs/core` |
-| **Язык** | TypeScript | `^5.4` | — |
-| **Job Queue** | BullMQ | `^5` | `bullmq` |
-| **ORM** | Prisma | `^6` | `prisma` |
-| **Database** | PostgreSQL | `^16` | `pg` |
-| **Cache / Sessions** | Redis (Dragonfly) | `^8` | `ioredis` |
-| **Object Storage** | Google Cloud Storage | latest | `@google-cloud/storage` |
-| **AI API** | Vertex AI (Lyria 3) | latest | `@google-cloud/vertexai` |
-| **Validation** | Zod + class-validator | latest | `zod` |
-| **Logging** | Pino | `^9` | `pino` |
-| **Tracing** | OpenTelemetry | latest | `@opentelemetry/sdk-node` |
-| **Testing** | Jest + Testcontainers | latest | `jest` |
-| **CI/CD** | GitHub Actions + Cloud Run | — | — |
-| **Monorepo** | Turborepo + pnpm workspaces | latest | — |
+| Слой                 | Технология                  | Версия  | Пакет                     |
+| -------------------- | --------------------------- | ------- | ------------------------- |
+| **Telegram Bot**     | grammY                      | `^1.30` | `grammy`                  |
+| **Backend**          | NestJS                      | `^11`   | `@nestjs/core`            |
+| **Язык**             | TypeScript                  | `^5.4`  | —                         |
+| **Job Queue**        | BullMQ                      | `^5`    | `bullmq`                  |
+| **ORM**              | Prisma                      | `^6`    | `prisma`                  |
+| **Database**         | PostgreSQL                  | `^16`   | `pg`                      |
+| **Cache / Sessions** | Redis (Dragonfly)           | `^8`    | `ioredis`                 |
+| **Object Storage**   | Google Cloud Storage        | latest  | `@google-cloud/storage`   |
+| **AI API**           | Vertex AI (Lyria 3)         | latest  | `@google-cloud/vertexai`  |
+| **Validation**       | Zod + class-validator       | latest  | `zod`                     |
+| **Logging**          | Pino                        | `^9`    | `pino`                    |
+| **Tracing**          | OpenTelemetry               | latest  | `@opentelemetry/sdk-node` |
+| **Testing**          | Jest + Testcontainers       | latest  | `jest`                    |
+| **CI/CD**            | GitHub Actions + Cloud Run  | —       | —                         |
+| **Monorepo**         | Turborepo + pnpm workspaces | latest  | —                         |
 
 ---
 
@@ -155,27 +155,27 @@ musicai-bot/
 
 ### 3.1 Модели
 
-| Model ID | Макс. длина | Особенности | Квота |
-|---|---|---|---|
-| `lyria-3-pro-preview` | **184 сек** | Full song, duration controls, полная структура | 10 req/min/регион |
-| `lyria-3-clip-preview` | **30 сек** | Быстрое превью, без duration controls | 10 req/min/регион |
+| Model ID               | Макс. длина | Особенности                                    | Квота             |
+| ---------------------- | ----------- | ---------------------------------------------- | ----------------- |
+| `lyria-3-pro-preview`  | **184 сек** | Full song, duration controls, полная структура | 10 req/min/регион |
+| `lyria-3-clip-preview` | **30 сек**  | Быстрое превью, без duration controls          | 10 req/min/регион |
 
 ### 3.2 Возможности API
 
-| Возможность | Pro | Clip |
-|---|---|---|
-| Text to Music | ✅ | ✅ |
-| Image to Music | ✅ | ✅ |
-| Vocal Generation | ✅ | ✅ |
-| Instrumental Mode | ✅ | ✅ |
-| Lyrics Generation (AI) | ✅ | ✅ |
-| User-provided Lyrics | ✅ | ✅ |
-| Negative Prompting | ✅ | ✅ |
-| BPM Controls | ✅ | ✅ |
-| Intensity Controls | ✅ | ✅ |
-| Duration Controls | ✅ | ❌ |
-| Prompt Rewriter | ✅ | ✅ |
-| SynthID Audio Watermark | ✅ | ✅ |
+| Возможность             | Pro | Clip |
+| ----------------------- | --- | ---- |
+| Text to Music           | ✅  | ✅   |
+| Image to Music          | ✅  | ✅   |
+| Vocal Generation        | ✅  | ✅   |
+| Instrumental Mode       | ✅  | ✅   |
+| Lyrics Generation (AI)  | ✅  | ✅   |
+| User-provided Lyrics    | ✅  | ✅   |
+| Negative Prompting      | ✅  | ✅   |
+| BPM Controls            | ✅  | ✅   |
+| Intensity Controls      | ✅  | ✅   |
+| Duration Controls       | ✅  | ❌   |
+| Prompt Rewriter         | ✅  | ✅   |
+| SynthID Audio Watermark | ✅  | ✅   |
 
 ### 3.3 Аудио-спецификация
 
@@ -196,24 +196,24 @@ import { VertexAI } from '@google-cloud/vertexai';
 export type LyriaModel = 'lyria-3-pro-preview' | 'lyria-3-clip-preview';
 
 export interface LyriaRequest {
-  prompt: string;                 // до 1000 симв.
-  negativePrompt?: string;        // до 300 симв.
+  prompt: string; // до 1000 симв.
+  negativePrompt?: string; // до 300 симв.
   model: LyriaModel;
-  vocal?: boolean;                // default: true
-  lyrics?: string;                // пользовательские тексты, до 2000 симв.
-  bpm?: number;                   // 60–200
+  vocal?: boolean; // default: true
+  lyrics?: string; // пользовательские тексты, до 2000 симв.
+  bpm?: number; // 60–200
   intensity?: 'low' | 'medium' | 'high' | 'epic';
-  durationSeconds?: number;       // 30–184, только Pro
+  durationSeconds?: number; // 30–184, только Pro
   language?: 'en' | 'de' | 'es' | 'fr' | 'hi' | 'ja' | 'ko' | 'pt';
-  promptRewriter?: boolean;       // default: true
-  imageBase64?: string;           // для image-to-music
+  promptRewriter?: boolean; // default: true
+  imageBase64?: string; // для image-to-music
   imageMimeType?: 'image/jpeg' | 'image/png';
 }
 
 export interface LyriaResponse {
-  audioBase64: string;            // base64-encoded MP3
+  audioBase64: string; // base64-encoded MP3
   mimeType: 'audio/mp3';
-  revisedPrompt?: string;         // если prompt rewriter активен
+  revisedPrompt?: string; // если prompt rewriter активен
 }
 
 export class LyriaClient {
@@ -279,32 +279,35 @@ export class LyriaClient {
 // packages/vertex-ai/src/lyria.errors.ts
 
 export enum LyriaErrorCode {
-  QUOTA_EXCEEDED    = 'QUOTA_EXCEEDED',       // 429 — retry после 60s
-  INVALID_ARGUMENT  = 'INVALID_ARGUMENT',     // 400 — вернуть ошибку юзеру
-  PERMISSION_DENIED = 'PERMISSION_DENIED',    // 403 — alert DevOps
-  INTERNAL          = 'INTERNAL',             // 500 — retry ×3
-  RECITATION_FILTER = 'RECITATION_FILTER',    // авторские права в промпте
-  VOCAL_LIKENESS    = 'VOCAL_LIKENESS',       // схожесть с реальным голосом
+  QUOTA_EXCEEDED = 'QUOTA_EXCEEDED', // 429 — retry после 60s
+  INVALID_ARGUMENT = 'INVALID_ARGUMENT', // 400 — вернуть ошибку юзеру
+  PERMISSION_DENIED = 'PERMISSION_DENIED', // 403 — alert DevOps
+  INTERNAL = 'INTERNAL', // 500 — retry ×3
+  RECITATION_FILTER = 'RECITATION_FILTER', // авторские права в промпте
+  VOCAL_LIKENESS = 'VOCAL_LIKENESS', // схожесть с реальным голосом
 }
 
 export function mapVertexError(error: unknown): LyriaErrorCode {
   const msg = String(error);
-  if (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED')) return LyriaErrorCode.QUOTA_EXCEEDED;
-  if (msg.includes('400') || msg.includes('INVALID_ARGUMENT'))   return LyriaErrorCode.INVALID_ARGUMENT;
-  if (msg.includes('403') || msg.includes('PERMISSION_DENIED'))  return LyriaErrorCode.PERMISSION_DENIED;
-  if (msg.includes('recitation'))                                 return LyriaErrorCode.RECITATION_FILTER;
-  if (msg.includes('vocal_likeness'))                             return LyriaErrorCode.VOCAL_LIKENESS;
+  if (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED'))
+    return LyriaErrorCode.QUOTA_EXCEEDED;
+  if (msg.includes('400') || msg.includes('INVALID_ARGUMENT'))
+    return LyriaErrorCode.INVALID_ARGUMENT;
+  if (msg.includes('403') || msg.includes('PERMISSION_DENIED'))
+    return LyriaErrorCode.PERMISSION_DENIED;
+  if (msg.includes('recitation')) return LyriaErrorCode.RECITATION_FILTER;
+  if (msg.includes('vocal_likeness')) return LyriaErrorCode.VOCAL_LIKENESS;
   return LyriaErrorCode.INTERNAL;
 }
 
 // Retry-стратегия для воркера
 export const RETRY_CONFIG = {
-  [LyriaErrorCode.QUOTA_EXCEEDED]:    { retry: true,  delay: 60_000, maxAttempts: 5 },
-  [LyriaErrorCode.INTERNAL]:          { retry: true,  delay: 5_000,  maxAttempts: 3 },
-  [LyriaErrorCode.INVALID_ARGUMENT]:  { retry: false, delay: 0,      maxAttempts: 0 },
-  [LyriaErrorCode.PERMISSION_DENIED]: { retry: false, delay: 0,      maxAttempts: 0 },
-  [LyriaErrorCode.RECITATION_FILTER]: { retry: false, delay: 0,      maxAttempts: 0 },
-  [LyriaErrorCode.VOCAL_LIKENESS]:    { retry: false, delay: 0,      maxAttempts: 0 },
+  [LyriaErrorCode.QUOTA_EXCEEDED]: { retry: true, delay: 60_000, maxAttempts: 5 },
+  [LyriaErrorCode.INTERNAL]: { retry: true, delay: 5_000, maxAttempts: 3 },
+  [LyriaErrorCode.INVALID_ARGUMENT]: { retry: false, delay: 0, maxAttempts: 0 },
+  [LyriaErrorCode.PERMISSION_DENIED]: { retry: false, delay: 0, maxAttempts: 0 },
+  [LyriaErrorCode.RECITATION_FILTER]: { retry: false, delay: 0, maxAttempts: 0 },
+  [LyriaErrorCode.VOCAL_LIKENESS]: { retry: false, delay: 0, maxAttempts: 0 },
 } as const;
 ```
 
@@ -498,18 +501,18 @@ model CreditTransaction {
 
 ### 6.1 Таблица команд
 
-| Команда | Кредиты | Описание |
-|---|---|---|
-| `/start` | 0 | Регистрация + онбординг + выдача 10 стартовых кредитов |
-| `/create` | 1–5 | Мастер создания трека (step-by-step сцена) |
-| `/lyrics` | 1 | Генерация текста песни через Gemini (без музыки) |
-| `/image_to_music` | 3–5 | Отправить фото → получить трек |
-| `/history` | 0 | История треков с пагинацией (по 5 шт.), inline кнопки скачивания |
-| `/library` | 0 | Публичные треки сообщества |
-| `/profile` | 0 | Баланс кредитов, подписка, статистика, реферальная ссылка |
-| `/buy` | 0 | Меню покупки кредитов и подписок (Telegram Stars) |
-| `/settings` | 0 | Дефолты: жанр, язык вокала, BPM, тип трека |
-| `/delete_account` | 0 | GDPR: удаление аккаунта и всех данных |
+| Команда           | Кредиты | Описание                                                         |
+| ----------------- | ------- | ---------------------------------------------------------------- |
+| `/start`          | 0       | Регистрация + онбординг + выдача 10 стартовых кредитов           |
+| `/create`         | 1–5     | Мастер создания трека (step-by-step сцена)                       |
+| `/lyrics`         | 1       | Генерация текста песни через Gemini (без музыки)                 |
+| `/image_to_music` | 3–5     | Отправить фото → получить трек                                   |
+| `/history`        | 0       | История треков с пагинацией (по 5 шт.), inline кнопки скачивания |
+| `/library`        | 0       | Публичные треки сообщества                                       |
+| `/profile`        | 0       | Баланс кредитов, подписка, статистика, реферальная ссылка        |
+| `/buy`            | 0       | Меню покупки кредитов и подписок (Telegram Stars)                |
+| `/settings`       | 0       | Дефолты: жанр, язык вокала, BPM, тип трека                       |
+| `/delete_account` | 0       | GDPR: удаление аккаунта и всех данных                            |
 
 ### 6.2 Сцена создания трека (`create-track.scene.ts`)
 
@@ -573,18 +576,18 @@ await ctx.replyWithAudio(track.telegramFileId ?? { source: audioBuffer }, {
 // apps/worker/src/main.ts
 
 const QUEUES = {
-  SYNTH_PRO_URGENT: 'synth:pro:urgent',  // paid users
-  SYNTH_PRO_NORMAL: 'synth:pro:normal',  // free users
-  SYNTH_CLIP:       'synth:clip',
-  SYNTH_DLQ:        'synth:dlq',         // dead letter queue
-  NOTIFY:           'notify',
+  SYNTH_PRO_URGENT: 'synth:pro:urgent', // paid users
+  SYNTH_PRO_NORMAL: 'synth:pro:normal', // free users
+  SYNTH_CLIP: 'synth:clip',
+  SYNTH_DLQ: 'synth:dlq', // dead letter queue
+  NOTIFY: 'notify',
 } as const;
 
 const queueOptions: QueueOptions = {
   connection: redisConnection,
   defaultJobOptions: {
-    removeOnComplete: { age: 86400, count: 1000 },  // хранить 24h
-    removeOnFail: false,                              // DLQ хранить вечно
+    removeOnComplete: { age: 86400, count: 1000 }, // хранить 24h
+    removeOnFail: false, // DLQ хранить вечно
   },
 };
 
@@ -592,8 +595,8 @@ const queueOptions: QueueOptions = {
 const workerConfig = {
   [QUEUES.SYNTH_PRO_URGENT]: { concurrency: 2, limiter: { max: 8, duration: 60_000 } },
   [QUEUES.SYNTH_PRO_NORMAL]: { concurrency: 3, limiter: { max: 8, duration: 60_000 } },
-  [QUEUES.SYNTH_CLIP]:       { concurrency: 5, limiter: { max: 9, duration: 60_000 } },
-  [QUEUES.NOTIFY]:           { concurrency: 10 },
+  [QUEUES.SYNTH_CLIP]: { concurrency: 5, limiter: { max: 9, duration: 60_000 } },
+  [QUEUES.NOTIFY]: { concurrency: 10 },
 };
 // Суммарно не более 10 req/min к Vertex AI (лимит квоты)
 ```
@@ -604,23 +607,23 @@ const workerConfig = {
 // packages/shared-types/src/job.types.ts
 
 export interface SynthJobPayload {
-  trackId:     string;
-  userId:      string;
-  telegramId:  string;       // для уведомлений
-  chatId:      number;
-  messageId:   number;       // ID статус-сообщения для редактирования
+  trackId: string;
+  userId: string;
+  telegramId: string; // для уведомлений
+  chatId: number;
+  messageId: number; // ID статус-сообщения для редактирования
   lyriaRequest: {
-    model:           'lyria-3-pro-preview' | 'lyria-3-clip-preview';
-    prompt:          string;
+    model: 'lyria-3-pro-preview' | 'lyria-3-clip-preview';
+    prompt: string;
     negativePrompt?: string;
-    vocal?:          boolean;
-    lyrics?:         string;
-    bpm?:            number;
-    intensity?:      'low' | 'medium' | 'high' | 'epic';
+    vocal?: boolean;
+    lyrics?: string;
+    bpm?: number;
+    intensity?: 'low' | 'medium' | 'high' | 'epic';
     durationSeconds?: number;
-    language?:       string;
-    imageBase64?:    string;
-    imageMimeType?:  string;
+    language?: string;
+    imageBase64?: string;
+    imageMimeType?: string;
   };
 }
 ```
@@ -632,7 +635,6 @@ export interface SynthJobPayload {
 
 @Processor(QUEUES.SYNTH_PRO_NORMAL)
 export class SynthJobProcessor {
-
   async process(job: Job<SynthJobPayload>): Promise<void> {
     const { trackId, lyriaRequest, chatId, messageId } = job.data;
 
@@ -642,7 +644,9 @@ export class SynthJobProcessor {
 
     // 2. Обновить статус-сообщение в Telegram
     await this.notifyQueue.add('status-update', {
-      chatId, messageId, text: '🎵 Генерируем трек... (~40 сек)',
+      chatId,
+      messageId,
+      text: '🎵 Генерируем трек... (~40 сек)',
     });
 
     // 3. Вызов Lyria 3
@@ -831,25 +835,25 @@ async refund(userId: string, trackId: string): Promise<void> {
 
 ### 9.1 Тарифы
 
-| Тариф | Цена | Кредиты/мес | Лимиты |
-|---|---|---|---|
-| **Free** | 0 | 10 при регистрации | Только Clip, 3 трека/день |
-| **Pro** | 299 ₽/мес | 150 | Pro + Clip, 20 треков/день, приоритет |
-| **Unlimited** | 799 ₽/мес | ∞ (50 треков/день) | Все функции + наивысший приоритет |
-| **Pack S** | 79 ₽ | 20 кредитов | Не сгорают 1 год |
-| **Pack M** | 299 ₽ | 100 кредитов | Не сгорают 1 год |
-| **Pack L** | 699 ₽ | 300 кредитов | Не сгорают 1 год |
+| Тариф         | Цена      | Кредиты/мес        | Лимиты                                |
+| ------------- | --------- | ------------------ | ------------------------------------- |
+| **Free**      | 0         | 10 при регистрации | Только Clip, 3 трека/день             |
+| **Pro**       | 299 ₽/мес | 150                | Pro + Clip, 20 треков/день, приоритет |
+| **Unlimited** | 799 ₽/мес | ∞ (50 треков/день) | Все функции + наивысший приоритет     |
+| **Pack S**    | 79 ₽      | 20 кредитов        | Не сгорают 1 год                      |
+| **Pack M**    | 299 ₽     | 100 кредитов       | Не сгорают 1 год                      |
+| **Pack L**    | 699 ₽     | 300 кредитов       | Не сгорают 1 год                      |
 
 ### 9.2 Стоимость операций
 
-| Операция | Кредиты |
-|---|---|
-| Clip 30 сек (`lyria-3-clip-preview`) | **1** |
-| Pro трек ≤ 60 сек (`lyria-3-pro-preview`) | **3** |
-| Pro трек 61–184 сек | **5** |
-| Расширение Clip → Pro | **3** (доплата) |
-| AI генерация текста (Gemini) | **1** |
-| Регенерация трека | **50% от цены** |
+| Операция                                  | Кредиты         |
+| ----------------------------------------- | --------------- |
+| Clip 30 сек (`lyria-3-clip-preview`)      | **1**           |
+| Pro трек ≤ 60 сек (`lyria-3-pro-preview`) | **3**           |
+| Pro трек 61–184 сек                       | **5**           |
+| Расширение Clip → Pro                     | **3** (доплата) |
+| AI генерация текста (Gemini)              | **1**           |
+| Регенерация трека                         | **50% от цены** |
 
 ### 9.3 Платёжные провайдеры
 
@@ -864,9 +868,9 @@ await ctx.api.sendInvoice(ctx.chat.id, {
   title: 'Pack M — 100 кредитов',
   description: '100 кредитов для генерации треков MusicAI',
   payload: JSON.stringify({ type: 'credits', amount: 100, userId }),
-  currency: 'XTR',                       // Telegram Stars
+  currency: 'XTR', // Telegram Stars
   prices: [{ label: 'Pack M', amount: 299 }],
-  provider_token: '',                    // пустой для Stars
+  provider_token: '', // пустой для Stars
 });
 ```
 
@@ -891,43 +895,43 @@ import { z } from 'zod';
 
 export const envSchema = z.object({
   // App
-  NODE_ENV:                  z.enum(['development', 'staging', 'production']),
-  PORT:                      z.coerce.number().default(3000),
+  NODE_ENV: z.enum(['development', 'staging', 'production']),
+  PORT: z.coerce.number().default(3000),
 
   // Telegram
-  BOT_TOKEN:                 z.string().min(1),
-  WEBHOOK_URL:               z.string().url().optional(),
-  WEBHOOK_SECRET:            z.string().min(16).optional(),
+  BOT_TOKEN: z.string().min(1),
+  WEBHOOK_URL: z.string().url().optional(),
+  WEBHOOK_SECRET: z.string().min(16).optional(),
 
   // Google Cloud
-  GOOGLE_CLOUD_PROJECT:      z.string().min(1),
-  VERTEX_AI_LOCATION:        z.string().default('us-central1'),
+  GOOGLE_CLOUD_PROJECT: z.string().min(1),
+  VERTEX_AI_LOCATION: z.string().default('us-central1'),
   GOOGLE_APPLICATION_CREDENTIALS: z.string().optional(),
-  GCS_BUCKET_NAME:           z.string().min(1),
-  GCS_PUBLIC_BASE_URL:       z.string().url(),
+  GCS_BUCKET_NAME: z.string().min(1),
+  GCS_PUBLIC_BASE_URL: z.string().url(),
 
   // Database
-  DATABASE_URL:              z.string().url(),
-  DIRECT_DATABASE_URL:       z.string().url().optional(),
+  DATABASE_URL: z.string().url(),
+  DIRECT_DATABASE_URL: z.string().url().optional(),
 
   // Redis
-  REDIS_URL:                 z.string().url(),
+  REDIS_URL: z.string().url(),
 
   // Payments
-  YUKASSA_SHOP_ID:           z.string().optional(),
-  YUKASSA_SECRET_KEY:        z.string().optional(),
-  STRIPE_SECRET_KEY:         z.string().optional(),
-  STRIPE_WEBHOOK_SECRET:     z.string().optional(),
+  YUKASSA_SHOP_ID: z.string().optional(),
+  YUKASSA_SECRET_KEY: z.string().optional(),
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
 
   // Limits
-  FREE_DAILY_TRACKS_LIMIT:   z.coerce.number().default(3),
-  PRO_DAILY_TRACKS_LIMIT:    z.coerce.number().default(20),
-  MAX_PROMPT_LENGTH:         z.coerce.number().default(1000),
-  MAX_LYRICS_LENGTH:         z.coerce.number().default(2000),
+  FREE_DAILY_TRACKS_LIMIT: z.coerce.number().default(3),
+  PRO_DAILY_TRACKS_LIMIT: z.coerce.number().default(20),
+  MAX_PROMPT_LENGTH: z.coerce.number().default(1000),
+  MAX_LYRICS_LENGTH: z.coerce.number().default(2000),
 
   // Rate limiting
-  GENERATE_RATE_LIMIT_PER_MIN:  z.coerce.number().default(5),
-  COMMAND_RATE_LIMIT_PER_MIN:   z.coerce.number().default(30),
+  GENERATE_RATE_LIMIT_PER_MIN: z.coerce.number().default(5),
+  COMMAND_RATE_LIMIT_PER_MIN: z.coerce.number().default(30),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -949,14 +953,14 @@ Service Account минимальные роли:
 
 ### 11.1 Производительность
 
-| Метрика | Цель |
-|---|---|
-| Время ответа на команды бота | < 500 ms (p95) |
-| ETA Clip в очереди (Free) | < 120 сек |
-| ETA Pro в очереди (Paid) | < 60 сек |
-| Throughput | ≥ 100 одновременных SynthJob |
-| Uptime SLA | 99.5% |
-| Размер MP3 (Pro 184s) | ~4.4 MB |
+| Метрика                      | Цель                         |
+| ---------------------------- | ---------------------------- |
+| Время ответа на команды бота | < 500 ms (p95)               |
+| ETA Clip в очереди (Free)    | < 120 сек                    |
+| ETA Pro в очереди (Paid)     | < 60 сек                     |
+| Throughput                   | ≥ 100 одновременных SynthJob |
+| Uptime SLA                   | 99.5%                        |
+| Размер MP3 (Pro 184s)        | ~4.4 MB                      |
 
 ### 11.2 Лимиты и защита
 
@@ -1093,16 +1097,16 @@ Deliverables:
 
 ### 13.1 Подтверждённые ограничения Lyria 3
 
-| # | Ограничение | Официальный источник | Влияние на бот |
-|---|---|---|---|
-| **L-01** | **Нет multi-turn editing** — генерация одноразовая, итеративное редактирование не поддерживается | Gemini API docs: *"Music generation is a single-turn process"* | Нельзя «поправить» готовый трек — только перегенерация |
-| **L-02** | **Нет inpainting** — невозможно заменить отдельную секцию (куплет, припев, 10 секунд) | Сравнение с Udio (поддерживает inpainting) | Замена лирики = перегенерация всего трека |
-| **L-03** | **Нет audio-to-audio** — нельзя загрузить готовый трек и изменить его | Только text/image → audio | Нет функции «загрузить свой трек и отредактировать» |
-| **L-04** | **Нет voice cloning** — нельзя загрузить референсный голос | Safety фильтры блокируют имитацию конкретных артистов | Нет функции «петь голосом X» |
-| **L-05** | **1 клип за запрос** — batch generation не поддерживается | Spec модели | Нельзя генерировать 3 варианта одновременно |
-| **L-06** | **Квота 10 req/min** на регион (Vertex AI) | Vertex AI model card | Требует жёсткого rate-limiting и очереди |
-| **L-07** | **SynthID watermark неудаляем** — присутствует во всех треках, выживает после сжатия | Google DeepMind | Нельзя убрать даже для платных пользователей |
-| **L-08** | **Preview статус** — Google может изменить API, лимиты или цены без предупреждения | Pre-GA Terms | Мониторить changelog, заложить абстракцию над клиентом |
+| #        | Ограничение                                                                                      | Официальный источник                                           | Влияние на бот                                         |
+| -------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- | ------------------------------------------------------ |
+| **L-01** | **Нет multi-turn editing** — генерация одноразовая, итеративное редактирование не поддерживается | Gemini API docs: _"Music generation is a single-turn process"_ | Нельзя «поправить» готовый трек — только перегенерация |
+| **L-02** | **Нет inpainting** — невозможно заменить отдельную секцию (куплет, припев, 10 секунд)            | Сравнение с Udio (поддерживает inpainting)                     | Замена лирики = перегенерация всего трека              |
+| **L-03** | **Нет audio-to-audio** — нельзя загрузить готовый трек и изменить его                            | Только text/image → audio                                      | Нет функции «загрузить свой трек и отредактировать»    |
+| **L-04** | **Нет voice cloning** — нельзя загрузить референсный голос                                       | Safety фильтры блокируют имитацию конкретных артистов          | Нет функции «петь голосом X»                           |
+| **L-05** | **1 клип за запрос** — batch generation не поддерживается                                        | Spec модели                                                    | Нельзя генерировать 3 варианта одновременно            |
+| **L-06** | **Квота 10 req/min** на регион (Vertex AI)                                                       | Vertex AI model card                                           | Требует жёсткого rate-limiting и очереди               |
+| **L-07** | **SynthID watermark неудаляем** — присутствует во всех треках, выживает после сжатия             | Google DeepMind                                                | Нельзя убрать даже для платных пользователей           |
+| **L-08** | **Preview статус** — Google может изменить API, лимиты или цены без предупреждения               | Pre-GA Terms                                                   | Мониторить changelog, заложить абстракцию над клиентом |
 
 ---
 
@@ -1169,11 +1173,11 @@ export const editLyricsScene = createConversation(async (conv, ctx) => {
   // Шаг 1: показать предупреждение об ограничении API
   await ctx.reply(
     `⚠️ *Важно*: Lyria 3 не поддерживает редактирование готового трека.\n` +
-    `Будет создан *новый трек* с теми же параметрами, но другим текстом.\n` +
-    `Старый трек останется в истории.\n\n` +
-    (sourceTrack.lyrics
-      ? `*Текущий текст:*\n\`\`\`\n${sourceTrack.lyrics}\n\`\`\``
-      : `*Текст предыдущего трека был сгенерирован автоматически.*`),
+      `Будет создан *новый трек* с теми же параметрами, но другим текстом.\n` +
+      `Старый трек останется в истории.\n\n` +
+      (sourceTrack.lyrics
+        ? `*Текущий текст:*\n\`\`\`\n${sourceTrack.lyrics}\n\`\`\``
+        : `*Текст предыдущего трека был сгенерирован автоматически.*`),
     { parse_mode: 'Markdown' }
   );
 
@@ -1184,22 +1188,24 @@ export const editLyricsScene = createConversation(async (conv, ctx) => {
   const newLyrics = message?.text === '/skip' ? undefined : message?.text;
 
   // Шаг 3: подтверждение со стоимостью
-  const cost = calcRegenerationCost(sourceTrack);  // 50% от оригинала
+  const cost = calcRegenerationCost(sourceTrack); // 50% от оригинала
   await ctx.reply(
     `*Параметры новой генерации:*\n` +
-    `• Промпт: ${sourceTrack.prompt}\n` +
-    `• BPM: ${sourceTrack.parameters.bpm ?? 'Авто'}\n` +
-    `• Язык: ${sourceTrack.parameters.language ?? 'en'}\n` +
-    `• Стоимость: ${cost} кредитов\n\n` +
-    `Продолжить?`,
+      `• Промпт: ${sourceTrack.prompt}\n` +
+      `• BPM: ${sourceTrack.parameters.bpm ?? 'Авто'}\n` +
+      `• Язык: ${sourceTrack.parameters.language ?? 'en'}\n` +
+      `• Стоимость: ${cost} кредитов\n\n` +
+      `Продолжить?`,
     {
       parse_mode: 'Markdown',
       reply_markup: {
-        inline_keyboard: [[
-          { text: '✅ Создать', callback_data: 'confirm_regen' },
-          { text: '❌ Отмена',  callback_data: 'cancel' },
-        ]]
-      }
+        inline_keyboard: [
+          [
+            { text: '✅ Создать', callback_data: 'confirm_regen' },
+            { text: '❌ Отмена', callback_data: 'cancel' },
+          ],
+        ],
+      },
     }
   );
 
@@ -1209,14 +1215,14 @@ export const editLyricsScene = createConversation(async (conv, ctx) => {
   // Шаг 4: создать новый трек с теми же параметрами + новой лирикой
   await tracksService.createTrack(ctx.from.id.toString(), {
     ...sourceTrack.parameters,
-    model:    sourceTrack.model as LyriaModel,
-    type:     sourceTrack.type  as TrackType,
-    prompt:   sourceTrack.prompt,
-    lyrics:   newLyrics,
-    chatId:   ctx.chat!.id,
+    model: sourceTrack.model as LyriaModel,
+    type: sourceTrack.type as TrackType,
+    prompt: sourceTrack.prompt,
+    lyrics: newLyrics,
+    chatId: ctx.chat!.id,
     messageId: (await ctx.reply('🎵 Создаём трек...')).message_id,
-    isRegeneration: true,   // для скидки 50%
-    sourceTrackId,          // ссылка на исходный
+    isRegeneration: true, // для скидки 50%
+    sourceTrackId, // ссылка на исходный
   });
 });
 ```
@@ -1273,9 +1279,9 @@ UX:
 
 interface SynthJobPayload {
   // ... existing fields ...
-  batchGroupId?: string;    // UUID группы, если это один из вариантов
-  batchIndex?:   number;    // 0, 1, 2
-  batchTotal?:   number;    // 3
+  batchGroupId?: string; // UUID группы, если это один из вариантов
+  batchIndex?: number; // 0, 1, 2
+  batchTotal?: number; // 3
 }
 
 // Воркер после завершения каждого задания в группе проверяет:
@@ -1293,10 +1299,10 @@ interface SynthJobPayload {
 // Распределение по очередям:
 
 const QUOTA_BUDGET = {
-  total:           10,  // req/min (hard limit Vertex AI)
-  synth_pro_urgent: 3,  // для paid users
-  synth_pro_normal: 3,  // для free users  
-  synth_clip:       4,  // быстрые клипы
+  total: 10, // req/min (hard limit Vertex AI)
+  synth_pro_urgent: 3, // для paid users
+  synth_pro_normal: 3, // для free users
+  synth_clip: 4, // быстрые клипы
 } as const;
 
 // BullMQ limiter — применяется к каждой очереди:
@@ -1318,17 +1324,17 @@ const QUOTA_BUDGET = {
 
 ### 13.5 Сравнение с конкурентами (для понимания ограничений)
 
-| Функция | Lyria 3 (наш бот) | Suno | Udio |
-|---|---|---|---|
-| Генерация трека | ✅ | ✅ | ✅ |
-| Пользовательские тексты | ✅ | ✅ | ✅ |
-| Редактирование секций (inpainting) | ❌ workaround | ❌ | ✅ |
-| Multi-turn итерации | ❌ workaround | ❌ | ✅ |
-| Stem export | ❌ | ✅ (платно) | ✅ |
-| Voice cloning | ❌ | ❌ | ❌ |
-| Лицензионная чистота данных | ✅ (Google заявляет) | ⚠️ (судебные иски) | ⚠️ (судебные иски) |
-| API для разработчиков | ✅ | ✅ | ⚠️ ограниченно |
-| Цена за трек (API) | ~$0.08 (Pro) | ~$0.05 | — |
+| Функция                            | Lyria 3 (наш бот)    | Suno               | Udio               |
+| ---------------------------------- | -------------------- | ------------------ | ------------------ |
+| Генерация трека                    | ✅                   | ✅                 | ✅                 |
+| Пользовательские тексты            | ✅                   | ✅                 | ✅                 |
+| Редактирование секций (inpainting) | ❌ workaround        | ❌                 | ✅                 |
+| Multi-turn итерации                | ❌ workaround        | ❌                 | ✅                 |
+| Stem export                        | ❌                   | ✅ (платно)        | ✅                 |
+| Voice cloning                      | ❌                   | ❌                 | ❌                 |
+| Лицензионная чистота данных        | ✅ (Google заявляет) | ⚠️ (судебные иски) | ⚠️ (судебные иски) |
+| API для разработчиков              | ✅                   | ✅                 | ⚠️ ограниченно     |
+| Цена за трек (API)                 | ~$0.08 (Pro)         | ~$0.05             | —                  |
 
 > **Ключевой вывод для разработки:** отсутствие inpainting — это архитектурное ограничение Lyria 3, а не упущение в нашей реализации. Workaround через «регенерацию с сохранением параметров» даёт пользователю 80% UX от полноценного редактирования при минимальных доработках.
 
@@ -1336,14 +1342,14 @@ const QUOTA_BUDGET = {
 
 ## Приложение: Примеры промптов
 
-| Жанр | Промпт |
-|---|---|
-| Pop | `Upbeat pop song, catchy chorus, female vocals, guitar and synth, 120 BPM, summer vibes` |
-| Hip-Hop | `Dark trap beat, 808 bass, hi-hats, male rap vocals, aggressive, 140 BPM` |
-| Cinematic | `Epic orchestral soundtrack, strings and brass, dramatic tension, no vocals, 90 BPM` |
-| Lo-fi | `Chill lo-fi hip hop, soft piano, vinyl crackle, mellow female vocals, 75 BPM, study mood` |
-| Electronic | `Progressive house, uplifting synth leads, energetic drop, 128 BPM` |
-| Jazz | `Smooth jazz, saxophone lead, brushed drums, upright bass, intimate bar atmosphere, 95 BPM` |
+| Жанр       | Промпт                                                                                      |
+| ---------- | ------------------------------------------------------------------------------------------- |
+| Pop        | `Upbeat pop song, catchy chorus, female vocals, guitar and synth, 120 BPM, summer vibes`    |
+| Hip-Hop    | `Dark trap beat, 808 bass, hi-hats, male rap vocals, aggressive, 140 BPM`                   |
+| Cinematic  | `Epic orchestral soundtrack, strings and brass, dramatic tension, no vocals, 90 BPM`        |
+| Lo-fi      | `Chill lo-fi hip hop, soft piano, vinyl crackle, mellow female vocals, 75 BPM, study mood`  |
+| Electronic | `Progressive house, uplifting synth leads, energetic drop, 128 BPM`                         |
+| Jazz       | `Smooth jazz, saxophone lead, brushed drums, upright bass, intimate bar atmosphere, 95 BPM` |
 
 ## Приложение: Ссылки
 
@@ -1359,4 +1365,4 @@ const QUOTA_BUDGET = {
 
 ---
 
-*SPEC v1.1 — MusicAI Bot — Google Lyria 3 | Обновлено: добавлен раздел 13 «Ограничения API и workarounds»*
+_SPEC v1.1 — MusicAI Bot — Google Lyria 3 | Обновлено: добавлен раздел 13 «Ограничения API и workarounds»_

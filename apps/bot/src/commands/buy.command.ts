@@ -25,6 +25,6 @@ export const buyCommand = async (ctx: Context) => {
     {
       parse_mode: 'Markdown',
       reply_markup: keyboard,
-    },
+    }
   );
 };
