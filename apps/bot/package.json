@@ -16,6 +16,7 @@
     "@musicai/database": "workspace:*",
     "@musicai/shared-types": "workspace:*",
     "@musicai/storage": "workspace:*",
+    "@musicai/vertex-ai": "workspace:*",
     "dotenv": "^17.4.1",
     "grammy": "^1.30.0",
     "ioredis": "^5.4.0",

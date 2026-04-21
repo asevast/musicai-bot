@@ -1,102 +1,12 @@
 import { Context, InlineKeyboard } from 'grammy';
 import { prisma } from '@musicai/database';
+import { GeminiClient } from '@musicai/vertex-ai';
 
-// Simple lyrics generation prompt template
-const generateLyricsPrompt = (theme: string, language: string = 'en', style?: string) => {
-  const langNames: Record<string, string> = {
-    en: 'English',
-    de: 'German',
-    es: 'Spanish',
-    fr: 'French',
-    hi: 'Hindi',
-    ja: 'Japanese',
-    ko: 'Korean',
-    pt: 'Portuguese',
-  };
-
-  return `Write song lyrics in ${langNames[language] || 'English'} about: ${theme}
-
-${style ? `Style: ${style}` : ''}
-
-Structure the lyrics with:
-- [Verse 1]
-- [Chorus]
-- [Verse 2]
-- [Chorus]
-- [Bridge] (optional)
-- [Final Chorus]
-
-Make it emotional, catchy, and suitable for music generation.`;
-};
-
-// Mock lyrics generator - in production this should call Gemini API
-const mockGenerateLyrics = async (theme: string, language: string = 'en'): Promise<string> => {
-  // This is a placeholder. In production, this should call Gemini API via routerai.ru
-  // or another text generation endpoint
-
-  const templates: Record<string, string> = {
-    en: `[Verse 1]
-Walking down this empty street
-Rain is falling at my feet
-Memories of you and me
-Like shadows dancing, wild and free
-
-[Chorus]
-Oh, the summer rain
-Washing away all the pain
-I hear your voice calling my name
-In the summer rain
-
-[Verse 2]
-City lights are shining bright
-But something still don't feel right
-Without you here by my side
-I keep all my feelings inside
-
-[Chorus]
-Oh, the summer rain
-Washing away all the pain
-I hear your voice calling my name
-In the summer rain
-
-[Bridge]
-Time moves slowly, days grow long
-I need you here where you belong
-
-[Final Chorus]
-Oh, the summer rain
-Washing away all the pain
-I hear your voice calling my name
-In the summer rain`,
-
-    ru: `[Куплет 1]
-Иду по улице одна
-Где ты сейчас, моя весна
-Воспоминания о нас
-Как в зеркале разбитых глаз
-
-[Припев]
-Летний дождь, летний дождь
-Ты вернёшь мою любовь
-В голосе твоём живу
-В летнем дожде тону
-
-[Куплет 2]
-Огни города горят
-Но меня ты не прощаешь, нет
-Без тебя мне не дышать
-Только слёзы, только тишина
-
-[Припев]
-Летний дождь, летний дождь
-Ты вернёшь мою любовь
-В голосе твоём живу
-В летнем дожде тону`,
-  };
-
-  // Return template based on language or default to English
-  return templates[language] || templates.en;
-};
+// Initialize Gemini client from environment
+const geminiClient = new GeminiClient(
+  process.env.LYRIA_API_KEY || '',
+  process.env.LYRIA_BASE_URL || 'https://routerai.ru/api/v1',
+);
 
 export const lyricsCommand = async (ctx: Context) => {
   const user = ctx.user;
@@ -202,8 +112,9 @@ export const handleLyricsRequest = async (ctx: Context) => {
   );
 
   try {
-    // Generate lyrics (mock for now - should call Gemini API)
-    const lyrics = await mockGenerateLyrics(theme, language);
+    // Generate lyrics via Gemini API
+    const result = await geminiClient.generateLyrics({ theme, language });
+    const lyrics = result.lyrics;
 
     // Deduct 1 credit
     await prisma.user.update({
