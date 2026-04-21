@@ -26,6 +26,7 @@ import {
   handleLyricsCreateTrack,
 } from './commands/lyrics.command';
 import { deleteAccountCommand, confirmDeleteAccount } from './commands/delete-account.command';
+import { handleInlineQuery } from './inline/tracks.inline';
 import { libraryCommand } from './commands/library.command';
 import { menuCommand } from './commands/menu.command';
 import { fleshCommand } from './commands/flesh.command';
@@ -857,8 +858,6 @@ await ctx.reply(
     const user = ctx.user;
     if (!user) return ctx.answerCallbackQuery('❌ User not found');
 
-    // Soft delete - mark as failed or add deleted flag
-    // For now, just remove the gcsUrl so it doesn't show download button
     await prisma.track.updateMany({
       where: { id: trackId, userId: user.id },
       data: { gcsUrl: null },
@@ -867,6 +866,8 @@ await ctx.reply(
     await ctx.answerCallbackQuery('🗑️ Track removed from history');
     await showHistoryPage(ctx, { page: 1, filter: 'all' });
   });
+
+  bot.inlineQuery('', handleInlineQuery);
 
   // Download track callback handler
   bot.callbackQuery(/^download_/, async (ctx) => {
