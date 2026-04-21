@@ -460,7 +460,7 @@ export function setupBot(bot: Bot<BotContext>) {
 
     if (track) {
       await ctx.answerCallbackQuery();
-      await ctx.reply(`📋 *Original Prompt:*\n\n` + track.prompt, { parse_mode: 'Markdown' });
+      await ctx.reply(`📋 <b>Original Prompt:</b>\n\n` + track.prompt, { parse_mode: 'HTML' });
     } else {
       await ctx.answerCallbackQuery('❌ Track not found');
     }
@@ -502,16 +502,16 @@ export function setupBot(bot: Bot<BotContext>) {
       .text('❌ Cancel', 'cancel_extend');
 
     await ctx.answerCallbackQuery();
-    await ctx.reply(
-      '🎼 *Extend to Full Song*\n\n' +
-        `This will create a full song version of your clip:\n` +
-        `• Original: 30 second clip\n` +
-        `• Extended: ~3 minute full song\n` +
-        `• Same prompt and style: ${track.prompt.slice(0, 50)}...\n\n` +
-        `⚠️ *Note:* The extended song will be inspired by your clip but may have different lyrics and melody variations to fill the longer duration.\n\n` +
-        `Cost: 3 credits`,
-      { parse_mode: 'Markdown', reply_markup: confirmKeyboard }
-    );
+await ctx.reply(
+  '🎼 <b>Extend to Full Song</b>\n\n' +
+    `This will create a full song version of your clip:\n` +
+    `• Original: 30 second clip\n` +
+    `• Extended: ~3 minute full song\n` +
+    `• Same prompt and style: ${track.prompt.slice(0, 50)}...\n\n` +
+    `⚠️ <b>Note:</b> The extended song will be inspired by your clip but may have different lyrics and melody variations to fill the longer duration.\n\n` +
+    `Cost: 3 credits`,
+  { parse_mode: 'HTML', reply_markup: confirmKeyboard },
+);
   });
 
   bot.callbackQuery(/^confirm_extend_/, async (ctx) => {
@@ -593,16 +593,16 @@ export function setupBot(bot: Bot<BotContext>) {
       .text('❌ Cancel', 'cancel_regen');
 
     await ctx.answerCallbackQuery();
-    await ctx.reply(
-      '🔄 *Regenerate Track*\n\n' +
-        `This will create a new track with the same settings:\n` +
-        `• Type: ${track.type}\n` +
-        `• Model: ${track.model}\n` +
-        `• Prompt: ${track.prompt.slice(0, 50)}...\n\n` +
-        `You can edit the lyrics in the next step.\n` +
-        `Cost: ${discount} credits (50% discount)`,
-      { parse_mode: 'Markdown', reply_markup: confirmKeyboard }
-    );
+await ctx.reply(
+  '🔄 <b>Regenerate Track</b>\n\n' +
+    `This will create a new track with the same settings:\n` +
+    `• Type: ${track.type}\n` +
+    `• Model: ${track.model}\n` +
+    `• Prompt: ${track.prompt.slice(0, 50)}...\n\n` +
+    `You can edit the lyrics in the next step.\n` +
+    `Cost: ${discount} credits (50% discount)`,
+  { parse_mode: 'HTML', reply_markup: confirmKeyboard },
+);
   });
 
   bot.callbackQuery(/^confirm_regen_/, async (ctx) => {
