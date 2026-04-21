@@ -8,9 +8,17 @@ export class TelegramAuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
 
-    // Try X-Telegram-Init-Data header first (Mini App authentication)
     const initDataRaw = request.headers['x-telegram-init-data'] as string;
+    const telegramIdHeader = request.headers['x-telegram-id'] as string;
 
+    // Reject if both authentication methods are present (security: prevent auth confusion)
+    if (initDataRaw && telegramIdHeader) {
+      throw new UnauthorizedException(
+        'Cannot use both init data and telegram ID headers simultaneously',
+      );
+    }
+
+    // Try X-Telegram-Init-Data header first (Mini App authentication)
     if (initDataRaw) {
       const botToken = process.env.BOT_TOKEN;
       if (!botToken) {

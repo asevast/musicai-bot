@@ -14,7 +14,21 @@ import IORedis from 'ioredis';
 
 @WebSocketGateway({
   namespace: 'tracks',
-  cors: { origin: '*' },
+  cors: {
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        process.env.WEBAPP_URL,
+        'https://web.telegram.org',
+        'https://*.telegram.org',
+      ].filter(Boolean);
+      if (!origin || allowedOrigins.some((allowed) => origin.match(new RegExp(allowed.replace(/\*/g, '.*'))))) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'), false);
+      }
+    },
+    credentials: true,
+  },
 })
 export class TracksGateway implements OnGatewayInit, OnGatewayConnection {
   @WebSocketServer()
@@ -53,10 +67,12 @@ export class TracksGateway implements OnGatewayInit, OnGatewayConnection {
     });
   }
 
-  handleConnection(client: Socket): void {
-    const initDataRaw = client.handshake.headers['x-telegram-init-data'] as string | undefined;
+  async handleConnection(client: Socket): Promise<void> {
+    // Browser WebSocket cannot send custom headers; read initData from query param
+    const initDataRaw = client.handshake.query.initData as string | undefined;
 
     if (!initDataRaw) {
+      console.error('[TracksGateway] Missing initData query param');
       client.disconnect(true);
       return;
     }
@@ -70,12 +86,25 @@ export class TracksGateway implements OnGatewayInit, OnGatewayConnection {
       const telegramId = initData.user?.id;
 
       if (!telegramId) {
+        console.error('[TracksGateway] Invalid init data: user not found');
         client.disconnect(true);
         return;
       }
 
-      // Store telegramId on client data for later use
+      // Verify user exists in database
+      const user = await prisma.user.findUnique({
+        where: { telegramId: BigInt(telegramId) },
+      });
+
+      if (!user) {
+        console.error('[TracksGateway] User not found:', telegramId);
+        client.disconnect(true);
+        return;
+      }
+
+      // Store user data on client
       client.data.telegramId = telegramId;
+      client.data.userId = user.id;
     } catch (error) {
       console.error('[TracksGateway] Invalid init data:', error);
       client.disconnect(true);

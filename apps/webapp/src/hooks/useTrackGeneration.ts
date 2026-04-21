@@ -39,10 +39,9 @@ export function useTrackGeneration(): UseTrackGenerationReturn {
   useEffect(() => {
     if (!initDataRaw) return;
 
+    // Browser WebSocket cannot send custom headers; pass initData via query param
     const socket = io(`${VITE_API_URL}/tracks`, {
-      extraHeaders: {
-        'X-Telegram-Init-Data': initDataRaw,
-      },
+      query: { initData: initDataRaw },
       transports: ['websocket', 'polling'],
     });
 
