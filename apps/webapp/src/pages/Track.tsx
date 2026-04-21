@@ -1,7 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import {
-  Page,
   Title,
   Cell,
   Caption,
@@ -36,6 +35,13 @@ const typeLabels: Record<TrackType, string> = {
   instrumental: 'Instrumental',
 };
 
+const statusModeMap: Record<TrackStatus, 'primary' | 'critical' | 'gray' | 'secondary'> = {
+  queued: 'gray',
+  processing: 'secondary',
+  done: 'primary',
+  failed: 'critical',
+};
+
 const statusColors: Record<TrackStatus, string> = {
   queued: 'bg-gray-500',
   processing: 'bg-yellow-500',
@@ -50,7 +56,7 @@ const statusLabels: Record<TrackStatus, string> = {
   failed: 'Failed',
 };
 
-export function Track(): JSX.Element {
+export function Track(): React.ReactElement {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useTelegram();
@@ -72,6 +78,7 @@ export function Track(): JSX.Element {
         id: response.id,
         title: response.title,
         status: response.status,
+        type: response.type,
         audioUrl: response.audioUrl,
         duration: response.duration,
         createdAt: response.createdAt,
@@ -89,36 +96,36 @@ export function Track(): JSX.Element {
 
   if (isLoading) {
     return (
-      <Page>
+      <div className="page">
         <div className="p-4">
           <Cell>Loading...</Cell>
         </div>
-      </Page>
+      </div>
     );
   }
 
   if (error || !track) {
     return (
-      <Page>
+      <div className="page">
         <div className="p-4">
           <Cell>Failed to load track</Cell>
           <Button
             stretched
-            mode="primary"
+            mode="filled"
             onClick={() => void fetchTrack()}
             className="mt-4"
           >
             Retry
           </Button>
         </div>
-      </Page>
+      </div>
     );
   }
 
   const createdDate = new Date(track.createdAt).toLocaleString();
 
   return (
-    <Page>
+    <div className="page">
       <div className="p-4 pb-20">
         <div className="flex items-center gap-2 mb-4">
           <Button
@@ -136,6 +143,8 @@ export function Track(): JSX.Element {
           </Title>
           <div className="flex gap-2 items-center">
             <Badge
+              type="number"
+              mode={statusModeMap[track.status]}
               className={`${statusColors[track.status]} text-white px-2 py-0.5 rounded`}
             >
               {statusLabels[track.status]}
@@ -219,7 +228,7 @@ export function Track(): JSX.Element {
             </Caption>
             <Button
               stretched
-              mode="primary"
+              mode="filled"
               onClick={() => navigate('/create')}
               className="mt-3"
             >
@@ -228,6 +237,6 @@ export function Track(): JSX.Element {
           </div>
         )}
       </div>
-    </Page>
+    </div>
   );
 }

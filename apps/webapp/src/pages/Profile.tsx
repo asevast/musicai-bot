@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Page, Title, Cell, Caption, Badge, List } from '@telegram-apps/telegram-ui';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Title, Cell, Caption, Badge, List } from '@telegram-apps/telegram-ui';
 import { apiClient } from '../api/client';
 import { useTelegram } from '../hooks/useTelegram';
 import type { SubscriptionTier } from '@musicai/shared-types';
@@ -46,7 +46,7 @@ const transactionLabels: Record<string, string> = {
   refund: 'Refund',
 };
 
-export function Profile(): JSX.Element {
+export function Profile(): React.ReactElement {
   const { user } = useTelegram();
   const [profile, setProfile] = useState<ProfileResponse | null>(null);
   const [transactions, setTransactions] = useState<CreditsHistoryItem[]>([]);
@@ -82,28 +82,28 @@ export function Profile(): JSX.Element {
 
   if (isLoading) {
     return (
-      <Page>
+      <div className="page">
         <div className="p-4">
           <Cell>Loading...</Cell>
         </div>
-      </Page>
+      </div>
     );
   }
 
   if (!profile) {
     return (
-      <Page>
+      <div className="page">
         <div className="p-4">
           <Cell>Failed to load profile</Cell>
         </div>
-      </Page>
+      </div>
     );
   }
 
   const displayName = profile.firstName || profile.username || 'User';
 
   return (
-    <Page>
+    <div className="page">
       <div className="p-4 pb-20">
         <Title level="2" weight="1" className="mb-4">
           Profile
@@ -112,8 +112,10 @@ export function Profile(): JSX.Element {
         <div className="mb-6">
           <Cell
             subtitle={<Caption className="text-gray-500">@{user?.username || 'user'}</Caption>}
-          after={
+            after={
               <Badge
+                type="number"
+                mode={profile.subscriptionTier === 'free' ? 'gray' : 'primary'}
                 className={`${tierColors[profile.subscriptionTier]} text-white px-2 py-1 rounded`}
               >
                 {tierLabels[profile.subscriptionTier]}
@@ -129,7 +131,7 @@ export function Profile(): JSX.Element {
           <Cell
             subtitle={<Caption className="text-gray-500">Available credits</Caption>}
             after={
-              <Badge className="bg-blue-500 text-white px-3 py-1 rounded text-base">
+              <Badge type="number" mode="primary" className="bg-blue-500 text-white px-3 py-1 rounded text-base">
                 {profile.credits}
               </Badge>
             }
@@ -158,6 +160,8 @@ export function Profile(): JSX.Element {
                   }
                   after={
                     <Badge
+                      type="number"
+                      mode={tx.amount > 0 ? 'primary' : 'critical'}
                       className={`${
                         tx.amount > 0 ? 'bg-green-500' : 'bg-red-500'
                       } text-white px-2 py-0.5 rounded`}
@@ -168,13 +172,13 @@ export function Profile(): JSX.Element {
                   }
                 >
                   {transactionLabels[tx.type] || tx.type}
-                  {tx.description ? ` • ${tx.description}` : ''}
+                  {tx.description ? ` \u2022 ${tx.description}` : ''}
                 </Cell>
               ))
             )}
           </List>
         </div>
       </div>
-    </Page>
+    </div>
   );
 }

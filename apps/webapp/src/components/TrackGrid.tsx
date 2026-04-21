@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Button, Caption } from '@telegram-apps/telegram-ui';
 import { TrackCard } from './TrackCard';
 import type { Track } from '../store/tracks.store';
@@ -17,7 +17,7 @@ export function TrackGrid({
   hasMore,
   onLoadMore,
   emptyMessage = 'No tracks yet',
-}: TrackGridProps): JSX.Element {
+}: TrackGridProps): React.ReactElement {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 

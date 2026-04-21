@@ -1,7 +1,8 @@
+import React from 'react';
 import { Badge, Cell } from '@telegram-apps/telegram-ui';
 import { useCredits } from '../hooks/useCredits';
 
-export function CreditsBadge(): JSX.Element {
+export function CreditsBadge(): React.ReactElement {
   const { credits, isLoading } = useCredits();
 
   return (

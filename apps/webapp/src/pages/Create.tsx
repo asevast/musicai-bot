@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Page, Title, Snackbar } from '@telegram-apps/telegram-ui';
+import React, { useState } from 'react';
+import { Title, Snackbar } from '@telegram-apps/telegram-ui';
 import { PromptForm } from '../components/PromptForm';
 import { apiClient } from '../api/client';
 import { useTelegram } from '../hooks/useTelegram';
@@ -15,7 +15,7 @@ interface PromptFormData {
   intensity: 'low' | 'medium' | 'high' | 'epic';
 }
 
-export function Create(): JSX.Element {
+export function Create(): React.ReactElement {
   const { user } = useTelegram();
   const addTrack = useTracksStore((state) => state.addTrack);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -82,7 +82,7 @@ export function Create(): JSX.Element {
   };
 
   return (
-    <Page>
+    <div className="page">
       <div className="p-4 pb-20">
         <Title level="2" weight="1" className="mb-4">
           Create New Track
@@ -106,6 +106,6 @@ export function Create(): JSX.Element {
           duration={3000}
         />
       )}
-    </Page>
+    </div>
   );
 }

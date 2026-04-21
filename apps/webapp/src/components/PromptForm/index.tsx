@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Input,
   Select,
@@ -46,7 +46,7 @@ interface PromptFormProps {
   isSubmitting: boolean;
 }
 
-export function PromptForm({ onSubmit, isSubmitting }: PromptFormProps): JSX.Element {
+export function PromptForm({ onSubmit, isSubmitting }: PromptFormProps): React.ReactElement {
   const [prompt, setPrompt] = useState('');
   const [type, setType] = useState<TrackType>('full_song');
   const [language, setLanguage] = useState('en');
@@ -170,7 +170,7 @@ export function PromptForm({ onSubmit, isSubmitting }: PromptFormProps): JSX.Ele
 
       <Button
         stretched
-        mode="primary"
+        mode="filled"
         onClick={handleSubmit}
         loading={isSubmitting}
         disabled={isSubmitting || prompt.length < 10}

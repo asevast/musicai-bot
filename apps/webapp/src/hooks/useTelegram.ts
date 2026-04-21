@@ -11,33 +11,36 @@ interface TelegramUser {
   photoUrl?: string;
 }
 
-interface ThemeParams {
-  bgColor?: string;
-  textColor?: string;
-  hintColor?: string;
-  linkColor?: string;
-  buttonColor?: string;
-  buttonTextColor?: string;
-  secondaryBgColor?: string;
-  headerBgColor?: string;
-  accentTextColor?: string;
-  sectionBgColor?: string;
-  sectionHeaderTextColor?: string;
-  subtitleTextColor?: string;
-  destructiveTextColor?: string;
+interface InitDataUser {
+  id: number;
+  firstName: string;
+  lastName?: string;
+  username?: string;
+  languageCode?: string;
+  isPremium?: boolean;
+  photoUrl?: string;
+}
+
+interface InitData {
+  user?: InitDataUser;
+}
+
+interface LaunchParams {
+  initDataRaw?: string;
+  initData?: InitData;
+  startParam?: string;
 }
 
 interface UseTelegramReturn {
   initDataRaw: string | null;
   user: TelegramUser | null;
-  themeParams: ThemeParams | null;
   startParam: string | null;
 }
 
 export function useTelegram(): UseTelegramReturn {
-  const launchParams = useMemo(() => {
+  const launchParams = useMemo((): LaunchParams | null => {
     try {
-      return retrieveLaunchParams();
+      return retrieveLaunchParams() as LaunchParams;
     } catch {
       // Not running inside Telegram Mini App
       return null;
@@ -60,32 +63,11 @@ export function useTelegram(): UseTelegramReturn {
     };
   }, [launchParams]);
 
-  const themeParams = useMemo((): ThemeParams | null => {
-    if (!launchParams?.themeParams) return null;
-    const t = launchParams.themeParams;
-    return {
-      bgColor: t.bgColor,
-      textColor: t.textColor,
-      hintColor: t.hintColor,
-      linkColor: t.linkColor,
-      buttonColor: t.buttonColor,
-      buttonTextColor: t.buttonTextColor,
-      secondaryBgColor: t.secondaryBgColor,
-      headerBgColor: t.headerBgColor,
-      accentTextColor: t.accentTextColor,
-      sectionBgColor: t.sectionBgColor,
-      sectionHeaderTextColor: t.sectionHeaderTextColor,
-      subtitleTextColor: t.subtitleTextColor,
-      destructiveTextColor: t.destructiveTextColor,
-    };
-  }, [launchParams]);
-
   const startParam = launchParams?.startParam ?? null;
 
   return {
     initDataRaw,
     user,
-    themeParams,
     startParam,
   };
 }

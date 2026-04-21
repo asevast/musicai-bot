@@ -1,9 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Page, Title, Tabs, Tab } from '@telegram-apps/telegram-ui';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Title, Button } from '@telegram-apps/telegram-ui';
 import { TrackGrid } from '../components/TrackGrid';
 import { apiClient } from '../api/client';
 import { useTelegram } from '../hooks/useTelegram';
-import { useTracksStore } from '../store/tracks.store';
 import type { Track } from '../store/tracks.store';
 
 interface TracksResponse {
@@ -13,7 +12,7 @@ interface TracksResponse {
 
 const LIMIT = 20;
 
-export function Library(): JSX.Element {
+export function Library(): React.ReactElement {
   const { user } = useTelegram();
   const [activeTab, setActiveTab] = useState<'my' | 'public'>('my');
   const [myTracks, setMyTracks] = useState<Track[]>([]);
@@ -84,37 +83,37 @@ export function Library(): JSX.Element {
   const emptyMessage = activeTab === 'my' ? 'No tracks yet' : 'No public tracks available';
 
   return (
-    <Page>
+    <div className="page">
       <div className="p-4 pb-20">
         <Title level="2" weight="1" className="mb-4">
           Library
         </Title>
 
-        <Tabs>
-          <Tab
-            selected={activeTab === 'my'}
+        <div className="flex gap-2 mb-4">
+          <Button
+            size="s"
+            mode={activeTab === 'my' ? 'filled' : 'outline'}
             onClick={() => setActiveTab('my')}
           >
             My Tracks
-          </Tab>
-          <Tab
-            selected={activeTab === 'public'}
+          </Button>
+          <Button
+            size="s"
+            mode={activeTab === 'public' ? 'filled' : 'outline'}
             onClick={() => setActiveTab('public')}
           >
             Public
-          </Tab>
-        </Tabs>
-
-        <div className="mt-4">
-          <TrackGrid
-            tracks={tracks}
-            isLoading={isLoading}
-            hasMore={hasMore}
-            onLoadMore={loadMore}
-            emptyMessage={emptyMessage}
-          />
+          </Button>
         </div>
+
+        <TrackGrid
+          tracks={tracks}
+          isLoading={isLoading}
+          hasMore={hasMore}
+          onLoadMore={loadMore}
+          emptyMessage={emptyMessage}
+        />
       </div>
-    </Page>
+    </div>
   );
 }

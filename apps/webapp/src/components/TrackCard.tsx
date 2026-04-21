@@ -1,3 +1,4 @@
+import React from 'react';
 import { Cell, Caption, Badge } from '@telegram-apps/telegram-ui';
 import { Link } from 'react-router';
 import type { Track } from '../store/tracks.store';
@@ -20,7 +21,7 @@ const statusColors: Record<Track['status'], string> = {
   failed: 'bg-red-500',
 };
 
-export function TrackCard({ track }: TrackCardProps): JSX.Element {
+export function TrackCard({ track }: TrackCardProps): React.ReactElement {
   const createdDate = new Date(track.createdAt).toLocaleDateString();
 
   return (
@@ -31,6 +32,7 @@ export function TrackCard({ track }: TrackCardProps): JSX.Element {
           <div className="flex gap-2 items-center">
             <Caption className="text-gray-500">{createdDate}</Caption>
             <Badge
+              type="number"
               className={`${statusColors[track.status]} text-white text-xs px-2 py-0.5 rounded`}
             >
               {track.status}
