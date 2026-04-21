@@ -18,6 +18,13 @@ import { helpCommand } from './commands/help.command';
 import { profileCommand } from './commands/profile.command';
 import { buyCommand } from './commands/buy.command';
 import { settingsCommand } from './commands/settings.command';
+import {
+  lyricsCommand,
+  handleLyricsLanguage,
+  handleLyricsRequest,
+  handleLyricsRegenerate,
+  handleLyricsCreateTrack,
+} from './commands/lyrics.command';
 import { deleteAccountCommand, confirmDeleteAccount } from './commands/delete-account.command';
 import { libraryCommand } from './commands/library.command';
 import { menuCommand } from './commands/menu.command';
@@ -47,6 +54,7 @@ import {
 // Define session data interface
 interface SessionData {
   awaitingRegenLyrics?: string;
+  lyricsLanguage?: string;
 }
 
 export type BotContext = Context & SessionFlavor<SessionData>;
@@ -103,6 +111,7 @@ export function setupBot(bot: Bot<BotContext>) {
   bot.command('help', helpCommand);
   bot.command('flesh', fleshCommand);
   bot.command('image', imageToMusicCommand);
+  bot.command('lyrics', lyricsCommand);
 
   bot.callbackQuery('main_menu', async (ctx) => {
     await ctx.answerCallbackQuery();
@@ -912,6 +921,18 @@ await ctx.reply(
 
   bot.catch((err) => {
     console.error('Bot error:', err);
+  });
+
+  // Lyrics command handlers
+  bot.callbackQuery(/^lyrics_lang_/, handleLyricsLanguage);
+  bot.callbackQuery('lyrics_regenerate', handleLyricsRegenerate);
+  bot.callbackQuery('lyrics_create_track', handleLyricsCreateTrack);
+
+  // Lyrics text handler (check before other message handlers)
+  bot.on('message:text', async (ctx, next) => {
+    const handled = await handleLyricsRequest(ctx);
+    if (handled) return;
+    return next();
   });
 }
 
