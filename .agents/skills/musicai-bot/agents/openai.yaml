@@ -1,0 +1,6 @@
+interface:
+  display_name: "Musicai Bot"
+  short_description: "Repo-specific patterns and workflows for musicai-bot"
+  default_prompt: "Use the musicai-bot repo skill to follow existing architecture, testing, and workflow conventions."
+policy:
+  allow_implicit_invocation: true
