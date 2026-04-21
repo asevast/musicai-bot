@@ -1,31 +1,9 @@
-# Cloudflare Pages Deployment Configuration
-# Usage: npx wrangler pages deploy dist --project-name=musicai-webapp
-# Staging preview: npx wrangler pages deploy dist --branch=staging
-
 name = "musicai-webapp"
 compatibility_date = "2024-01-01"
 pages_build_output_dir = "dist"
 
-# Staging environment
-[env.staging]
-name = "musicai-webapp-staging"
+[env.preview]
+name = "musicai-webapp-preview"
 
-# Production environment
 [env.production]
 name = "musicai-webapp"
-
-# Headers (also in _headers file)
-[[headers]]
-for = "/*.js"
-[headers.values]
-Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-for = "/*.css"
-[headers.values]
-Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-for = "/index.html"
-[headers.values]
-Cache-Control = "public, max-age=0, must-revalidate"
