@@ -46,19 +46,22 @@ export const handleInlineQuery = async (ctx: Context) => {
   const results = await Promise.all(
     tracks.map(async (track) => {
       const preview = track.prompt.slice(0, 50) + (track.prompt.length > 50 ? '...' : '');
-      const typeEmoji = track.type === 'clip' ? '✂️' : track.type === 'instrumental' ? '🎹' : '🎵';
+
+      if (!track.gcsUrl) {
+        return null;
+      }
 
       let audioUrl: string | undefined;
-      let thumbUrl: string | undefined;
+      try {
+        const storageKey = track.gcsUrl.split('/').slice(-2).join('/');
+        const publicUrl = storageService.getPublicUrl(storageKey);
+        audioUrl = publicUrl;
+      } catch {
+        return null;
+      }
 
-      if (track.gcsUrl) {
-        try {
-          const storageKey = track.gcsUrl.split('/').slice(-2).join('/');
-          const publicUrl = storageService.getPublicUrl(storageKey);
-          audioUrl = publicUrl;
-        } catch {
-          // Ignore storage errors
-        }
+      if (!audioUrl) {
+        return null;
       }
 
       const shareText =
@@ -69,7 +72,7 @@ export const handleInlineQuery = async (ctx: Context) => {
       return {
         type: 'audio' as const,
         id: track.id,
-        audio_url: audioUrl || '',
+        audio_url: audioUrl,
         title: preview,
         performer: `@fleshmus_bot`,
         caption: shareText,
@@ -78,7 +81,23 @@ export const handleInlineQuery = async (ctx: Context) => {
     })
   );
 
-  await ctx.answerInlineQuery(results, {
+  const validResults = results.filter((r): r is NonNullable<typeof r> => r !== null);
+
+  if (validResults.length === 0) {
+    return ctx.answerInlineQuery([
+      {
+        type: 'article',
+        id: 'no_tracks',
+        title: 'No tracks found',
+        description: 'Create a track with /create to share it!',
+        input_message_content: {
+          message_text: '🎵 No tracks found. Use /create to generate music!',
+        },
+      },
+    ]);
+  }
+
+  await ctx.answerInlineQuery(validResults, {
     cache_time: 60,
     is_personal: true,
   });
