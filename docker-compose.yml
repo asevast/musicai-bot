@@ -162,6 +162,26 @@ services:
       minio-init:
         condition: service_completed_successfully
 
+  webapp:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.dev
+      target: webapp
+    container_name: musicai_webapp
+    restart: unless-stopped
+    ports:
+      - '5173:5173'
+    volumes:
+      - ./apps/webapp/src:/app/apps/webapp/src
+      - ./apps/webapp/index.html:/app/apps/webapp/index.html
+      - ./apps/webapp/tsconfig.json:/app/apps/webapp/tsconfig.json
+      - ./apps/webapp/vite.config.ts:/app/apps/webapp/vite.config.ts
+      - ./tsconfig.base.json:/app/tsconfig.base.json
+    env_file: .env.development
+    depends_on:
+      api:
+        condition: service_started
+
   # ─── Dev UI Tools ───────────────────────────────────────────────────────────
 
   bullboard:

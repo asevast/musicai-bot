@@ -228,7 +228,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/home/asevast/musicbot/packages/database/src/generated/client",
+      "value": "/home/asevast/musicbot/.claude/worktrees/feat-miniapp/packages/database/src/generated/client",
       "fromEnvVar": null
     },
     "config": {
@@ -246,7 +246,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/home/asevast/musicbot/packages/database/prisma/schema.prisma",
+    "sourceFilePath": "/home/asevast/musicbot/.claude/worktrees/feat-miniapp/packages/database/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {

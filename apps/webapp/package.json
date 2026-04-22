@@ -1,0 +1,33 @@
+{
+  "name": "@musicai/webapp",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test:e2e": "vitest run e2e/",
+    "smoke": "pnpm build && echo \"Build OK - ready for Cloudflare Pages\""
+  },
+  "dependencies": {
+    "@musicai/shared-types": "workspace:*",
+    "@telegram-apps/sdk-react": "^3.0.0",
+    "@telegram-apps/telegram-ui": "^2.0.0",
+    "ky": "^1.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router": "^7.0.0",
+    "socket.io-client": "^4.0.0",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.0.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.4.0",
+    "vite": "^6.0.0"
+  }
+}

@@ -1,4 +1,5 @@
 import { Context } from 'grammy';
+import { loadEnv } from '@musicai/config';
 import { mainMenuKeyboard } from '../keyboards/main-menu.keyboard';
 
 export const menuCommand = async (ctx: Context) => {
@@ -20,7 +21,7 @@ export const menuCommand = async (ctx: Context) => {
       `Select an option below:`,
     {
       parse_mode: 'Markdown',
-      reply_markup: mainMenuKeyboard(),
+      reply_markup: mainMenuKeyboard(loadEnv().WEBAPP_URL || 'https://app.musicai.bot'),
     }
   );
 };

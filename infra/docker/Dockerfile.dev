@@ -20,6 +20,7 @@ COPY tsconfig.base.json ./
 COPY apps/bot/package.json ./apps/bot/
 COPY apps/api/package.json ./apps/api/
 COPY apps/worker/package.json ./apps/worker/
+COPY apps/webapp/package.json ./apps/webapp/
 
 # Packages
 COPY packages/database/package.json ./packages/database/
@@ -86,3 +87,10 @@ CMD ["pnpm", "--filter", "@musicai/api", "dev"]
 FROM base AS worker
 
 CMD ["pnpm", "--filter", "@musicai/worker", "dev"]
+
+# ─── Target: Webapp Service ───────────────────────────────────────────────────
+FROM base AS webapp
+
+EXPOSE 5173
+
+CMD ["pnpm", "--filter", "@musicai/webapp", "dev", "--host"]

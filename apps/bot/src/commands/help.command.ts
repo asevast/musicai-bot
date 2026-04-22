@@ -1,4 +1,5 @@
 import type { BotContext } from '../bot';
+import { loadEnv } from '@musicai/config';
 import { mainMenuKeyboard } from '../keyboards/main-menu.keyboard';
 
 export const helpCommand = async (ctx: BotContext) => {
@@ -34,6 +35,6 @@ export const helpCommand = async (ctx: BotContext) => {
 
   await ctx.reply(helpText, {
     parse_mode: 'Markdown',
-    reply_markup: mainMenuKeyboard(),
+    reply_markup: mainMenuKeyboard(loadEnv().WEBAPP_URL || 'https://app.musicai.bot'),
   });
 };

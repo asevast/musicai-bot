@@ -2,7 +2,7 @@ import { Job } from 'bullmq';
 import { prisma } from '@musicai/database';
 import { storageService } from '@musicai/storage';
 import type { NotifyPayload } from '@musicai/shared-types';
-import { Bot, InputFile } from 'grammy';
+import { Bot, InlineKeyboard, InputFile } from 'grammy';
 import { loadEnv } from '@musicai/config';
 
 export class NotifyProcessor {
@@ -48,6 +48,7 @@ export class NotifyProcessor {
           const audioBuffer = await storageService.getFileBuffer(storageKey);
 
           // Send audio file directly to Telegram
+          const webAppUrl = loadEnv().WEBAPP_URL || 'https://app.musicai.bot';
           await this.bot.api.sendAudio(
             chatId,
             new InputFile(audioBuffer, `${track.type}_track_${track.id.slice(0, 8)}.mp3`),
@@ -58,6 +59,10 @@ export class NotifyProcessor {
                 `📝 ${track.prompt.slice(0, 100)}${track.prompt.length > 100 ? '...' : ''}`,
               title: `MusicAI Track - ${track.id.slice(0, 8)}`,
               performer: 'MusicAI Bot',
+              reply_markup: new InlineKeyboard().webApp(
+                '🎵 Open in MusicAI',
+                `${webAppUrl}/track/${trackId}`
+              ),
             }
           );
           console.log('[Notify] Sent audio file directly to Telegram');

@@ -1,0 +1,7 @@
+# Build artifacts
+*.d.ts
+*.d.ts.map
+*.js
+*.js.map
+!*.config.ts
+!*.config.js

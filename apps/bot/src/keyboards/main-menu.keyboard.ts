@@ -1,8 +1,10 @@
 import { InlineKeyboard } from 'grammy';
 import type { NotificationMode, UserSettings } from '../utils/user-settings';
 
-export const mainMenuKeyboard = () =>
+export const mainMenuKeyboard = (webAppUrl: string) =>
   new InlineKeyboard()
+    .webApp('🎵 Open MusicAI', webAppUrl)
+    .row()
     .text('🎵 Create New Track', 'create_track')
     .row()
     .text('📸 Image to Music', 'image_to_music')
