@@ -14,6 +14,9 @@ export const startCommand = async (ctx: Context) => {
     unlimited: '👑',
   }[user.subscriptionTier];
 
+  const webAppUrl = loadEnv().WEBAPP_URL || 'https://app.musicai.bot';
+  console.log('[startCommand] WEBAPP_URL:', webAppUrl);
+
   await ctx.reply(
     `🎵 *Welcome to MusicAI Bot!*\n\n` +
       `👤 *Your Profile:*\n` +
@@ -29,7 +32,7 @@ export const startCommand = async (ctx: Context) => {
       `May the Force be with you! 🌟`,
     {
       parse_mode: 'Markdown',
-      reply_markup: mainMenuKeyboard(loadEnv().WEBAPP_URL || 'https://app.musicai.bot'),
+      reply_markup: mainMenuKeyboard(webAppUrl),
     }
   );
 };

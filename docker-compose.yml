@@ -109,12 +109,13 @@ services:
       target: api
     container_name: musicai_api
     restart: unless-stopped
-    ports:
-      - '3000:3000'
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     volumes:
       - ./apps/api/src:/app/apps/api/src
+      - ./apps/api/.swcrc:/app/apps/api/.swcrc
       - ./apps/api/tsconfig.json:/app/apps/api/tsconfig.json
-      - ./tsconfig.base.json:/app/tsconfig.base.json
       # Mount packages selectively (preserve Prisma generated binaries)
       - ./packages/config/src:/app/packages/config/src
       - ./packages/queues/src:/app/packages/queues/src
@@ -142,6 +143,9 @@ services:
       target: worker
     container_name: musicai_worker
     restart: unless-stopped
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     volumes:
       - ./apps/worker/src:/app/apps/worker/src
       # Mount packages selectively (preserve Prisma generated binaries)
@@ -205,7 +209,9 @@ services:
     container_name: musicai_adminer
     restart: unless-stopped
     ports:
-      - '8080:8080'
+      - '127.0.0.1:8081:8080'
+    environment:
+      - ADMINER_DEFAULT_SERVER=postgres
     depends_on:
       postgres:
         condition: service_healthy

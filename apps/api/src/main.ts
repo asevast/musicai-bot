@@ -14,7 +14,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { json, urlencoded } from 'express';
 import { AppModule } from './app.module';
 import { loadEnv } from '@musicai/config';
-import { IoAdapter } from './ws-adapter.js';
+import { IoAdapter } from './ws-adapter';
 
 const env = loadEnv();
 

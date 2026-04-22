@@ -1,8 +1,9 @@
 import { InlineKeyboard } from 'grammy';
 import type { NotificationMode, UserSettings } from '../utils/user-settings';
 
-export const mainMenuKeyboard = (webAppUrl: string) =>
-  new InlineKeyboard()
+export const mainMenuKeyboard = (webAppUrl: string) => {
+  console.log('[mainMenuKeyboard] Creating keyboard with URL:', webAppUrl);
+  return new InlineKeyboard()
     .webApp('🎵 Open MusicAI', webAppUrl)
     .row()
     .text('🎵 Create New Track', 'create_track')
@@ -16,6 +17,7 @@ export const mainMenuKeyboard = (webAppUrl: string) =>
     .text('⚙️ Settings', 'settings')
     .row()
     .text('💎 Buy Credits', 'buy_credits');
+};
 
 export const createMenuKeyboard = () =>
   new InlineKeyboard()
