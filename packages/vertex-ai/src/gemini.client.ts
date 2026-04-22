@@ -36,6 +36,7 @@ export class GeminiClient {
       ja: 'Japanese',
       ko: 'Korean',
       pt: 'Portuguese',
+      ru: 'Russian',
     };
 
     const prompt = `Write original song lyrics in ${langNames[req.language || 'en']}.

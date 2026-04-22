@@ -35,7 +35,9 @@ export const lyricsCommand = async (ctx: Context) => {
     .text('🇰🇷 Korean', 'lyrics_lang_ko')
     .row()
     .text('🇮🇳 Hindi', 'lyrics_lang_hi')
-    .text('🇧🇷 Portuguese', 'lyrics_lang_pt');
+    .text('🇧🇷 Portuguese', 'lyrics_lang_pt')
+    .row()
+    .text('🇷🇺 Russian', 'lyrics_lang_ru');
 
   await ctx.reply(
     '📝 *Lyrics Generator*\n\n' +
