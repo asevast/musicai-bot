@@ -2,7 +2,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { prisma } from '@musicai/database';
 
 export class InsufficientCreditsError extends Error {
-  constructor(public current: number, public required: number) {
+  constructor(
+    public current: number,
+    public required: number
+  ) {
     super(`Insufficient credits: ${current} < ${required}`);
     this.name = 'InsufficientCreditsError';
   }
@@ -29,7 +32,7 @@ export class CreditsService {
     type: 'earn' | 'buy' | 'bonus' | 'refund',
     description: string,
     paymentId?: string,
-    trackId?: string,
+    trackId?: string
   ): Promise<void> {
     await prisma.$transaction([
       prisma.user.update({
@@ -111,7 +114,7 @@ export class CreditsService {
       'refund',
       `Refund for failed generation (${trackId.slice(0, 8)})`,
       undefined,
-      trackId,
+      trackId
     );
   }
 }

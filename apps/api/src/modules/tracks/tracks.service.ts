@@ -38,11 +38,11 @@ export class TracksService {
   async createTrack(telegramId: string, dto: CreateTrackDto): Promise<Track> {
     this.validateDto(dto);
 
-    let user = await prisma.user.findUniqueOrThrow({
-      where: { telegramId: Number(telegramId) },
-    });
+  let user = await prisma.user.findUniqueOrThrow({
+    where: { telegramId: Number(telegramId) },
+  });
 
-    if (
+  if (
       user.subscriptionTier !== 'free' &&
       user.subscriptionExpiresAt &&
       user.subscriptionExpiresAt <= new Date()
@@ -71,7 +71,6 @@ export class TracksService {
           model: dto.model,
           type: dto.type,
           prompt: dto.prompt,
-          negativePrompt: dto.negativePrompt,
           lyrics: dto.lyrics,
           parameters: {
             bpm: dto.bpm,
@@ -104,10 +103,8 @@ export class TracksService {
           lyriaRequest: {
             model: dto.model,
             prompt: dto.prompt,
-            negativePrompt: dto.negativePrompt,
             vocal: dto.type !== 'instrumental',
             lyrics: dto.lyrics,
-            // Disable prompt rewriter when custom lyrics are provided
             promptRewriter: dto.lyrics ? false : dto.promptRewriter,
             bpm: dto.bpm,
             intensity: dto.intensity,
@@ -129,7 +126,6 @@ export class TracksService {
       throw error;
     }
 
-    console.log('[TracksService] Job added to queue, trackId:', track.id);
     return track;
   }
 
@@ -174,10 +170,6 @@ export class TracksService {
       throw new BadRequestException(
         `Prompt must be between 10 and ${this.env.MAX_PROMPT_LENGTH} characters`
       );
-    }
-
-    if (dto.negativePrompt && dto.negativePrompt.length > 300) {
-      throw new BadRequestException('Negative prompt must be 300 characters or less');
     }
 
     if (dto.lyrics && dto.lyrics.length > this.env.MAX_LYRICS_LENGTH) {

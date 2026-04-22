@@ -9,7 +9,6 @@ export interface SynthJobPayload {
   lyriaRequest: {
     model: LyriaModel;
     prompt: string;
-    negativePrompt?: string;
     vocal?: boolean;
     lyrics?: string;
     promptRewriter?: boolean;

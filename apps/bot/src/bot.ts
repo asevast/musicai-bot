@@ -1,5 +1,5 @@
 import { Bot, session, InlineKeyboard, InputFile } from 'grammy';
-import type { Context } from 'grammy';
+import type { Context, SessionFlavor } from 'grammy';
 import { conversations } from '@grammyjs/conversations';
 import { loadEnv } from '@musicai/config';
 import { prisma } from '@musicai/database';
@@ -18,11 +18,19 @@ import { helpCommand } from './commands/help.command';
 import { profileCommand } from './commands/profile.command';
 import { buyCommand } from './commands/buy.command';
 import { settingsCommand } from './commands/settings.command';
+import {
+  lyricsCommand,
+  handleLyricsLanguage,
+  handleLyricsRequest,
+  handleLyricsRegenerate,
+  handleLyricsCreateTrack,
+} from './commands/lyrics.command';
 import { deleteAccountCommand, confirmDeleteAccount } from './commands/delete-account.command';
+import { handleInlineQuery } from './inline/tracks.inline';
 import { libraryCommand } from './commands/library.command';
 import { menuCommand } from './commands/menu.command';
 import { fleshCommand } from './commands/flesh.command';
-import { imageToMusicCommand } from './commands/image-to-music.command';
+import { imageToMusicCommand, imageToMusicScene } from './commands/image-to-music.command';
 import { buildPaymentInvoice, handleSuccessfulPayment } from './payments/stars.handler';
 import {
   mainMenuKeyboard,
@@ -44,7 +52,13 @@ import {
   parseUserSettings,
 } from './utils/user-settings';
 
-export type BotContext = Context;
+// Define session data interface
+interface SessionData {
+  awaitingRegenLyrics?: string;
+  lyricsLanguage?: string;
+}
+
+export type BotContext = Context & SessionFlavor<SessionData>;
 
 const renderSettingsText = (settings: ReturnType<typeof parseUserSettings>) =>
   `⚙️ *Settings*\n\n${buildSettingsSummary(settings)}\n\nConfigure your preferences:`;
@@ -84,6 +98,7 @@ export function setupBot(bot: Bot<BotContext>) {
   });
 
   bot.use(createTrackScene);
+  bot.use(imageToMusicScene);
 
   bot.command('start', startCommand);
   bot.command('create', createCommand);
@@ -97,6 +112,7 @@ export function setupBot(bot: Bot<BotContext>) {
   bot.command('help', helpCommand);
   bot.command('flesh', fleshCommand);
   bot.command('image', imageToMusicCommand);
+  bot.command('lyrics', lyricsCommand);
 
   bot.callbackQuery('main_menu', async (ctx) => {
     await ctx.answerCallbackQuery();
@@ -113,7 +129,7 @@ export function setupBot(bot: Bot<BotContext>) {
 
   bot.callbackQuery('image_to_music', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await imageToMusicCommand(ctx);
+    await (ctx as any).conversation?.enter('imageToMusic');
   });
 
   bot.callbackQuery('history', async (ctx) => {
@@ -128,6 +144,41 @@ export function setupBot(bot: Bot<BotContext>) {
         parse_mode: 'Markdown',
         reply_markup: profileMenuKeyboard(),
       });
+    } catch {
+      // Message not modified - ignore
+    }
+  });
+
+  bot.callbackQuery('profile_stats', async (ctx) => {
+    const user = ctx.user;
+    if (!user) return ctx.answerCallbackQuery('❌ User not found');
+
+    const totalTracks = await prisma.track.count({ where: { userId: user.id } });
+    const doneTracks = await prisma.track.count({
+      where: { userId: user.id, status: 'done' },
+    });
+    const totalCreditsSpent = await prisma.track.aggregate({
+      where: { userId: user.id, status: 'done' },
+      _sum: { creditsCharged: true },
+    });
+
+    const tierEmoji = { free: '🌟', pro: '💎', unlimited: '👑' }[user.subscriptionTier];
+
+    await ctx.answerCallbackQuery();
+    try {
+      await ctx.editMessageText(
+        `📊 *Stats*\n\n` +
+          `${tierEmoji} Tier: ${user.subscriptionTier}\n` +
+          `💰 Credits: ${user.credits}\n\n` +
+          `• Total tracks: ${totalTracks}\n` +
+          `• Completed: ${doneTracks}\n` +
+          `• Credits spent: ${totalCreditsSpent._sum.creditsCharged ?? 0}\n\n` +
+          `Use /buy to get more credits!`,
+        {
+          parse_mode: 'Markdown',
+          reply_markup: profileMenuKeyboard(),
+        }
+      );
     } catch {
       // Message not modified - ignore
     }
@@ -364,6 +415,11 @@ export function setupBot(bot: Bot<BotContext>) {
     await ctx.answerCallbackQuery();
   });
 
+  bot.callbackQuery('cancel_image_music', async (ctx) => {
+    await ctx.answerCallbackQuery('Cancelled');
+    await ctx.reply('❌ Image to Music cancelled.');
+  });
+
   // History pagination handlers
   bot.callbackQuery(/^history_page_/, handleHistoryPage);
   bot.callbackQuery('history_summary', handleHistorySummary);
@@ -419,7 +475,7 @@ export function setupBot(bot: Bot<BotContext>) {
 
     if (track) {
       await ctx.answerCallbackQuery();
-      await ctx.reply(`📋 *Original Prompt:*\n\n` + track.prompt, { parse_mode: 'Markdown' });
+      await ctx.reply(`📋 <b>Original Prompt:</b>\n\n` + track.prompt, { parse_mode: 'HTML' });
     } else {
       await ctx.answerCallbackQuery('❌ Track not found');
     }
@@ -461,16 +517,16 @@ export function setupBot(bot: Bot<BotContext>) {
       .text('❌ Cancel', 'cancel_extend');
 
     await ctx.answerCallbackQuery();
-    await ctx.reply(
-      '🎼 *Extend to Full Song*\n\n' +
-        `This will create a full song version of your clip:\n` +
-        `• Original: 30 second clip\n` +
-        `• Extended: ~3 minute full song\n` +
-        `• Same prompt and style: ${track.prompt.slice(0, 50)}...\n\n` +
-        `⚠️ *Note:* The extended song will be inspired by your clip but may have different lyrics and melody variations to fill the longer duration.\n\n` +
-        `Cost: 3 credits`,
-      { parse_mode: 'Markdown', reply_markup: confirmKeyboard }
-    );
+await ctx.reply(
+  '🎼 <b>Extend to Full Song</b>\n\n' +
+    `This will create a full song version of your clip:\n` +
+    `• Original: 30 second clip\n` +
+    `• Extended: ~3 minute full song\n` +
+    `• Same prompt and style: ${track.prompt.slice(0, 50)}...\n\n` +
+    `⚠️ <b>Note:</b> The extended song will be inspired by your clip but may have different lyrics and melody variations to fill the longer duration.\n\n` +
+    `Cost: 3 credits`,
+  { parse_mode: 'HTML', reply_markup: confirmKeyboard },
+);
   });
 
   bot.callbackQuery(/^confirm_extend_/, async (ctx) => {
@@ -546,22 +602,123 @@ export function setupBot(bot: Bot<BotContext>) {
     const cost = track.model === 'lyria-3-clip-preview' ? 1 : 3;
     const discount = Math.max(1, Math.floor(cost * 0.5));
 
+    // Show current lyrics if any
+    const lyricsInfo = track.lyrics
+      ? `\n📝 <b>Current lyrics:</b>\n<i>${track.lyrics.slice(0, 100)}${track.lyrics.length > 100 ? '...' : ''}</i>\n`
+      : '\n🎵 <i>No custom lyrics (auto-generated)</i>\n';
+
     const confirmKeyboard = new InlineKeyboard()
       .text('✅ Create (50% off: ' + discount + ' credits)', `confirm_regen_${trackId}`)
+      .row()
+      .text('✏️ Edit Lyrics', `edit_regen_lyrics_${trackId}`)
       .row()
       .text('❌ Cancel', 'cancel_regen');
 
     await ctx.answerCallbackQuery();
     await ctx.reply(
-      '🔄 *Regenerate Track*\n\n' +
+      '🔄 <b>Regenerate Track</b>\n\n' +
         `This will create a new track with the same settings:\n` +
         `• Type: ${track.type}\n` +
         `• Model: ${track.model}\n` +
-        `• Prompt: ${track.prompt.slice(0, 50)}...\n\n` +
-        `You can edit the lyrics in the next step.\n` +
-        `Cost: ${discount} credits (50% discount)`,
-      { parse_mode: 'Markdown', reply_markup: confirmKeyboard }
+        `• Prompt: ${track.prompt.slice(0, 50)}...\n` +
+        lyricsInfo +
+        `\nCost: ${discount} credits (50% discount)`,
+      { parse_mode: 'HTML', reply_markup: confirmKeyboard },
     );
+  });
+
+  // Handle edit lyrics for regeneration
+  bot.callbackQuery(/^edit_regen_lyrics_/, async (ctx) => {
+    const trackId = ctx.callbackQuery.data.replace('edit_regen_lyrics_', '');
+    const user = ctx.user;
+    if (!user) return ctx.answerCallbackQuery('❌ User not found');
+
+    const track = await prisma.track.findFirst({
+      where: { id: trackId, userId: user.id, status: 'done' },
+    });
+
+    if (!track) {
+      return ctx.answerCallbackQuery('❌ Track not found');
+    }
+
+    await ctx.answerCallbackQuery();
+
+    // Ask for new lyrics
+    const cancelKeyboard = new InlineKeyboard().text('❌ Cancel', 'cancel_regen_lyrics');
+
+    await ctx.reply(
+      '📝 <b>Edit Lyrics for Regeneration</b>\n\n' +
+        `Current lyrics:\n<i>${track.lyrics || '(auto-generated)'}</i>\n\n` +
+        `Send me the new lyrics, or click Cancel to keep the current ones.`,
+      { parse_mode: 'HTML', reply_markup: cancelKeyboard },
+    );
+
+    // Store the trackId in session for the next message handler
+    ctx.session.awaitingRegenLyrics = trackId;
+  });
+
+  // Handle lyrics input for regeneration
+  bot.on('message:text', async (ctx, next) => {
+    const trackId = ctx.session.awaitingRegenLyrics;
+    if (!trackId) return next();
+
+    // Clear the awaiting state
+    delete ctx.session.awaitingRegenLyrics;
+
+    const user = ctx.user;
+    if (!user) {
+      return ctx.reply('❌ User not found');
+    }
+
+    const track = await prisma.track.findFirst({
+      where: { id: trackId, userId: user.id, status: 'done' },
+    });
+
+    if (!track) {
+      return ctx.reply('❌ Track not found');
+    }
+
+    const newLyrics = ctx.message.text.trim();
+    const params = track.parameters as Record<string, unknown>;
+    const cost = track.model === 'lyria-3-clip-preview' ? 1 : 3;
+    const discount = Math.max(1, Math.floor(cost * 0.5));
+
+    // Create track with new lyrics
+    const API_URL = process.env.API_URL || 'http://api:3000';
+    const response = await fetch(`${API_URL}/tracks`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Id': user.telegramId.toString(),
+      },
+      body: JSON.stringify({
+        model: track.model,
+        type: track.type,
+        prompt: track.prompt,
+        lyrics: newLyrics || undefined,
+        bpm: params.bpm,
+        intensity: params.intensity,
+        language: params.language,
+        promptRewriter: newLyrics ? false : undefined,
+        telegramId: user.telegramId.toString(),
+        chatId: ctx.chat?.id,
+        isRegeneration: true,
+        sourceTrackId: trackId,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      return ctx.reply('❌ Failed to create track: ' + error);
+    }
+
+    await ctx.reply('🎵 Your track is being regenerated with new lyrics and a 50% discount!');
+  });
+
+  bot.callbackQuery('cancel_regen_lyrics', async (ctx) => {
+    delete ctx.session.awaitingRegenLyrics;
+    await ctx.answerCallbackQuery('Cancelled');
+    await ctx.reply('❌ Lyrics edit cancelled. You can still regenerate with current settings.');
   });
 
   bot.callbackQuery(/^confirm_regen_/, async (ctx) => {
@@ -591,12 +748,11 @@ export function setupBot(bot: Bot<BotContext>) {
         model: sourceTrack.model,
         type: sourceTrack.type,
         prompt: sourceTrack.prompt,
-        negativePrompt: sourceTrack.negativePrompt,
-        lyrics: sourceTrack.lyrics, // Can be edited
+        lyrics: sourceTrack.lyrics,
         bpm: params.bpm,
         intensity: params.intensity,
         language: params.language,
-        durationSeconds: params.durationSeconds as number | undefined,
+        promptRewriter: sourceTrack.lyrics ? false : undefined,
         telegramId: user.telegramId.toString(),
         chatId: ctx.chat?.id,
         isRegeneration: true,
@@ -702,8 +858,6 @@ export function setupBot(bot: Bot<BotContext>) {
     const user = ctx.user;
     if (!user) return ctx.answerCallbackQuery('❌ User not found');
 
-    // Soft delete - mark as failed or add deleted flag
-    // For now, just remove the gcsUrl so it doesn't show download button
     await prisma.track.updateMany({
       where: { id: trackId, userId: user.id },
       data: { gcsUrl: null },
@@ -712,6 +866,8 @@ export function setupBot(bot: Bot<BotContext>) {
     await ctx.answerCallbackQuery('🗑️ Track removed from history');
     await showHistoryPage(ctx, { page: 1, filter: 'all' });
   });
+
+  bot.inlineQuery('', handleInlineQuery);
 
   // Download track callback handler
   bot.callbackQuery(/^download_/, async (ctx) => {
@@ -766,6 +922,18 @@ export function setupBot(bot: Bot<BotContext>) {
 
   bot.catch((err) => {
     console.error('Bot error:', err);
+  });
+
+  // Lyrics command handlers
+  bot.callbackQuery(/^lyrics_lang_/, handleLyricsLanguage);
+  bot.callbackQuery('lyrics_regenerate', handleLyricsRegenerate);
+  bot.callbackQuery('lyrics_create_track', handleLyricsCreateTrack);
+
+  // Lyrics text handler (check before other message handlers)
+  bot.on('message:text', async (ctx, next) => {
+    const handled = await handleLyricsRequest(ctx);
+    if (handled) return;
+    return next();
   });
 }
 

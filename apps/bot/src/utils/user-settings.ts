@@ -30,10 +30,7 @@ export function parseUserSettings(value: unknown): UserSettings {
     settings.intensity = source.intensity as Intensity;
   }
 
-  if (
-    typeof source.notifications === 'string' &&
-    VALID_NOTIFICATIONS.has(source.notifications)
-  ) {
+  if (typeof source.notifications === 'string' && VALID_NOTIFICATIONS.has(source.notifications)) {
     settings.notifications = source.notifications as NotificationMode;
   }
 
@@ -56,7 +53,7 @@ export function formatLanguage(value?: string): string {
     pt: 'Portuguese',
   };
 
-  return value ? labels[value] ?? value.toUpperCase() : 'Not set';
+  return value ? (labels[value] ?? value.toUpperCase()) : 'Not set';
 }
 
 export function formatIntensity(value?: Intensity): string {

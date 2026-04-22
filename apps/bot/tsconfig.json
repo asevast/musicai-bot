@@ -6,6 +6,8 @@
     "moduleResolution": "bundler",
     "strict": false,
     "skipLibCheck": true,
+    "declaration": false,
+    "declarationMap": false,
     "noImplicitAny": false,
     "noImplicitReturns": false,
     "noUnusedLocals": false,

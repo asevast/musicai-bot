@@ -55,15 +55,15 @@ describe('TracksService', () => {
 
   describe('calcCost', () => {
     it('returns 1 for clip preview', () => {
-      expect((service as any).calcCost('lyria-3-clip-preview', 30)).toBe(1);
+      expect((service as any).calcCost({ model: 'lyria-3-clip-preview', durationSeconds: 30 })).toBe(1);
     });
 
     it('returns 3 for short pro track', () => {
-      expect((service as any).calcCost('lyria-3-pro-preview', 30)).toBe(3);
+      expect((service as any).calcCost({ model: 'lyria-3-pro-preview', durationSeconds: 30 })).toBe(3);
     });
 
     it('returns 5 for long track', () => {
-      expect((service as any).calcCost('lyria-3-pro-preview', 120)).toBe(5);
+      expect((service as any).calcCost({ model: 'lyria-3-pro-preview', durationSeconds: 120 })).toBe(5);
     });
   });
 

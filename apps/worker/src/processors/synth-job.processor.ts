@@ -1,6 +1,6 @@
 import { Job, Queue } from 'bullmq';
 import IORedis from 'ioredis';
-import { PrismaClient } from '@musicai/database';
+import { prisma } from '@musicai/database';
 import { LyriaClient } from '@musicai/vertex-ai';
 import { mapVertexError, RETRY_CONFIG } from '@musicai/vertex-ai';
 import { QUEUES, QUEUE_OPTIONS } from '@musicai/queues';
@@ -12,7 +12,7 @@ export class SynthJobProcessor {
   private redisPublisher: IORedis;
 
   constructor(
-    private readonly prisma: PrismaClient,
+    private readonly prismaInstance: typeof prisma,
     private readonly lyriaClient: LyriaClient,
     redisUrl: string
   ) {
@@ -31,12 +31,12 @@ export class SynthJobProcessor {
   async process(job: Job<SynthJobPayload>): Promise<void> {
     const { trackId, userId, lyriaRequest, chatId, messageId } = job.data;
 
-    await this.prisma.track.update({
+    await this.prismaInstance.track.update({
       where: { id: trackId },
       data: { status: 'processing' },
     });
 
-    await this.prisma.synthJob.update({
+    await this.prismaInstance.synthJob.update({
       where: { trackId },
       data: { startedAt: new Date(), bullJobId: job.id },
     });
@@ -70,20 +70,19 @@ export class SynthJobProcessor {
           | undefined,
         imageMimeType: lyriaRequest.imageMimeType as 'image/jpeg' | 'image/png' | undefined,
       };
-      console.log('[SynthJobProcessor] Lyria request:', JSON.stringify(request, null, 2));
       lyriaResponse = await this.lyriaClient.generate(request);
-    } catch (err) {
+    } catch (err: any) {
       const errorCode = mapVertexError(err);
       const retryConfig = RETRY_CONFIG[errorCode];
 
-      await this.prisma.synthJob.update({
+      await this.prismaInstance.synthJob.update({
         where: { trackId },
         data: { errorCode, errorMessage: String(err) },
       });
 
       if (!retryConfig.retry) {
         await this.refund(trackId);
-        await this.prisma.track.update({
+        await this.prismaInstance.track.update({
           where: { id: trackId },
           data: { status: 'failed' },
         });
@@ -110,41 +109,59 @@ export class SynthJobProcessor {
       });
     }
 
-    const audioBuffer = Buffer.from(lyriaResponse.audioBase64, 'base64');
-    const storageKey = await storageService.uploadTrack(audioBuffer, trackId);
-    const gcsUrl = storageService.getPublicUrl(storageKey);
+    // Post-Lyria processing (may throw)
+    try {
+      const audioBuffer = Buffer.from(lyriaResponse.audioBase64, 'base64');
+      const storageKey = await storageService.uploadTrack(audioBuffer, trackId);
+      const gcsUrl = storageService.getPublicUrl(storageKey);
+      const durationSec = this.estimateDuration(audioBuffer);
 
-    const durationSec = this.estimateDuration(audioBuffer);
+      await this.prismaInstance.track.update({
+        where: { id: trackId },
+        data: {
+          status: 'done',
+          gcsUrl,
+          revisedPrompt: lyriaResponse.revisedPrompt,
+          durationSec,
+        },
+      });
 
-    await this.prisma.track.update({
-      where: { id: trackId },
-      data: {
+      await this.prismaInstance.synthJob.update({
+        where: { trackId },
+        data: { finishedAt: new Date() },
+      });
+
+      await this.publishProgress({
+        userId,
+        trackId,
         status: 'done',
         gcsUrl,
-        revisedPrompt: lyriaResponse.revisedPrompt,
-        durationSec,
-      },
-    });
+        etaSec: 0,
+      });
 
-    await this.prisma.synthJob.update({
-      where: { trackId },
-      data: { finishedAt: new Date() },
-    });
-
-    await this.publishProgress({
-      userId,
-      trackId,
-      status: 'done',
-      gcsUrl,
-      etaSec: 0,
-    });
-
-    await this.sendNotify({
-      chatId,
-      messageId,
-      text: '✅ Your track is ready!',
-      trackId,
-    });
+      await this.sendNotify({
+        chatId,
+        messageId,
+        text: '✅ Your track is ready!',
+        trackId,
+      });
+    } catch (postError: any) {
+      console.error('[SynthJobProcessor] Post-Lyria error:', {
+        trackId,
+        errorMessage: postError.message,
+      });
+      await this.refund(trackId);
+      await this.prismaInstance.track.update({
+        where: { id: trackId },
+        data: { status: 'failed' },
+      });
+      await this.sendNotify({
+        chatId,
+        messageId,
+        text: '❌ Track generation failed after audio generation. Credits have been refunded.',
+      });
+      return;
+    }
   }
 
   private async sendNotify(payload: NotifyPayload): Promise<void> {
@@ -160,14 +177,14 @@ export class SynthJobProcessor {
   }
 
   private async refund(trackId: string): Promise<void> {
-    const job = await this.prisma.synthJob.findFirst({
+    const job = await this.prismaInstance.synthJob.findFirst({
       where: { trackId },
       include: { track: true },
     });
 
     if (!job?.track.creditsCharged) return;
 
-    const existingRefund = await this.prisma.creditTransaction.findFirst({
+    const existingRefund = await this.prismaInstance.creditTransaction.findFirst({
       where: {
         userId: job.track.userId,
         trackId,
@@ -178,12 +195,12 @@ export class SynthJobProcessor {
 
     if (existingRefund) return;
 
-    await this.prisma.$transaction([
-      this.prisma.user.update({
+    await this.prismaInstance.$transaction([
+      this.prismaInstance.user.update({
         where: { id: job.track.userId },
         data: { credits: { increment: job.track.creditsCharged } },
       }),
-      this.prisma.creditTransaction.create({
+      this.prismaInstance.creditTransaction.create({
         data: {
           userId: job.track.userId,
           amount: job.track.creditsCharged,

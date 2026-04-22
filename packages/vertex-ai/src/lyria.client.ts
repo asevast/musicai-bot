@@ -1,163 +1,163 @@
 import type { LyriaRequest, LyriaResponse } from './lyria.types';
 import { LyriaGenerationError } from './lyria.errors';
+import { CircuitBreaker } from './circuit-breaker';
 
 export class LyriaClient {
   private readonly apiKey: string;
   private readonly baseUrl: string;
+  private readonly circuitBreaker: CircuitBreaker;
 
   constructor(apiKey: string, baseUrl = 'https://routerai.ru/api/v1') {
     this.apiKey = apiKey;
     this.baseUrl = baseUrl;
+    this.circuitBreaker = new CircuitBreaker({
+      failureThreshold: 5,
+      successThreshold: 2,
+      timeout: 60_000,
+      monitorInterval: 10_000,
+    });
   }
 
   async generate(req: LyriaRequest): Promise<LyriaResponse> {
-    const model =
-      req.model === 'lyria-3-clip-preview'
-        ? 'google/lyria-3-clip-preview'
-        : 'google/lyria-3-pro-preview';
+    return this.circuitBreaker.execute(async () => {
+      const model =
+        req.model === 'lyria-3-clip-preview'
+          ? 'google/lyria-3-clip-preview'
+          : 'google/lyria-3-pro-preview';
 
-    // Build messages array with text and optional image
-    const messageContent: Array<{
-      type: 'text' | 'image_url';
-      text?: string;
-      image_url?: { url: string };
-    }> = [{ type: 'text', text: req.prompt }];
+      let promptText = req.prompt;
+      if (req.lyrics && req.promptRewriter === false) {
+        promptText = `${req.prompt}\n\nLyrics:\n${req.lyrics.trim()}`;
+      }
 
-    // Add image if provided - use OpenAI vision format with data URL
-    if (req.imageBase64 && req.imageMimeType) {
-      messageContent.push({
-        type: 'image_url',
-        image_url: {
-          url: `data:${req.imageMimeType};base64,${req.imageBase64}`,
+      const userContent: string | object[] =
+        req.imageBase64 && req.imageMimeType
+          ? [
+              { type: 'text', text: promptText },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: `data:${req.imageMimeType};base64,${req.imageBase64}`,
+                },
+              },
+            ]
+          : promptText;
+
+      const requestBody: Record<string, unknown> = {
+        model,
+        messages: [{ role: 'user', content: userContent }],
+        stream: true,
+      };
+
+      if (req.vocal !== undefined) {
+        requestBody.vocal = req.vocal;
+      }
+      if (req.bpm) {
+        requestBody.bpm = req.bpm;
+      }
+      if (req.intensity) {
+        requestBody.intensity = req.intensity;
+      }
+      if (req.durationSeconds) {
+        requestBody.durationSeconds = req.durationSeconds;
+      }
+      if (req.language) {
+        requestBody.language = req.language;
+      }
+
+      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+        method: 'POST',
+        signal: AbortSignal.timeout(200_000),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.apiKey}`,
         },
+        body: JSON.stringify(requestBody),
       });
-    }
 
-    // Build the request body with all Lyria-specific parameters
-    const requestBody: Record<string, unknown> = {
-      model,
-      messages: [{ role: 'user', content: messageContent }],
-      stream: true,
-    };
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new LyriaGenerationError(`Lyria API error: ${response.status} - ${errorText}`);
+      }
 
-    // Add Lyria-specific parameters directly to the body
-    if (req.lyrics) {
-      // Ensure lyrics are properly formatted with section markers
-      requestBody.lyrics = req.lyrics.trim();
-      // When custom lyrics are provided, ensure vocal is true
-      requestBody.vocal = true;
-      // Disable prompt rewriter to use custom lyrics as-is
-      requestBody.promptRewriter = req.promptRewriter ?? false;
-    } else if (req.vocal !== undefined) {
-      requestBody.vocal = req.vocal;
-    }
-    if (req.bpm) {
-      requestBody.bpm = req.bpm;
-    }
-    if (req.intensity) {
-      requestBody.intensity = req.intensity;
-    }
-    if (req.durationSeconds) {
-      requestBody.durationSeconds = req.durationSeconds;
-    }
-    if (req.language) {
-      requestBody.language = req.language;
-    }
-    if (req.negativePrompt) {
-      requestBody.negativePrompt = req.negativePrompt;
-    }
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new LyriaGenerationError('No response body from Lyria API');
+      }
 
-    // Debug: Log the request body
-    console.log('[LyriaClient] Request body:', JSON.stringify(requestBody, null, 2));
+      const audioChunks: string[] = [];
+      const decoder = new TextDecoder();
+      let buffer = '';
 
-    // Make the fetch request directly
-    const response = await fetch(`${this.baseUrl}/chat/completions`, {
-      method: 'POST',
-      signal: AbortSignal.timeout(200_000),
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.apiKey}`,
-      },
-      body: JSON.stringify(requestBody),
-    });
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new LyriaGenerationError(`Lyria API error: ${response.status} - ${errorText}`);
-    }
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() ?? '';
 
-    const reader = response.body?.getReader();
-    if (!reader) {
-      throw new LyriaGenerationError('No response body from Lyria API');
-    }
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+            if (trimmed.startsWith('data: ')) {
+              const data = trimmed.slice(6);
+              if (data === '[DONE]') continue;
 
-    const audioChunks: string[] = [];
-    const decoder = new TextDecoder();
-    let buffer = '';
+              try {
+                const parsed = JSON.parse(data);
 
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+                if (parsed.error) {
+                  throw new LyriaGenerationError(
+                    `Lyria API error: ${parsed.error.code || 'UNKNOWN'} - ${parsed.error.message || JSON.stringify(parsed.error)}`
+                  );
+                }
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        // Keep the last potentially incomplete line in the buffer
-        buffer = lines.pop() ?? '';
+                const delta = parsed.choices?.[0]?.delta;
+                const audio = delta?.audio as { data?: string } | undefined;
+                if (audio?.data) {
+                  audioChunks.push(audio.data);
+                }
+              } catch (e) {
+                if (e instanceof LyriaGenerationError) throw e;
+              }
+            }
+          }
+        }
 
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed) continue;
+        if (buffer.trim()) {
+          const trimmed = buffer.trim();
           if (trimmed.startsWith('data: ')) {
             const data = trimmed.slice(6);
-            if (data === '[DONE]') continue;
-
-            try {
-              const parsed = JSON.parse(data);
-              const delta = parsed.choices?.[0]?.delta;
-              const audio = delta?.audio as { data?: string } | undefined;
-              if (audio?.data) {
-                audioChunks.push(audio.data);
+            if (data !== '[DONE]') {
+              try {
+                const parsed = JSON.parse(data);
+                const audio = parsed.choices?.[0]?.delta?.audio as { data?: string } | undefined;
+                if (audio?.data) {
+                  audioChunks.push(audio.data);
+                }
+              } catch {
+                // Ignore parse errors
               }
-            } catch {
-              // Ignore parse errors for malformed chunks
             }
           }
         }
+      } finally {
+        reader.releaseLock();
       }
 
-      // Process any remaining data in buffer
-      if (buffer.trim()) {
-        const trimmed = buffer.trim();
-        if (trimmed.startsWith('data: ')) {
-          const data = trimmed.slice(6);
-          if (data !== '[DONE]') {
-            try {
-              const parsed = JSON.parse(data);
-              const audio = parsed.choices?.[0]?.delta?.audio as { data?: string } | undefined;
-              if (audio?.data) {
-                audioChunks.push(audio.data);
-              }
-            } catch {
-              // Ignore parse errors
-            }
-          }
-        }
+      if (audioChunks.length === 0) {
+        throw new LyriaGenerationError('No audio data received from Lyria API');
       }
-    } finally {
-      reader.releaseLock();
-    }
 
-    if (audioChunks.length === 0) {
-      throw new LyriaGenerationError('No audio data received from Lyria API');
-    }
+      const mp3Data = Buffer.from(audioChunks.join(''), 'base64');
 
-    const mp3Data = Buffer.from(audioChunks.join(''), 'base64');
-
-    return {
-      audioBase64: mp3Data.toString('base64'),
-      mimeType: 'audio/mp3',
-      revisedPrompt: req.prompt,
-    };
+      return {
+        audioBase64: mp3Data.toString('base64'),
+        mimeType: 'audio/mp3',
+        revisedPrompt: req.prompt,
+      };
+    });
   }
 }

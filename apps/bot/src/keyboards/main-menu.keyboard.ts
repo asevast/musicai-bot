@@ -38,7 +38,7 @@ export const historyMenuKeyboard = () =>
 
 export const profileMenuKeyboard = () =>
   new InlineKeyboard()
-    .text('📊 Stats', 'profile')
+    .text('📊 Stats', 'profile_stats')
     .text('💳 Transactions', 'profile_transactions')
     .row()
     .text('⬅️ Back to Menu', 'main_menu');

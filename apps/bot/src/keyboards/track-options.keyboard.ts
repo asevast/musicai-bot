@@ -55,8 +55,6 @@ export const additionalSettingsKeyboard = () =>
     .text('🎯 BPM', 'settings_bpm')
     .text('🎚️ Intensity', 'settings_intensity')
     .row()
-    .text('🚫 Negative Prompt', 'settings_negative')
-    .row()
     .text('⏭ Skip Advanced', 'settings_skip');
 
 export const trackActionKeyboard = (trackId: string) =>
@@ -64,5 +62,5 @@ export const trackActionKeyboard = (trackId: string) =>
     .text('🔄 Regenerate', `regen_${trackId}`)
     .text('📤 Share', `share_${trackId}`)
     .row()
-    .text('📋 Copy Prompt', `copy_${trackId}`)
+    .text('📋 Copy Prompt', `copy_prompt_${trackId}`)
     .text('❤️ To Library', `library_${trackId}`);

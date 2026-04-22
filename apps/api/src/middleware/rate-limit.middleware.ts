@@ -13,7 +13,7 @@ export class RateLimitMiddleware implements NestMiddleware {
 
   constructor(
     private readonly limit: number,
-    private readonly windowMs: number = 60_000,
+    private readonly windowMs: number = 60_000
   ) {}
 
   use(req: Request, res: Response, next: NextFunction) {
@@ -41,7 +41,12 @@ export class RateLimitMiddleware implements NestMiddleware {
     return telegramId ? `telegram:${telegramId}` : `ip:${req.ip}`;
   }
 
-  private setRateLimitHeaders(res: Response, count: number, limit: number, resetTime: number): void {
+  private setRateLimitHeaders(
+    res: Response,
+    count: number,
+    limit: number,
+    resetTime: number
+  ): void {
     res.setHeader('X-RateLimit-Limit', limit.toString());
     res.setHeader('X-RateLimit-Remaining', Math.max(0, limit - count).toString());
     res.setHeader('X-RateLimit-Reset', new Date(resetTime).toISOString());

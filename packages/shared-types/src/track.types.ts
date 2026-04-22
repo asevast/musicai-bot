@@ -17,12 +17,7 @@ export interface CreateTrackDto {
   model: LyriaModel;
   type: TrackType;
   prompt: string;
-  negativePrompt?: string;
   lyrics?: string;
-  /**
-   * When false, uses custom lyrics as-is without AI rewriting.
-   * Should be set to false when user provides custom lyrics.
-   */
   promptRewriter?: boolean;
   bpm?: number;
   intensity?: Intensity;
