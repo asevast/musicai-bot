@@ -4,13 +4,13 @@
 
 BullMQ 5 does not support colons in queue names. The following queues were renamed:
 
-| Old Name | New Name |
-|----------|----------|
+| Old Name         | New Name         |
+| ---------------- | ---------------- |
 | synth:pro:urgent | synth-pro-urgent |
 | synth:pro:normal | synth-pro-normal |
-| synth:clip | synth-clip |
-| synth:dlq | synth-dlq |
-| notify | notify |
+| synth:clip       | synth-clip       |
+| synth:dlq        | synth-dlq        |
+| notify           | notify           |
 
 ## Migration Steps
 
@@ -21,4 +21,3 @@ BullMQ 5 does not support colons in queue names. The following queues were renam
    docker compose restart
 
 3. Existing jobs will be lost - inform users if any tracks were queued.
-

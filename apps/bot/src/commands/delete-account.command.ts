@@ -23,7 +23,7 @@ export const deleteAccountCommand = async (ctx: Context) => {
     {
       parse_mode: 'Markdown',
       reply_markup: keyboard,
-    },
+    }
   );
 };
 
@@ -46,6 +46,6 @@ export const confirmDeleteAccount = async (ctx: Context) => {
     '✅ *Account Deleted*\n\n' +
       'All your data has been permanently deleted.\n\n' +
       'Thank you for using MusicAI Bot. May the Force be with you! 🌟',
-    { parse_mode: 'Markdown' },
+    { parse_mode: 'Markdown' }
   );
 };

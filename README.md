@@ -26,11 +26,13 @@ Telegram bot for generating music using Google Lyria 3 API (Vertex AI).
 
 1. Clone the repository
 2. Install dependencies:
+
    ```bash
    pnpm install
    ```
 
 3. Start local services:
+
    ```bash
    docker-compose up -d
    ```
@@ -38,6 +40,7 @@ Telegram bot for generating music using Google Lyria 3 API (Vertex AI).
 4. Copy `.env.example` to `.env` and configure your environment variables
 
 5. Generate Prisma client:
+
    ```bash
    pnpm db:generate
    ```
@@ -83,16 +86,16 @@ docker-compose up
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `/start` | Register and get welcome message |
-| `/create` | Create a new track |
-| `/history` | View your track history |
-| `/library` | Browse community tracks |
-| `/profile` | View your profile |
-| `/settings` | Configure defaults |
-| `/buy` | Buy credits |
-| `/delete_account` | Delete account (GDPR) |
+| Command           | Description                      |
+| ----------------- | -------------------------------- |
+| `/start`          | Register and get welcome message |
+| `/create`         | Create a new track               |
+| `/history`        | View your track history          |
+| `/library`        | Browse community tracks          |
+| `/profile`        | View your profile                |
+| `/settings`       | Configure defaults               |
+| `/buy`            | Buy credits                      |
+| `/delete_account` | Delete account (GDPR)            |
 
 ## Architecture
 

@@ -247,15 +247,15 @@ export const handleViewTrack = async (ctx: BotContext) => {
     year: 'numeric',
   });
 
-  let message = `${statusEmoji[track.status] || '⏳'} *Track Details*\n\n`;
-  message += `*Type:* ${typeLabel[track.type] || track.type}\n`;
-  message += `*Status:* ${track.status}\n`;
-  message += `*Duration:* ${duration}\n`;
-  message += `*Created:* ${date}\n\n`;
-  message += `*Prompt:* ${track.prompt.slice(0, 200)}${track.prompt.length > 200 ? '...' : ''}\n`;
+  let message = `${statusEmoji[track.status] || '⏳'} <b>Track Details</b>\n\n`;
+  message += `<b>Type:</b> ${typeLabel[track.type] || track.type}\n`;
+  message += `<b>Status:</b> ${track.status}\n`;
+  message += `<b>Duration:</b> ${duration}\n`;
+  message += `<b>Created:</b> ${date}\n\n`;
+  message += `<b>Prompt:</b> ${track.prompt.slice(0, 200)}${track.prompt.length > 200 ? '...' : ''}\n`;
 
   if (track.lyrics) {
-    message += `\n*Lyrics:* ${track.lyrics.slice(0, 200)}${track.lyrics.length > 200 ? '...' : ''}\n`;
+    message += `\n<b>Lyrics:</b> ${track.lyrics.slice(0, 200)}${track.lyrics.length > 200 ? '...' : ''}\n`;
   }
 
   // Build action keyboard
@@ -289,7 +289,7 @@ export const handleViewTrack = async (ctx: BotContext) => {
   keyboard.text('⬅️ Back to List', 'history');
 
   await ctx.answerCallbackQuery();
-  await ctx.reply(message, { parse_mode: 'Markdown', reply_markup: keyboard });
+  await ctx.reply(message, { parse_mode: 'HTML', reply_markup: keyboard });
 };
 
 // Handler for filter buttons
