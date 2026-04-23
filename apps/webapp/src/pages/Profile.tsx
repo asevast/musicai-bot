@@ -57,9 +57,7 @@ export function Profile(): React.ReactElement {
 
     setIsLoading(true);
     try {
-      const userResponse = await apiClient
-        .get(`users/telegram/${user.id}`)
-        .json<{ id: string }>();
+      const userResponse = await apiClient.get(`users/telegram/${user.id}`).json<{ id: string }>();
 
       const [profileData, creditsResponse] = await Promise.all([
         apiClient.get(`users/${userResponse.id}/profile`).json<ProfileResponse>(),
@@ -131,7 +129,11 @@ export function Profile(): React.ReactElement {
           <Cell
             subtitle={<Caption className="text-gray-500">Available credits</Caption>}
             after={
-              <Badge type="number" mode="primary" className="bg-blue-500 text-white px-3 py-1 rounded text-base">
+              <Badge
+                type="number"
+                mode="primary"
+                className="bg-blue-500 text-white px-3 py-1 rounded text-base"
+              >
                 {profile.credits}
               </Badge>
             }

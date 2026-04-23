@@ -21,7 +21,10 @@ import IORedis from 'ioredis';
         'https://web.telegram.org',
         'https://*.telegram.org',
       ].filter(Boolean);
-      if (!origin || allowedOrigins.some((allowed) => origin.match(new RegExp(allowed.replace(/\*/g, '.*'))))) {
+      if (
+        !origin ||
+        allowedOrigins.some((allowed) => origin.match(new RegExp(allowed.replace(/\*/g, '.*'))))
+      ) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'), false);

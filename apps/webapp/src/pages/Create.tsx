@@ -33,9 +33,7 @@ export function Create(): React.ReactElement {
 
     try {
       const model: LyriaModel =
-        formData.type === 'clip'
-          ? 'lyria-3-clip-preview'
-          : 'lyria-3-pro-preview';
+        formData.type === 'clip' ? 'lyria-3-clip-preview' : 'lyria-3-pro-preview';
 
       const dto: Omit<CreateTrackDto, 'telegramId' | 'chatId' | 'messageId'> & {
         telegramId: string;
@@ -54,15 +52,13 @@ export function Create(): React.ReactElement {
         messageId: 0,
       };
 
-      const response = await apiClient
-        .post('tracks', { json: dto })
-        .json<{
-          id: string;
-          title: string;
-          status: 'queued';
-          createdAt: string;
-          type: string;
-        }>();
+      const response = await apiClient.post('tracks', { json: dto }).json<{
+        id: string;
+        title: string;
+        status: 'queued';
+        createdAt: string;
+        type: string;
+      }>();
 
       addTrack({
         id: response.id,
@@ -91,13 +87,7 @@ export function Create(): React.ReactElement {
         <PromptForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />
       </div>
 
-      {error && (
-        <Snackbar
-          description={error}
-          onClose={() => setError(null)}
-          duration={5000}
-        />
-      )}
+      {error && <Snackbar description={error} onClose={() => setError(null)} duration={5000} />}
 
       {success && (
         <Snackbar

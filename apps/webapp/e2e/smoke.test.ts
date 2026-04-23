@@ -51,7 +51,7 @@ describe('Mini App Smoke Tests', () => {
   describe('Build Output', () => {
     it('should have index.html with correct base path', async () => {
       // vite.config.ts has base: '/' for TMA
-      const html = await fetch('/').then(r => r.text());
+      const html = await fetch('/').then((r) => r.text());
       expect(html).toContain('<div id="root"></div>');
     });
 

@@ -38,11 +38,11 @@ export class TracksService {
   async createTrack(telegramId: string, dto: CreateTrackDto): Promise<Track> {
     this.validateDto(dto);
 
-  let user = await prisma.user.findUniqueOrThrow({
-    where: { telegramId: Number(telegramId) },
-  });
+    let user = await prisma.user.findUniqueOrThrow({
+      where: { telegramId: Number(telegramId) },
+    });
 
-  if (
+    if (
       user.subscriptionTier !== 'free' &&
       user.subscriptionExpiresAt &&
       user.subscriptionExpiresAt <= new Date()

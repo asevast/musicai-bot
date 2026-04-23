@@ -5,7 +5,7 @@ import { GeminiClient } from '@musicai/vertex-ai';
 // Initialize Gemini client from environment
 const geminiClient = new GeminiClient(
   process.env.LYRIA_API_KEY || '',
-  process.env.LYRIA_BASE_URL || 'https://routerai.ru/api/v1',
+  process.env.LYRIA_BASE_URL || 'https://routerai.ru/api/v1'
 );
 
 export const lyricsCommand = async (ctx: Context) => {
@@ -19,7 +19,7 @@ export const lyricsCommand = async (ctx: Context) => {
     return ctx.reply(
       '❌ Not enough credits!\n\n' +
         'Generating lyrics costs 1 credit.\n' +
-        'Use /buy to purchase more credits.',
+        'Use /buy to purchase more credits.'
     );
   }
 
@@ -43,13 +43,13 @@ export const lyricsCommand = async (ctx: Context) => {
     '📝 *Lyrics Generator*\n\n' +
       'Cost: 1 credit\n\n' +
       'Send me a theme or description for your song, ' +
-      'and I\'ll generate lyrics for you!\n\n' +
+      "and I'll generate lyrics for you!\n\n" +
       'Examples:\n' +
       '• "Summer rain and lost love"\n' +
       '• "Party anthem for Friday night"\n' +
       '• "Melancholic indie folk about mountains"\n\n' +
       'Select language below, then type your theme:',
-    { parse_mode: 'Markdown', reply_markup: keyboard },
+    { parse_mode: 'Markdown', reply_markup: keyboard }
   );
 };
 
@@ -67,7 +67,7 @@ export const handleLyricsLanguage = async (ctx: Context) => {
   await ctx.reply(
     `✅ Language set!\n\n` +
       `Now send me your song theme or description.\n` +
-      `For example: "Summer rain and lost love"`,
+      `For example: "Summer rain and lost love"`
   );
 };
 
@@ -91,9 +91,7 @@ export const handleLyricsRequest = async (ctx: Context) => {
 
   // Validate theme length
   if (theme.length < 5 || theme.length > 500) {
-    await ctx.reply(
-      '❌ Theme should be between 5 and 500 characters.',
-    );
+    await ctx.reply('❌ Theme should be between 5 and 500 characters.');
     return true;
   }
 
@@ -102,16 +100,14 @@ export const handleLyricsRequest = async (ctx: Context) => {
     await ctx.reply(
       '❌ Not enough credits!\n\n' +
         'Generating lyrics costs 1 credit.\n' +
-        'Use /buy to purchase more credits.',
+        'Use /buy to purchase more credits.'
     );
     delete (ctx as any).session.lyricsLanguage;
     return true;
   }
 
   // Show processing message
-  const processingMsg = await ctx.reply(
-    '🎵 Generating lyrics...',
-  );
+  const processingMsg = await ctx.reply('🎵 Generating lyrics...');
 
   try {
     // Generate lyrics via Gemini API
@@ -150,7 +146,7 @@ export const handleLyricsRequest = async (ctx: Context) => {
         '```\n' +
         lyrics +
         '```',
-      { parse_mode: 'Markdown', reply_markup: keyboard },
+      { parse_mode: 'Markdown', reply_markup: keyboard }
     );
 
     // Clear session
@@ -160,7 +156,7 @@ export const handleLyricsRequest = async (ctx: Context) => {
     await ctx.api.editMessageText(
       ctx.chat!.id,
       processingMsg.message_id,
-      '❌ Failed to generate lyrics. Please try again.',
+      '❌ Failed to generate lyrics. Please try again.'
     );
     delete (ctx as any).session.lyricsLanguage;
   }
@@ -172,7 +168,7 @@ export const handleLyricsRequest = async (ctx: Context) => {
 export const handleLyricsRegenerate = async (ctx: Context) => {
   await ctx.answerCallbackQuery('Feature coming soon!');
   await ctx.reply(
-    '♻️ To regenerate lyrics, simply run /lyrics again with the same or a different theme.',
+    '♻️ To regenerate lyrics, simply run /lyrics again with the same or a different theme.'
   );
 };
 
@@ -180,8 +176,8 @@ export const handleLyricsRegenerate = async (ctx: Context) => {
 export const handleLyricsCreateTrack = async (ctx: Context) => {
   await ctx.answerCallbackQuery('Starting track creation...');
   await ctx.reply(
-    '🎵 Great! Let\'s create a track with your lyrics.\n\n' +
+    "🎵 Great! Let's create a track with your lyrics.\n\n" +
       'Copy the lyrics above and then use /create to start the track creation process. ' +
-      'When asked for lyrics, choose "✍️ Enter custom lyrics" and paste the generated lyrics.',
+      'When asked for lyrics, choose "✍️ Enter custom lyrics" and paste the generated lyrics.'
   );
 };

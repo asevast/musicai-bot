@@ -1,12 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import {
-  init,
-  miniApp,
-  themeParams,
-  viewport,
-  backButton,
-} from '@telegram-apps/sdk-react';
+import { init, miniApp, themeParams, viewport, backButton } from '@telegram-apps/sdk-react';
 import App from './App';
 import './app.css';
 

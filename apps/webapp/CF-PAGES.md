@@ -2,19 +2,21 @@
 
 ## Build Configuration
 
-| Setting | Value |
-|---------|-------|
-| Build Command | `pnpm --filter @musicai/webapp build` |
-| Build Output | `dist` |
-| Root Directory | `apps/webapp` |
-| Node Version | 20 |
+| Setting        | Value                                 |
+| -------------- | ------------------------------------- |
+| Build Command  | `pnpm --filter @musicai/webapp build` |
+| Build Output   | `dist`                                |
+| Root Directory | `apps/webapp`                         |
+| Node Version   | 20                                    |
 
 ## Environment Variables
 
 Required in Cloudflare Pages dashboard:
+
 - `VITE_API_URL` — Production API endpoint (e.g., `https://api.musicai.bot`)
 
 Optional:
+
 - `VITE_BOT_USERNAME` — For direct Telegram links
 
 ## SPA Configuration
@@ -26,6 +28,7 @@ Optional:
 ## CORS
 
 API CORS allows:
+
 - `WEBAPP_URL` env var
 - `https://web.telegram.org`
 - `https://*.telegram.org`

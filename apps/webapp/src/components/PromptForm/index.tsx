@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Input,
-  Select,
-  Textarea,
-  Caption,
-  Button,
-} from '@telegram-apps/telegram-ui';
+import { Input, Select, Textarea, Caption, Button } from '@telegram-apps/telegram-ui';
 import type { TrackType, Intensity } from '@musicai/shared-types';
 
 const TRACK_TYPES: { value: TrackType; label: string }[] = [
@@ -94,21 +88,14 @@ export function PromptForm({ onSubmit, isSubmitting }: PromptFormProps): React.R
           rows={3}
         />
         <div className="flex justify-between mt-1">
-          <Caption className="text-gray-500">
-            {prompt.length}/1000
-          </Caption>
-          {promptError && (
-            <Caption className="text-red-500">{promptError}</Caption>
-          )}
+          <Caption className="text-gray-500">{prompt.length}/1000</Caption>
+          {promptError && <Caption className="text-red-500">{promptError}</Caption>}
         </div>
       </div>
 
       <div>
         <Caption className="text-gray-500 mb-1">Track Type</Caption>
-        <Select
-          value={type}
-          onChange={(e) => setType(e.target.value as TrackType)}
-        >
+        <Select value={type} onChange={(e) => setType(e.target.value as TrackType)}>
           {TRACK_TYPES.map((t) => (
             <option key={t.value} value={t.value}>
               {t.label}
@@ -119,10 +106,7 @@ export function PromptForm({ onSubmit, isSubmitting }: PromptFormProps): React.R
 
       <div>
         <Caption className="text-gray-500 mb-1">Language</Caption>
-        <Select
-          value={language}
-          onChange={(e) => setLanguage(e.target.value)}
-        >
+        <Select value={language} onChange={(e) => setLanguage(e.target.value)}>
           {LANGUAGES.map((l) => (
             <option key={l.value} value={l.value}>
               {l.label}
@@ -156,10 +140,7 @@ export function PromptForm({ onSubmit, isSubmitting }: PromptFormProps): React.R
 
       <div>
         <Caption className="text-gray-500 mb-1">Intensity</Caption>
-        <Select
-          value={intensity}
-          onChange={(e) => setIntensity(e.target.value as Intensity)}
-        >
+        <Select value={intensity} onChange={(e) => setIntensity(e.target.value as Intensity)}>
           {INTENSITIES.map((i) => (
             <option key={i.value} value={i.value}>
               {i.label}

@@ -517,16 +517,16 @@ export function setupBot(bot: Bot<BotContext>) {
       .text('❌ Cancel', 'cancel_extend');
 
     await ctx.answerCallbackQuery();
-await ctx.reply(
-  '🎼 <b>Extend to Full Song</b>\n\n' +
-    `This will create a full song version of your clip:\n` +
-    `• Original: 30 second clip\n` +
-    `• Extended: ~3 minute full song\n` +
-    `• Same prompt and style: ${track.prompt.slice(0, 50)}...\n\n` +
-    `⚠️ <b>Note:</b> The extended song will be inspired by your clip but may have different lyrics and melody variations to fill the longer duration.\n\n` +
-    `Cost: 3 credits`,
-  { parse_mode: 'HTML', reply_markup: confirmKeyboard },
-);
+    await ctx.reply(
+      '🎼 <b>Extend to Full Song</b>\n\n' +
+        `This will create a full song version of your clip:\n` +
+        `• Original: 30 second clip\n` +
+        `• Extended: ~3 minute full song\n` +
+        `• Same prompt and style: ${track.prompt.slice(0, 50)}...\n\n` +
+        `⚠️ <b>Note:</b> The extended song will be inspired by your clip but may have different lyrics and melody variations to fill the longer duration.\n\n` +
+        `Cost: 3 credits`,
+      { parse_mode: 'HTML', reply_markup: confirmKeyboard }
+    );
   });
 
   bot.callbackQuery(/^confirm_extend_/, async (ctx) => {
@@ -623,7 +623,7 @@ await ctx.reply(
         `• Prompt: ${track.prompt.slice(0, 50)}...\n` +
         lyricsInfo +
         `\nCost: ${discount} credits (50% discount)`,
-      { parse_mode: 'HTML', reply_markup: confirmKeyboard },
+      { parse_mode: 'HTML', reply_markup: confirmKeyboard }
     );
   });
 
@@ -650,7 +650,7 @@ await ctx.reply(
       '📝 <b>Edit Lyrics for Regeneration</b>\n\n' +
         `Current lyrics:\n<i>${track.lyrics || '(auto-generated)'}</i>\n\n` +
         `Send me the new lyrics, or click Cancel to keep the current ones.`,
-      { parse_mode: 'HTML', reply_markup: cancelKeyboard },
+      { parse_mode: 'HTML', reply_markup: cancelKeyboard }
     );
 
     // Store the trackId in session for the next message handler
