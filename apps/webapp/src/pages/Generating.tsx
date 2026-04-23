@@ -1,5 +1,14 @@
 import React from 'react';
-import { CheckIcon, PlayIcon, CloudIcon, MessageIcon } from '../components/icons';
+import { CheckIcon, PlayIcon, CloudIcon } from '../components/icons';
+
+// Message icon for Telegram stage
+function MessageIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24">
+      <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" />
+    </svg>
+  );
+}
 
 interface Stage {
   id: string;
@@ -15,15 +24,6 @@ const stages: Stage[] = [
   { id: '4', label: 'Сохранение в облако', status: 'pending', icon: 'cloud' },
   { id: '5', label: 'Отправка в Telegram', status: 'pending', icon: 'message' },
 ];
-
-// Message icon component
-function MessageIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24">
-      <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" />
-    </svg>
-  );
-}
 
 export function Generating(): React.ReactElement {
   const progress = 62;
