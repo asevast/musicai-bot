@@ -80,9 +80,7 @@ export function ProgressPlayer({
             Estimated time: ~{Math.ceil(progress.etaSec / 60)} min
           </Caption>
         )}
-        {currentStatus === 'done' && (
-          <Caption className="text-green-600">Track ready!</Caption>
-        )}
+        {currentStatus === 'done' && <Caption className="text-green-600">Track ready!</Caption>}
         {currentStatus === 'failed' && (
           <Caption className="text-red-500">Generation failed. Please try again.</Caption>
         )}

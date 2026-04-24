@@ -31,9 +31,7 @@ export function Library(): React.ReactElement {
       const response = await apiClient
         .get(`tracks/user/${user.id}?limit=${LIMIT}&offset=${myOffset}`)
         .json<TracksResponse>();
-      setMyTracks((prev) =>
-        myOffset === 0 ? response.tracks : [...prev, ...response.tracks]
-      );
+      setMyTracks((prev) => (myOffset === 0 ? response.tracks : [...prev, ...response.tracks]));
       setMyTotal(response.total);
     } catch {
       setMyTracks([]);

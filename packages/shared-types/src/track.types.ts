@@ -1,6 +1,6 @@
 export type LyriaModel = 'lyria-3-pro-preview' | 'lyria-3-clip-preview';
 
-export type TrackType = 'full_song' | 'clip' | 'instrumental';
+export type TrackType = 'full_song' | 'clip' | 'instrumental' | 'variants';
 
 export type TrackStatus = 'queued' | 'processing' | 'done' | 'failed';
 

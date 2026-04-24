@@ -46,8 +46,6 @@ export const useTracksStore = create<TracksStore>((set) => ({
     set((state) => ({
       tracks: state.tracks.map((t) => (t.id === id ? { ...t, ...updates } : t)),
       currentTrack:
-        state.currentTrack?.id === id
-          ? { ...state.currentTrack, ...updates }
-          : state.currentTrack,
+        state.currentTrack?.id === id ? { ...state.currentTrack, ...updates } : state.currentTrack,
     })),
 }));

@@ -75,7 +75,7 @@ Format your response with clear section markers.`;
       throw new LyriaGenerationError(`Gemini API error: ${response.status} - ${errorText}`);
     }
 
-    const data = await response.json() as {
+    const data = (await response.json()) as {
       choices?: Array<{ message?: { content?: string } }>;
     };
     const lyrics = data.choices?.[0]?.message?.content?.trim();

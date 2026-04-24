@@ -65,9 +65,7 @@ export const handleInlineQuery = async (ctx: Context) => {
       }
 
       const shareText =
-        `🎵 Track: ${preview}\n` +
-        `Type: ${track.type}\n` +
-        `Created with @fleshmus_bot`;
+        `🎵 Track: ${preview}\n` + `Type: ${track.type}\n` + `Created with @fleshmus_bot`;
 
       return {
         type: 'audio' as const,

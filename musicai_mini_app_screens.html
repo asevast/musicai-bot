@@ -1,0 +1,735 @@
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans);background:transparent}
+.wrap{display:flex;flex-direction:column;gap:2rem;padding:1rem 0}
+.section-label{font-size:11px;font-weight:500;color:var(--color-text-tertiary);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.75rem}
+.screens-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.phone{background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:20px;overflow:hidden;position:relative}
+.phone-bar{background:var(--color-background-secondary);padding:10px 14px 8px;display:flex;align-items:center;gap:8px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.phone-bar-title{font-size:13px;font-weight:500;color:var(--color-text-primary);flex:1;text-align:center}
+.phone-bar-icon{width:24px;height:24px;border-radius:50%;background:#5B5FC7;display:flex;align-items:center;justify-content:center}
+.phone-bar-icon svg{width:13px;height:13px;fill:white}
+.back-btn{font-size:12px;color:#5B5FC7;cursor:pointer;min-width:28px}
+.phone-body{padding:12px}
+
+/* Home */
+.hero-card{background:linear-gradient(135deg,#5B5FC7 0%,#8B5CF6 100%);border-radius:14px;padding:16px;margin-bottom:12px;color:white}
+.hero-title{font-size:16px;font-weight:500;margin-bottom:4px}
+.hero-sub{font-size:11px;opacity:.8;margin-bottom:12px}
+.credits-pill{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.2);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:500}
+.credits-dot{width:6px;height:6px;border-radius:50%;background:#4ADE80}
+.gen-btn{display:block;width:100%;background:white;color:#5B5FC7;border:none;border-radius:10px;padding:9px;font-size:12px;font-weight:500;margin-top:10px;text-align:center;cursor:pointer}
+
+.section-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.section-hdr-title{font-size:12px;font-weight:500;color:var(--color-text-primary)}
+.section-hdr-link{font-size:11px;color:#5B5FC7;cursor:pointer}
+
+.track-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.track-row:last-child{border-bottom:none}
+.track-cover{width:36px;height:36px;border-radius:8px;background:#E0E7FF;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px}
+.track-info{flex:1;min-width:0}
+.track-name{font-size:12px;font-weight:500;color:var(--color-text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.track-meta{font-size:10px;color:var(--color-text-tertiary);margin-top:1px}
+.play-btn{width:28px;height:28px;border-radius:50%;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer}
+.play-btn svg{width:10px;height:10px;fill:var(--color-text-secondary);margin-left:1px}
+
+.bottom-nav{display:flex;border-top:0.5px solid var(--color-border-tertiary);background:var(--color-background-primary)}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 4px 6px;cursor:pointer;gap:2px}
+.nav-item svg{width:16px;height:16px;fill:var(--color-text-tertiary)}
+.nav-item.active svg{fill:#5B5FC7}
+.nav-label{font-size:9px;color:var(--color-text-tertiary);font-weight:500}
+.nav-item.active .nav-label{color:#5B5FC7}
+
+/* Create wizard */
+.step-dots{display:flex;gap:4px;justify-content:center;margin-bottom:14px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--color-border-secondary)}
+.dot.active{background:#5B5FC7;width:18px;border-radius:3px}
+.dot.done{background:#5B5FC7}
+
+.wizard-title{font-size:14px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px}
+.wizard-sub{font-size:11px;color:var(--color-text-secondary);margin-bottom:14px}
+
+.type-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px}
+.type-card{border:0.5px solid var(--color-border-tertiary);border-radius:10px;padding:10px 8px;cursor:pointer;text-align:center;background:var(--color-background-primary)}
+.type-card.sel{border-color:#5B5FC7;background:#EEF2FF}
+.type-icon{font-size:18px;margin-bottom:4px}
+.type-name{font-size:11px;font-weight:500;color:var(--color-text-primary)}
+.type-cost{font-size:10px;color:var(--color-text-tertiary);margin-top:1px}
+.type-card.sel .type-cost{color:#5B5FC7}
+
+.prompt-box{width:100%;border:0.5px solid var(--color-border-tertiary);border-radius:10px;padding:8px 10px;font-size:11px;color:var(--color-text-secondary);background:var(--color-background-secondary);height:60px;resize:none;font-family:var(--font-sans);line-height:1.5}
+.char-count{text-align:right;font-size:10px;color:var(--color-text-tertiary);margin-top:3px;margin-bottom:10px}
+
+.lang-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:14px}
+.lang-btn{border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:6px 8px;display:flex;align-items:center;gap:5px;cursor:pointer;background:var(--color-background-primary)}
+.lang-btn.sel{border-color:#5B5FC7;background:#EEF2FF}
+.lang-flag{font-size:13px}
+.lang-name{font-size:11px;font-weight:500;color:var(--color-text-primary)}
+.lang-code{font-size:10px;color:var(--color-text-tertiary)}
+
+.slider-row{margin-bottom:12px}
+.slider-lbl{display:flex;justify-content:space-between;margin-bottom:5px}
+.slider-lbl span{font-size:11px;color:var(--color-text-secondary)}
+.slider-lbl strong{font-size:11px;font-weight:500;color:#5B5FC7}
+.slider-track{height:4px;background:var(--color-background-secondary);border-radius:2px;position:relative;border:0.5px solid var(--color-border-tertiary)}
+.slider-fill{height:4px;background:#5B5FC7;border-radius:2px;width:60%}
+.slider-thumb{width:14px;height:14px;border-radius:50%;background:#5B5FC7;border:2px solid var(--color-background-primary);position:absolute;top:-5px;left:57%;box-shadow:0 1px 3px rgba(91,95,199,.3)}
+
+.next-btn{display:block;width:100%;background:#5B5FC7;color:white;border:none;border-radius:10px;padding:10px;font-size:12px;font-weight:500;text-align:center;cursor:pointer;margin-top:4px}
+.next-btn.ghost{background:var(--color-background-secondary);color:var(--color-text-secondary);border:0.5px solid var(--color-border-tertiary)}
+
+/* Generating screen */
+.gen-screen{padding:16px 12px}
+.gen-visual{display:flex;flex-direction:column;align-items:center;padding:20px 0 16px}
+.wave-bars{display:flex;gap:3px;align-items:center;height:40px}
+.bar{width:4px;border-radius:2px;background:#5B5FC7;opacity:.4}
+.bar.a1{height:12px;opacity:.9}
+.bar.a2{height:28px;opacity:.7}
+.bar.a3{height:36px;opacity:1}
+.bar.a4{height:20px;opacity:.6}
+.bar.a5{height:32px;opacity:.85}
+.bar.a6{height:16px;opacity:.5}
+.bar.a7{height:24px;opacity:.75}
+.bar.a8{height:38px;opacity:.95}
+.bar.a9{height:18px;opacity:.55}
+.gen-status{font-size:13px;font-weight:500;color:var(--color-text-primary);margin-top:12px}
+.gen-eta{font-size:11px;color:var(--color-text-tertiary);margin-top:3px}
+.prog-track{height:3px;background:var(--color-background-secondary);border-radius:2px;margin:14px 0;overflow:hidden;border:0.5px solid var(--color-border-tertiary)}
+.prog-fill{height:3px;background:#5B5FC7;border-radius:2px;width:62%;position:relative}
+.prog-fill::after{content:'';position:absolute;right:0;top:0;bottom:0;width:20px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4))}
+.stage-list{display:flex;flex-direction:column;gap:7px}
+.stage{display:flex;align-items:center;gap:8px}
+.stage-icon{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.stage-icon.done{background:#DCFCE7}
+.stage-icon.active{background:#EEF2FF}
+.stage-icon.pending{background:var(--color-background-secondary)}
+.stage-icon svg{width:9px;height:9px}
+.stage-icon.done svg{fill:#16A34A}
+.stage-icon.active svg{fill:#5B5FC7}
+.stage-icon.pending svg{fill:var(--color-text-tertiary)}
+.stage-text{font-size:11px;color:var(--color-text-secondary)}
+.stage-text.done{color:var(--color-text-primary)}
+.stage-text.active{color:#5B5FC7;font-weight:500}
+
+/* Result screen */
+.result-cover{width:100%;height:100px;background:linear-gradient(135deg,#5B5FC7,#8B5CF6);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;position:relative;overflow:hidden}
+.result-cover-wave{position:absolute;bottom:0;left:0;right:0;height:30px;opacity:.3}
+.result-play{width:40px;height:40px;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center}
+.result-play svg{width:16px;height:16px;fill:#5B5FC7;margin-left:2px}
+.result-title{font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:2px}
+.result-meta{font-size:11px;color:var(--color-text-tertiary);margin-bottom:12px}
+.waveform{height:32px;display:flex;gap:2px;align-items:center;margin-bottom:12px}
+.wf-bar{border-radius:2px;background:var(--color-border-secondary)}
+.wf-bar.played{background:#5B5FC7}
+.time-row{display:flex;justify-content:space-between;font-size:10px;color:var(--color-text-tertiary);margin-bottom:12px}
+.action-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+.action-btn{border:0.5px solid var(--color-border-tertiary);border-radius:9px;padding:8px;display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;background:var(--color-background-primary)}
+.action-btn svg{width:13px;height:13px;fill:var(--color-text-secondary)}
+.action-btn span{font-size:11px;font-weight:500;color:var(--color-text-primary)}
+.regen-btn{display:block;width:100%;background:#EEF2FF;color:#5B5FC7;border:none;border-radius:9px;padding:9px;font-size:12px;font-weight:500;text-align:center;cursor:pointer}
+
+/* Library */
+.lib-tabs{display:flex;gap:0;margin-bottom:10px;border:0.5px solid var(--color-border-tertiary);border-radius:8px;overflow:hidden}
+.lib-tab{flex:1;padding:6px;font-size:11px;font-weight:500;text-align:center;cursor:pointer;color:var(--color-text-secondary);background:var(--color-background-primary)}
+.lib-tab.active{background:#EEF2FF;color:#5B5FC7}
+
+.lib-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.lib-card{border:0.5px solid var(--color-border-tertiary);border-radius:10px;overflow:hidden;cursor:pointer;background:var(--color-background-primary)}
+.lib-cover{height:64px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.lib-cover.c1{background:#EEF2FF}
+.lib-cover.c2{background:#F0FDF4}
+.lib-cover.c3{background:#FFF7ED}
+.lib-cover.c4{background:#FDF4FF}
+.lib-body{padding:7px 8px}
+.lib-name{font-size:11px;font-weight:500;color:var(--color-text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lib-dur{font-size:10px;color:var(--color-text-tertiary);margin-top:1px}
+
+/* Profile */
+.profile-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.avatar{width:44px;height:44px;border-radius:50%;background:#EEF2FF;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;color:#5B5FC7;flex-shrink:0}
+.profile-name{font-size:14px;font-weight:500;color:var(--color-text-primary)}
+.profile-sub{font-size:11px;color:var(--color-text-tertiary)}
+.badge-pro{display:inline-block;background:#EEF2FF;color:#5B5FC7;font-size:10px;font-weight:500;border-radius:4px;padding:2px 6px;margin-left:4px}
+
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px}
+.stat-card{background:var(--color-background-secondary);border-radius:9px;padding:10px 10px 8px}
+.stat-val{font-size:20px;font-weight:500;color:var(--color-text-primary)}
+.stat-lbl{font-size:10px;color:var(--color-text-tertiary);margin-top:2px}
+
+.credits-bar-wrap{margin-bottom:14px}
+.credits-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.credits-hdr-lbl{font-size:12px;font-weight:500;color:var(--color-text-primary)}
+.credits-hdr-val{font-size:12px;font-weight:500;color:#5B5FC7}
+.credits-bar-bg{height:6px;background:var(--color-background-secondary);border-radius:3px;overflow:hidden;border:0.5px solid var(--color-border-tertiary)}
+.credits-bar-fill{height:6px;background:#5B5FC7;border-radius:3px;width:53%}
+.credits-hint{font-size:10px;color:var(--color-text-tertiary);margin-top:4px}
+
+.menu-item{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:0.5px solid var(--color-border-tertiary);cursor:pointer}
+.menu-item:last-child{border-bottom:none}
+.menu-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.menu-icon svg{width:13px;height:13px}
+.menu-text{flex:1;font-size:12px;font-weight:500;color:var(--color-text-primary)}
+.menu-arrow svg{width:12px;height:12px;fill:var(--color-text-tertiary)}
+</style>
+
+<div class="wrap">
+
+<p class="section-label">Экран 1 — Главная &amp; Библиотека</p>
+<div class="screens-row">
+
+<!-- HOME -->
+<div class="phone">
+  <div class="phone-bar">
+    <div class="phone-bar-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+    </div>
+    <div class="phone-bar-title">MusicAI</div>
+    <div style="width:28px"></div>
+  </div>
+  <div class="phone-body">
+    <div class="hero-card">
+      <div class="hero-title">Создать трек</div>
+      <div class="hero-sub">Google Lyria 3 · до 3 минут</div>
+      <div class="credits-pill"><div class="credits-dot"></div>80 кредитов</div>
+      <div class="gen-btn">+ Новый трек</div>
+    </div>
+
+    <div class="section-hdr">
+      <div class="section-hdr-title">Недавние</div>
+      <div class="section-hdr-link">Все</div>
+    </div>
+
+    <div class="track-row">
+      <div class="track-cover">🎸</div>
+      <div class="track-info">
+        <div class="track-name">Summer Drive</div>
+        <div class="track-meta">Pop · 3:02 · только что</div>
+      </div>
+      <div class="play-btn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+    </div>
+    <div class="track-row">
+      <div class="track-cover">🌙</div>
+      <div class="track-info">
+        <div class="track-name">Midnight Chill</div>
+        <div class="track-meta">Lo-fi · 2:30 · вчера</div>
+      </div>
+      <div class="play-btn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+    </div>
+    <div class="track-row">
+      <div class="track-cover">🔥</div>
+      <div class="track-info">
+        <div class="track-name">Epic Cinematic</div>
+        <div class="track-meta">Orchestral · 3:04 · 2 дня назад</div>
+      </div>
+      <div class="play-btn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item active">
+      <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      <div class="nav-label">Главная</div>
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+      <div class="nav-label">Создать</div>
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z"/></svg>
+      <div class="nav-label">Лента</div>
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+      <div class="nav-label">Профиль</div>
+    </div>
+  </div>
+</div>
+
+<!-- LIBRARY -->
+<div class="phone">
+  <div class="phone-bar">
+    <div style="width:28px"></div>
+    <div class="phone-bar-title">Лента</div>
+    <div style="width:28px"></div>
+  </div>
+  <div class="phone-body">
+    <div class="lib-tabs">
+      <div class="lib-tab active">Все</div>
+      <div class="lib-tab">Pop</div>
+      <div class="lib-tab">Lo-fi</div>
+      <div class="lib-tab">Epic</div>
+    </div>
+    <div class="lib-grid">
+      <div class="lib-card">
+        <div class="lib-cover c1">🎸</div>
+        <div class="lib-body">
+          <div class="lib-name">Summer Drive</div>
+          <div class="lib-dur">Pop · 3:02</div>
+        </div>
+      </div>
+      <div class="lib-card">
+        <div class="lib-cover c2">🌿</div>
+        <div class="lib-body">
+          <div class="lib-name">Forest Rain</div>
+          <div class="lib-dur">Ambient · 2:48</div>
+        </div>
+      </div>
+      <div class="lib-card">
+        <div class="lib-cover c3">🔥</div>
+        <div class="lib-body">
+          <div class="lib-name">Epic Rises</div>
+          <div class="lib-dur">Cinematic · 3:04</div>
+        </div>
+      </div>
+      <div class="lib-card">
+        <div class="lib-cover c4">🌙</div>
+        <div class="lib-body">
+          <div class="lib-name">Night Jazz</div>
+          <div class="lib-dur">Jazz · 2:55</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      <div class="nav-label">Главная</div>
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+      <div class="nav-label">Создать</div>
+    </div>
+    <div class="nav-item active">
+      <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z"/></svg>
+      <div class="nav-label">Лента</div>
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+      <div class="nav-label">Профиль</div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- ── CREATE WIZARD ─────────────────────────────── -->
+<p class="section-label">Экран 2 — Мастер создания (шаги 1–3)</p>
+<div class="screens-row">
+
+<!-- STEP 1: TYPE -->
+<div class="phone">
+  <div class="phone-bar">
+    <div class="back-btn">←</div>
+    <div class="phone-bar-title">Новый трек</div>
+    <div style="width:28px;font-size:10px;color:var(--color-text-tertiary);text-align:right">1/4</div>
+  </div>
+  <div class="phone-body">
+    <div class="step-dots">
+      <div class="dot active"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+    <div class="wizard-title">Тип трека</div>
+    <div class="wizard-sub">Выберите формат генерации</div>
+    <div class="type-grid">
+      <div class="type-card sel">
+        <div class="type-icon">🎵</div>
+        <div class="type-name">Полная песня</div>
+        <div class="type-cost">5 кредитов</div>
+      </div>
+      <div class="type-card">
+        <div class="type-icon">✂️</div>
+        <div class="type-name">Клип 30с</div>
+        <div class="type-cost">1 кредит</div>
+      </div>
+      <div class="type-card">
+        <div class="type-icon">🎹</div>
+        <div class="type-name">Инструментал</div>
+        <div class="type-cost">3 кредита</div>
+      </div>
+      <div class="type-card">
+        <div class="type-icon">🎲</div>
+        <div class="type-name">3 варианта</div>
+        <div class="type-cost">3 кредита</div>
+      </div>
+    </div>
+    <div class="next-btn">Далее →</div>
+  </div>
+</div>
+
+<!-- STEP 2: PROMPT -->
+<div class="phone">
+  <div class="phone-bar">
+    <div class="back-btn">←</div>
+    <div class="phone-bar-title">Новый трек</div>
+    <div style="width:28px;font-size:10px;color:var(--color-text-tertiary);text-align:right">2/4</div>
+  </div>
+  <div class="phone-body">
+    <div class="step-dots">
+      <div class="dot done"></div>
+      <div class="dot active"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+    <div class="wizard-title">Описание</div>
+    <div class="wizard-sub">Что за трек хотите создать?</div>
+    <textarea class="prompt-box" style="height:70px;line-height:1.5;border-radius:10px;border:0.5px solid #5B5FC7;background:var(--color-background-primary);color:var(--color-text-primary)">Upbeat pop song, catchy chorus, female vocals, guitar and synth, 120 BPM, summer vibes</textarea>
+    <div class="char-count">87 / 1000</div>
+
+    <div class="slider-row">
+      <div class="slider-lbl"><span>Интенсивность</span><strong>Medium</strong></div>
+      <div class="slider-track"><div class="slider-fill"></div><div class="slider-thumb"></div></div>
+    </div>
+    <div class="slider-row">
+      <div class="slider-lbl"><span>Длительность</span><strong>120 сек</strong></div>
+      <div class="slider-track"><div class="slider-fill" style="width:65%"></div><div class="slider-thumb" style="left:62%"></div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px">
+      <div class="next-btn ghost" style="padding:9px">Negative prompt</div>
+      <div class="next-btn">Далее →</div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<div class="screens-row">
+
+<!-- STEP 3: LANGUAGE -->
+<div class="phone">
+  <div class="phone-bar">
+    <div class="back-btn">←</div>
+    <div class="phone-bar-title">Новый трек</div>
+    <div style="width:28px;font-size:10px;color:var(--color-text-tertiary);text-align:right">3/4</div>
+  </div>
+  <div class="phone-body">
+    <div class="step-dots">
+      <div class="dot done"></div>
+      <div class="dot done"></div>
+      <div class="dot active"></div>
+      <div class="dot"></div>
+    </div>
+    <div class="wizard-title">Язык вокала</div>
+    <div class="wizard-sub">В каком языке петь?</div>
+    <div class="lang-grid">
+      <div class="lang-btn sel">
+        <div class="lang-flag">🇺🇸</div>
+        <div><div class="lang-name">English</div><div class="lang-code">EN</div></div>
+      </div>
+      <div class="lang-btn">
+        <div class="lang-flag">🇩🇪</div>
+        <div><div class="lang-name">Deutsch</div><div class="lang-code">DE</div></div>
+      </div>
+      <div class="lang-btn">
+        <div class="lang-flag">🇪🇸</div>
+        <div><div class="lang-name">Español</div><div class="lang-code">ES</div></div>
+      </div>
+      <div class="lang-btn">
+        <div class="lang-flag">🇫🇷</div>
+        <div><div class="lang-name">Français</div><div class="lang-code">FR</div></div>
+      </div>
+      <div class="lang-btn">
+        <div class="lang-flag">🇯🇵</div>
+        <div><div class="lang-name">日本語</div><div class="lang-code">JA</div></div>
+      </div>
+      <div class="lang-btn">
+        <div class="lang-flag">🇰🇷</div>
+        <div><div class="lang-name">한국어</div><div class="lang-code">KO</div></div>
+      </div>
+    </div>
+    <div class="next-btn">Далее →</div>
+    <div class="next-btn ghost" style="margin-top:6px">Свои тексты</div>
+  </div>
+</div>
+
+<!-- STEP 4: CONFIRM -->
+<div class="phone">
+  <div class="phone-bar">
+    <div class="back-btn">←</div>
+    <div class="phone-bar-title">Подтверждение</div>
+    <div style="width:28px;font-size:10px;color:var(--color-text-tertiary);text-align:right">4/4</div>
+  </div>
+  <div class="phone-body">
+    <div class="step-dots">
+      <div class="dot done"></div>
+      <div class="dot done"></div>
+      <div class="dot done"></div>
+      <div class="dot active"></div>
+    </div>
+    <div class="wizard-title">Всё готово</div>
+    <div class="wizard-sub">Проверьте параметры трека</div>
+
+    <div style="background:var(--color-background-secondary);border-radius:10px;padding:10px 12px;margin-bottom:14px;border:0.5px solid var(--color-border-tertiary)">
+      <div style="display:flex;flex-direction:column;gap:7px">
+        <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--color-text-tertiary)">Тип</span><span style="color:var(--color-text-primary);font-weight:500">Полная песня</span></div>
+        <div style="height:0.5px;background:var(--color-border-tertiary)"></div>
+        <div style="font-size:11px;color:var(--color-text-secondary);line-height:1.5">Upbeat pop song, catchy chorus, female vocals...</div>
+        <div style="height:0.5px;background:var(--color-border-tertiary)"></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--color-text-tertiary)">Язык</span><span style="color:var(--color-text-primary);font-weight:500">🇺🇸 EN</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--color-text-tertiary)">BPM</span><span style="color:var(--color-text-primary);font-weight:500">Авто</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--color-text-tertiary)">Длина</span><span style="color:var(--color-text-primary);font-weight:500">120 сек</span></div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:10px 12px;background:#EEF2FF;border-radius:10px">
+      <div style="font-size:12px;font-weight:500;color:#5B5FC7">Стоимость</div>
+      <div style="font-size:16px;font-weight:500;color:#5B5FC7">5 кредитов</div>
+    </div>
+
+    <div class="next-btn">Создать трек</div>
+    <div class="next-btn ghost" style="margin-top:6px">Изменить</div>
+  </div>
+</div>
+
+</div>
+
+<!-- ── GENERATING + RESULT ─────────────────────────── -->
+<p class="section-label">Экран 3 — Генерация &amp; Результат</p>
+<div class="screens-row">
+
+<!-- GENERATING -->
+<div class="phone">
+  <div class="phone-bar">
+    <div style="width:28px"></div>
+    <div class="phone-bar-title">Генерация</div>
+    <div style="width:28px"></div>
+  </div>
+  <div class="gen-screen">
+    <div class="gen-visual">
+      <div class="wave-bars">
+        <div class="bar a1"></div>
+        <div class="bar a2"></div>
+        <div class="bar a3"></div>
+        <div class="bar a4"></div>
+        <div class="bar a5"></div>
+        <div class="bar a6"></div>
+        <div class="bar a7"></div>
+        <div class="bar a8"></div>
+        <div class="bar a9"></div>
+        <div class="bar a4"></div>
+        <div class="bar a2"></div>
+        <div class="bar a6"></div>
+      </div>
+      <div class="gen-status">Создаём трек...</div>
+      <div class="gen-eta">Осталось ~38 секунд</div>
+    </div>
+    <div class="prog-track"><div class="prog-fill"></div></div>
+    <div class="stage-list">
+      <div class="stage">
+        <div class="stage-icon done">
+          <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+        </div>
+        <div class="stage-text done">Промпт улучшен</div>
+      </div>
+      <div class="stage">
+        <div class="stage-icon done">
+          <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+        </div>
+        <div class="stage-text done">Задача в очереди Lyria 3</div>
+      </div>
+      <div class="stage">
+        <div class="stage-icon active">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+        </div>
+        <div class="stage-text active">Генерация аудио</div>
+      </div>
+      <div class="stage">
+        <div class="stage-icon pending">
+          <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
+        </div>
+        <div class="stage-text">Сохранение в облако</div>
+      </div>
+      <div class="stage">
+        <div class="stage-icon pending">
+          <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+        </div>
+        <div class="stage-text">Отправка в Telegram</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div class="phone">
+  <div class="phone-bar">
+    <div class="back-btn">←</div>
+    <div class="phone-bar-title">Готово</div>
+    <div style="width:28px"></div>
+  </div>
+  <div class="phone-body">
+    <div class="result-cover">
+      <div class="result-play">
+        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      </div>
+    </div>
+    <div class="result-title">Summer Drive</div>
+    <div class="result-meta">Pop · EN · 120 BPM · 2:00</div>
+    <div class="waveform">
+      <div class="wf-bar played" style="height:16px;width:3px"></div>
+      <div class="wf-bar played" style="height:22px;width:3px"></div>
+      <div class="wf-bar played" style="height:30px;width:3px"></div>
+      <div class="wf-bar played" style="height:18px;width:3px"></div>
+      <div class="wf-bar played" style="height:26px;width:3px"></div>
+      <div class="wf-bar played" style="height:14px;width:3px"></div>
+      <div class="wf-bar played" style="height:28px;width:3px"></div>
+      <div class="wf-bar" style="height:20px;width:3px"></div>
+      <div class="wf-bar" style="height:32px;width:3px"></div>
+      <div class="wf-bar" style="height:16px;width:3px"></div>
+      <div class="wf-bar" style="height:24px;width:3px"></div>
+      <div class="wf-bar" style="height:28px;width:3px"></div>
+      <div class="wf-bar" style="height:12px;width:3px"></div>
+      <div class="wf-bar" style="height:20px;width:3px"></div>
+      <div class="wf-bar" style="height:30px;width:3px"></div>
+      <div class="wf-bar" style="height:22px;width:3px"></div>
+      <div class="wf-bar" style="height:18px;width:3px"></div>
+      <div class="wf-bar" style="height:26px;width:3px"></div>
+      <div class="wf-bar" style="height:14px;width:3px"></div>
+      <div class="wf-bar" style="height:24px;width:3px"></div>
+    </div>
+    <div class="time-row"><span>0:42</span><span>2:00</span></div>
+    <div class="action-grid">
+      <div class="action-btn">
+        <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+        <span>Поделиться</span>
+      </div>
+      <div class="action-btn">
+        <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+        <span>Скачать</span>
+      </div>
+      <div class="action-btn">
+        <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+        <span>Изменить текст</span>
+      </div>
+      <div class="action-btn">
+        <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+        <span>В библиотеку</span>
+      </div>
+    </div>
+    <div class="regen-btn">🔄 Перегенерировать (3 кр.)</div>
+  </div>
+</div>
+
+</div>
+
+<!-- ── PROFILE ─────────────────────────────────────── -->
+<p class="section-label">Экран 4 — Профиль</p>
+<div class="screens-row">
+
+<div class="phone">
+  <div class="phone-bar">
+    <div style="width:28px"></div>
+    <div class="phone-bar-title">Профиль</div>
+    <div style="width:28px"></div>
+  </div>
+  <div class="phone-body">
+    <div class="profile-head">
+      <div class="avatar">АЛ</div>
+      <div>
+        <div class="profile-name">Alex <span class="badge-pro">Pro</span></div>
+        <div class="profile-sub">@username · 47 треков создано</div>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-val">47</div>
+        <div class="stat-lbl">Треков создано</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">12</div>
+        <div class="stat-lbl">В библиотеке</div>
+      </div>
+    </div>
+
+    <div class="credits-bar-wrap">
+      <div class="credits-hdr">
+        <div class="credits-hdr-lbl">Кредиты</div>
+        <div class="credits-hdr-val">80 / 150</div>
+      </div>
+      <div class="credits-bar-bg"><div class="credits-bar-fill"></div></div>
+      <div class="credits-hint">Обновятся 1 мая · или купить сейчас</div>
+    </div>
+
+    <div class="menu-item">
+      <div class="menu-icon" style="background:#EEF2FF"><svg viewBox="0 0 24 24" style="fill:#5B5FC7"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg></div>
+      <div class="menu-text">Купить кредиты</div>
+      <div class="menu-arrow"><svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg></div>
+    </div>
+    <div class="menu-item">
+      <div class="menu-icon" style="background:#F0FDF4"><svg viewBox="0 0 24 24" style="fill:#16A34A"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg></div>
+      <div class="menu-text">Пригласить друга</div>
+      <div class="menu-arrow"><svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg></div>
+    </div>
+    <div class="menu-item">
+      <div class="menu-icon" style="background:#FFF7ED"><svg viewBox="0 0 24 24" style="fill:#EA580C"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></div>
+      <div class="menu-text">Настройки</div>
+      <div class="menu-arrow"><svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg></div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      <div class="nav-label">Главная</div>
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+      <div class="nav-label">Создать</div>
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z"/></svg>
+      <div class="nav-label">Лента</div>
+    </div>
+    <div class="nav-item active">
+      <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+      <div class="nav-label">Профиль</div>
+    </div>
+  </div>
+</div>
+
+<!-- BUY CREDITS -->
+<div class="phone">
+  <div class="phone-bar">
+    <div class="back-btn">←</div>
+    <div class="phone-bar-title">Кредиты</div>
+    <div style="width:28px"></div>
+  </div>
+  <div class="phone-body">
+    <div style="background:#EEF2FF;border-radius:10px;padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:11px;color:#5B5FC7">Текущий баланс</div>
+      <div style="font-size:18px;font-weight:500;color:#5B5FC7">80 кр.</div>
+    </div>
+
+    <div class="section-hdr"><div class="section-hdr-title">Разовые паки</div></div>
+
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
+      <div style="border:0.5px solid var(--color-border-tertiary);border-radius:10px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:var(--color-background-primary)">
+        <div><div style="font-size:12px;font-weight:500;color:var(--color-text-primary)">Pack S</div><div style="font-size:10px;color:var(--color-text-tertiary)">20 кредитов · ~4 трека</div></div>
+        <div style="background:#EEF2FF;color:#5B5FC7;font-size:12px;font-weight:500;border-radius:8px;padding:5px 10px">79 ⭐</div>
+      </div>
+      <div style="border:2px solid #5B5FC7;border-radius:10px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;position:relative;background:var(--color-background-primary)">
+        <div style="position:absolute;top:-8px;left:10px;background:#5B5FC7;color:white;font-size:9px;font-weight:500;border-radius:4px;padding:2px 6px">Популярный</div>
+        <div><div style="font-size:12px;font-weight:500;color:var(--color-text-primary)">Pack M</div><div style="font-size:10px;color:var(--color-text-tertiary)">100 кредитов · ~20 треков</div></div>
+        <div style="background:#EEF2FF;color:#5B5FC7;font-size:12px;font-weight:500;border-radius:8px;padding:5px 10px">299 ⭐</div>
+      </div>
+      <div style="border:0.5px solid var(--color-border-tertiary);border-radius:10px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:var(--color-background-primary)">
+        <div><div style="font-size:12px;font-weight:500;color:var(--color-text-primary)">Pack L</div><div style="font-size:10px;color:var(--color-text-tertiary)">300 кредитов · ~60 треков</div></div>
+        <div style="background:#EEF2FF;color:#5B5FC7;font-size:12px;font-weight:500;border-radius:8px;padding:5px 10px">699 ⭐</div>
+      </div>
+    </div>
+
+    <div class="section-hdr"><div class="section-hdr-title">Подписки</div></div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="border:0.5px solid var(--color-border-tertiary);border-radius:10px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:var(--color-background-primary)">
+        <div><div style="font-size:12px;font-weight:500;color:var(--color-text-primary)">Pro</div><div style="font-size:10px;color:var(--color-text-tertiary)">150 кр/мес · 20 треков/день</div></div>
+        <div style="background:#EEF2FF;color:#5B5FC7;font-size:11px;font-weight:500;border-radius:8px;padding:5px 8px">299 ₽/мес</div>
+      </div>
+      <div style="border:0.5px solid var(--color-border-tertiary);border-radius:10px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:var(--color-background-primary)">
+        <div><div style="font-size:12px;font-weight:500;color:var(--color-text-primary)">Unlimited</div><div style="font-size:10px;color:var(--color-text-tertiary)">∞ кредитов · 50 треков/день</div></div>
+        <div style="background:#EEF2FF;color:#5B5FC7;font-size:11px;font-weight:500;border-radius:8px;padding:5px 8px">799 ₽/мес</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+</div>

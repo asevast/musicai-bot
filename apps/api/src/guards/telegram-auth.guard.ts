@@ -14,7 +14,7 @@ export class TelegramAuthGuard implements CanActivate {
     // Reject if both authentication methods are present (security: prevent auth confusion)
     if (initDataRaw && telegramIdHeader) {
       throw new UnauthorizedException(
-        'Cannot use both init data and telegram ID headers simultaneously',
+        'Cannot use both init data and telegram ID headers simultaneously'
       );
     }
 
@@ -49,7 +49,7 @@ export class TelegramAuthGuard implements CanActivate {
         return true;
       } catch (error) {
         throw new UnauthorizedException(
-          error instanceof Error ? error.message : 'Invalid init data',
+          error instanceof Error ? error.message : 'Invalid init data'
         );
       }
     }

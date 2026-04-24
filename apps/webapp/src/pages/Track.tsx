@@ -1,13 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import {
-  Title,
-  Cell,
-  Caption,
-  Badge,
-  Button,
-  List,
-} from '@telegram-apps/telegram-ui';
+import { Title, Cell, Caption, Badge, Button, List } from '@telegram-apps/telegram-ui';
 import { apiClient } from '../api/client';
 import { useTelegram } from '../hooks/useTelegram';
 import { useTracksStore } from '../store/tracks.store';
@@ -70,9 +63,7 @@ export function Track(): React.ReactElement {
 
     setIsLoading(true);
     try {
-      const response = await apiClient
-        .get(`tracks/${id}`)
-        .json<TrackDetail>();
+      const response = await apiClient.get(`tracks/${id}`).json<TrackDetail>();
       setTrack(response);
       setCurrentTrack({
         id: response.id,
@@ -109,12 +100,7 @@ export function Track(): React.ReactElement {
       <div className="page">
         <div className="p-4">
           <Cell>Failed to load track</Cell>
-          <Button
-            stretched
-            mode="filled"
-            onClick={() => void fetchTrack()}
-            className="mt-4"
-          >
+          <Button stretched mode="filled" onClick={() => void fetchTrack()} className="mt-4">
             Retry
           </Button>
         </div>
@@ -128,11 +114,7 @@ export function Track(): React.ReactElement {
     <div className="page">
       <div className="p-4 pb-20">
         <div className="flex items-center gap-2 mb-4">
-          <Button
-            size="s"
-            mode="outline"
-            onClick={() => navigate(-1)}
-          >
+          <Button size="s" mode="outline" onClick={() => navigate(-1)}>
             Back
           </Button>
         </div>
@@ -162,44 +144,30 @@ export function Track(): React.ReactElement {
           {track.parameters && (
             <>
               {track.parameters.bpm && (
-                <Cell
-                  subtitle={<Caption className="text-gray-500">BPM</Caption>}
-                >
+                <Cell subtitle={<Caption className="text-gray-500">BPM</Caption>}>
                   {track.parameters.bpm}
                 </Cell>
               )}
               {track.parameters.intensity && (
-                <Cell
-                  subtitle={<Caption className="text-gray-500">Intensity</Caption>}
-                >
+                <Cell subtitle={<Caption className="text-gray-500">Intensity</Caption>}>
                   {track.parameters.intensity}
                 </Cell>
               )}
               {track.parameters.language && (
-                <Cell
-                  subtitle={<Caption className="text-gray-500">Language</Caption>}
-                >
+                <Cell subtitle={<Caption className="text-gray-500">Language</Caption>}>
                   {track.parameters.language}
                 </Cell>
               )}
             </>
           )}
 
-          <Cell
-            subtitle={<Caption className="text-gray-500">Created</Caption>}
-          >
-            {createdDate}
-          </Cell>
+          <Cell subtitle={<Caption className="text-gray-500">Created</Caption>}>{createdDate}</Cell>
         </List>
 
         {track.status === 'done' && track.audioUrl && (
           <div className="mt-4">
             <Caption className="text-gray-500 mb-2 block">Audio Preview</Caption>
-            <audio
-              controls
-              className="w-full"
-              src={track.audioUrl}
-            >
+            <audio controls className="w-full" src={track.audioUrl}>
               Your browser does not support the audio element.
             </audio>
           </div>
@@ -226,12 +194,7 @@ export function Track(): React.ReactElement {
             <Caption className="text-red-700">
               Generation failed. Please try again or contact support if the issue persists.
             </Caption>
-            <Button
-              stretched
-              mode="filled"
-              onClick={() => navigate('/create')}
-              className="mt-3"
-            >
+            <Button stretched mode="filled" onClick={() => navigate('/create')} className="mt-3">
               Try Again
             </Button>
           </div>

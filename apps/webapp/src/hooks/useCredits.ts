@@ -22,9 +22,7 @@ export function useCredits(): UseCreditsReturn {
 
     setIsLoading(true);
     try {
-      const response = await apiClient
-        .get(`credits/user/${user.id}`)
-        .json<CreditsResponse>();
+      const response = await apiClient.get(`credits/user/${user.id}`).json<CreditsResponse>();
       setCredits(response.credits);
     } catch {
       setCredits(0);

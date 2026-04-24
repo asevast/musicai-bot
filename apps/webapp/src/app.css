@@ -1,1 +1,54 @@
+@keyframes bar-1 {
+  0%, 100% { height: 12px; opacity: 0.9; }
+  50% { height: 28px; opacity: 0.7; }
+}
+@keyframes bar-2 {
+  0%, 100% { height: 28px; opacity: 0.7; }
+  50% { height: 36px; opacity: 1; }
+}
+@keyframes bar-3 {
+  0%, 100% { height: 36px; opacity: 1; }
+  50% { height: 20px; opacity: 0.6; }
+}
+@keyframes bar-4 {
+  0%, 100% { height: 20px; opacity: 0.6; }
+  50% { height: 32px; opacity: 0.85; }
+}
+@keyframes bar-5 {
+  0%, 100% { height: 32px; opacity: 0.85; }
+  50% { height: 16px; opacity: 0.5; }
+}
+@keyframes bar-6 {
+  0%, 100% { height: 16px; opacity: 0.5; }
+  50% { height: 24px; opacity: 0.75; }
+}
+@keyframes bar-7 {
+  0%, 100% { height: 24px; opacity: 0.75; }
+  50% { height: 38px; opacity: 0.95; }
+}
+@keyframes bar-8 {
+  0%, 100% { height: 38px; opacity: 0.95; }
+  50% { height: 18px; opacity: 0.55; }
+}
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
 @import "tailwindcss";
+
+.animate-bar-1 { animation: bar-1 0.8s ease-in-out infinite alternate; animation-delay: 0s; }
+.animate-bar-2 { animation: bar-2 0.8s ease-in-out infinite alternate; animation-delay: 0.1s; }
+.animate-bar-3 { animation: bar-3 0.8s ease-in-out infinite alternate; animation-delay: 0.2s; }
+.animate-bar-4 { animation: bar-4 0.8s ease-in-out infinite alternate; animation-delay: 0.3s; }
+.animate-bar-5 { animation: bar-5 0.8s ease-in-out infinite alternate; animation-delay: 0.4s; }
+.animate-bar-6 { animation: bar-6 0.8s ease-in-out infinite alternate; animation-delay: 0.5s; }
+.animate-bar-7 { animation: bar-7 0.8s ease-in-out infinite alternate; animation-delay: 0.6s; }
+.animate-bar-8 { animation: bar-8 0.8s ease-in-out infinite alternate; animation-delay: 0.7s; }
+.animate-shimmer { animation: shimmer 1.5s linear infinite; }
