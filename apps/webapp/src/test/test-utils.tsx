@@ -1,5 +1,6 @@
-import { ReactNode } from 'react';
-import { render as rtlRender, RenderOptions } from '@testing-library/react';
+import type { ReactNode } from 'react';
+import type { RenderOptions } from '@testing-library/react';
+import { render as rtlRender } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { AppRoot } from '@telegram-apps/telegram-ui';
 
@@ -15,14 +16,14 @@ function AllTheProviders({
   initialEntries?: string[];
 }) {
   return (
-    <AppRoot platform="ios">
-      <MemoryRouter initialEntries={initialEntries}>{children}</MemoryRouter>
-    </AppRoot>
+    <MemoryRouter initialEntries={initialEntries}>
+      <AppRoot platform="ios">{children}</AppRoot>
+    </MemoryRouter>
   );
 }
 
 export function render(ui: ReactNode, { initialEntries, ...options }: CustomRenderOptions = {}) {
-  return rtlRender(ui, {
+  return rtlRender(ui as React.ReactElement, {
     wrapper: ({ children }) => (
       <AllTheProviders initialEntries={initialEntries}>{children}</AllTheProviders>
     ),

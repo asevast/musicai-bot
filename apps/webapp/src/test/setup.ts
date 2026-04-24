@@ -12,6 +12,7 @@ const mockLaunchParams = {
   startParam: '',
 };
 
+// Mock these BEFORE they get imported by components
 vi.mock('@telegram-apps/sdk-react', () => ({
   init: vi.fn().mockResolvedValue(undefined),
   miniApp: { mount: mockMount, unmount: mockMount },
