@@ -8,7 +8,7 @@ import type { CreateTrackDto, LyriaModel } from '@musicai/shared-types';
 
 interface PromptFormData {
   prompt: string;
-  type: 'full_song' | 'clip' | 'instrumental';
+  type: 'full_song' | 'clip' | 'instrumental' | 'variants';
   language: string;
   lyrics?: string;
   bpm: number;

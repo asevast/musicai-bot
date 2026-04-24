@@ -11,25 +11,35 @@ function Root() {
   useEffect(() => {
     async function initTelegramSDK() {
       try {
+        console.log('[Debug] Starting SDK init...');
+
         // Initialize Telegram Mini App SDK
+        console.log('[Debug] Calling init()...');
         init();
+        console.log('[Debug] init() completed');
 
         // Mount and expand viewport
+        console.log('[Debug] Mounting viewport...');
         await viewport.mount();
+        console.log('[Debug] Viewport mounted, expanding...');
         viewport.expand();
 
         // Mount theme params for theme synchronization
+        console.log('[Debug] Mounting themeParams...');
         await themeParams.mount();
 
         // Mount mini app
+        console.log('[Debug] Mounting miniApp...');
         await miniApp.mount();
 
         // Mount back button
+        console.log('[Debug] Mounting backButton...');
         await backButton.mount();
 
+        console.log('[Debug] All SDK components mounted!');
         setIsReady(true);
       } catch (e) {
-        console.error('Telegram SDK init error:', e);
+        console.error('[Debug] Telegram SDK init error:', e);
         setError(e instanceof Error ? e.message : 'Failed to initialize');
       }
     }

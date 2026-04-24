@@ -1,5 +1,7 @@
-export const mockMount = vi.fn().mockResolvedValue(undefined));
-export const mockUnmount = vi.fn().mockResolvedValue(undefined));
+import { vi } from 'vitest';
+
+export const mockMount = vi.fn().mockResolvedValue(undefined);
+export const mockUnmount = vi.fn().mockResolvedValue(undefined);
 
 export const miniApp = {
   mount: mockMount,
