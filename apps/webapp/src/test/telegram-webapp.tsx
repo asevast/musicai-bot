@@ -395,11 +395,11 @@ export function mockWindowTelegramWebApp(
  * Trigger a viewport change event in tests
  */
 export function triggerViewportChange(height: number, stableHeight?: number) {
-  const webApp = (global as unknown as { window: { Telegram: { WebApp: { viewportHeight: number; viewportStableHeight: number; _eventHandlers?: Record<string, (() => void)[]> } } } } }).window.Telegram.WebApp;
+  const webApp = (global as unknown as { window: { Telegram: { WebApp: Record<string, unknown> } } }).window.Telegram.WebApp;
   webApp.viewportHeight = height;
   webApp.viewportStableHeight = stableHeight ?? height;
 
-  const handlers = webApp._eventHandlers?.['viewportChanged'];
+  const handlers = (webApp._eventHandlers as Record<string, (() => void)[]> | undefined)?.['viewportChanged'];
   if (handlers) {
     handlers.forEach((cb) => cb());
   }
@@ -409,9 +409,12 @@ export function triggerViewportChange(height: number, stableHeight?: number) {
  * Trigger theme change event in tests
  */
 export function triggerThemeChange(colorScheme: 'light' | 'dark') {
-  const webApp = (global as unknown as { window: { Telegram: { WebApp: { colorScheme: 'light' | 'dark'; themeParams: { bg_color: string }; _eventHandlers?: Record<string, (() => void)[]> } } } } }).window.Telegram.WebApp;
+  const webApp = (global as unknown as { window: { Telegram: { WebApp: Record<string, unknown> } } }).window.Telegram.WebApp;
   webApp.colorScheme = colorScheme;
-  webApp.themeParams.bg_color = colorScheme === 'dark' ? '#1a1a1a' : '#ffffff';
+  const themeParams = webApp.themeParams as Record<string, string> | undefined;
+  if (themeParams) {
+    themeParams.bg_color = colorScheme === 'dark' ? '#1a1a1a' : '#ffffff';
+  }
 
   const handlers = webApp._eventHandlers?.['themeChanged'];
   if (handlers) {
@@ -423,25 +426,27 @@ export function triggerThemeChange(colorScheme: 'light' | 'dark') {
  * Click the back button in tests
  */
 export function clickBackButton() {
-  const webApp = (global as unknown as { window: { Telegram: { WebApp: { BackButton: { _callbacks?: (() => void)[]; isVisible: boolean } } } } }).window.Telegram.WebApp;
-  if (!webApp.BackButton.isVisible) {
+  const webApp = (global as unknown as { window: { Telegram: { WebApp: Record<string, unknown> } } }).window.Telegram.WebApp;
+  const backButton = webApp.BackButton as { _callbacks?: (() => void)[]; isVisible: boolean };
+  if (!backButton.isVisible) {
     throw new Error('BackButton is not visible');
   }
-  webApp.BackButton._callbacks?.forEach((cb) => cb());
+  backButton._callbacks?.forEach((cb) => cb());
 }
 
 /**
  * Click the main button in tests
  */
 export function clickMainButton() {
-  const webApp = (global as unknown as { window: { Telegram: { WebApp: { MainButton: { _callbacks?: (() => void)[]; isVisible: boolean; isActive: boolean } } } } }).window.Telegram.WebApp;
-  if (!webApp.MainButton.isVisible) {
+  const webApp = (global as unknown as { window: { Telegram: { WebApp: Record<string, unknown> } } }).window.Telegram.WebApp;
+  const mainButton = webApp.MainButton as { _callbacks?: (() => void)[]; isVisible: boolean; isActive: boolean };
+  if (!mainButton.isVisible) {
     throw new Error('MainButton is not visible');
   }
-  if (!webApp.MainButton.isActive) {
+  if (!mainButton.isActive) {
     throw new Error('MainButton is not active');
   }
-  webApp.MainButton._callbacks?.forEach((cb) => cb());
+  mainButton._callbacks?.forEach((cb) => cb());
 }
 
 /**

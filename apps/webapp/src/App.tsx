@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router';
+import { AppRoot } from '@telegram-apps/telegram-ui';
 import { Home } from './pages/Home';
 import { CreateType } from './pages/CreateType';
 import { CreatePrompt } from './pages/CreatePrompt';

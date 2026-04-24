@@ -1,6 +1,9 @@
 import { vi, afterEach } from 'vitest';
 import '@testing-library/jest-dom';
 
+// Re-export Telegram WebApp testing utilities
+export * from './telegram-webapp';
+
 // Mock Telegram SDK
 const mockMount = vi.fn().mockResolvedValue(undefined);
 
@@ -12,7 +15,6 @@ const mockLaunchParams = {
   startParam: '',
 };
 
-// Mock these BEFORE they get imported by components
 vi.mock('@telegram-apps/sdk-react', () => ({
   init: vi.fn().mockResolvedValue(undefined),
   miniApp: { mount: mockMount, unmount: mockMount },
@@ -123,4 +125,5 @@ afterEach(() => {
   useTracksStore.getState().setTracks([]);
   useTracksStore.getState().setCurrentTrack(null);
   useTracksStore.getState().setLoading(false);
+  vi.clearAllMocks();
 });

@@ -92,11 +92,12 @@ describe('Telegram WebApp Testing Utilities', () => {
     });
 
     it('should allow back button clicks when visible', () => {
-      const { windowMock } = (global as unknown as { window: { Telegram: { WebApp: ReturnType<typeof mockWindowTelegramWebApp> } } }).window.Telegram;
-      windowMock.BackButton.show();
+      const webApp = (global as unknown as { window: { Telegram: { WebApp: Record<string, unknown> } } }).window.Telegram.WebApp;
+      const backButton = webApp.BackButton as { isVisible: boolean; show: () => void; onClick: (cb: () => void) => void };
+      backButton.show();
 
       let clicked = false;
-      windowMock.BackButton.onClick(() => { clicked = true; });
+      backButton.onClick(() => { clicked = true; });
       clickBackButton();
       expect(clicked).toBe(true);
     });
@@ -112,21 +113,23 @@ describe('Telegram WebApp Testing Utilities', () => {
     });
 
     it('should throw when clicking disabled main button', () => {
-      const { windowMock } = (global as unknown as { window: { Telegram: { WebApp: ReturnType<typeof mockWindowTelegramWebApp> } } }).window.Telegram;
-      windowMock.MainButton.show();
-      windowMock.MainButton.disable();
+      const webApp = (global as unknown as { window: { Telegram: { WebApp: Record<string, unknown> } } }).window.Telegram.WebApp;
+      const mainButton = webApp.MainButton as { isVisible: boolean; isActive: boolean; show: () => void; disable: () => void };
+      mainButton.show();
+      mainButton.disable();
       expect(() => clickMainButton()).toThrow('MainButton is not active');
     });
 
     it('should allow main button clicks when visible and active', () => {
-      const { windowMock } = (global as unknown as { window: { Telegram: { WebApp: ReturnType<typeof mockWindowTelegramWebApp> } } }).window.Telegram;
-      windowMock.MainButton.show();
+      const webApp = (global as unknown as { window: { Telegram: { WebApp: Record<string, unknown> } } }).window.Telegram.WebApp;
+      const mainButton = webApp.MainButton as { isVisible: boolean; isActive: boolean; show: () => void; onClick: (cb: () => void) => void };
+      mainButton.show();
 
       let clicked = false;
-      windowMock.MainButton.onClick(() => { clicked = true; });
+      mainButton.onClick(() => { clicked = true; });
 
-      expect(windowMock.MainButton.isVisible).toBe(true);
-      expect(windowMock.MainButton.isActive).toBe(true);
+      expect(mainButton.isVisible).toBe(true);
+      expect(mainButton.isActive).toBe(true);
 
       clickMainButton();
       expect(clicked).toBe(true);
