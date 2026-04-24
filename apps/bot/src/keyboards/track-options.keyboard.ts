@@ -16,14 +16,15 @@ export const trackTypeKeyboard = (isPaidUser = false) => {
 
 export const languageKeyboard = () =>
   new InlineKeyboard()
+    .text('🇷🇺 RU', 'lang_ru')
     .text('🇺🇸 EN', 'lang_en')
     .text('🇩🇪 DE', 'lang_de')
-    .text('🇪🇸 ES', 'lang_es')
     .row()
+    .text('🇪🇸 ES', 'lang_es')
     .text('🇫🇷 FR', 'lang_fr')
     .text('🇯🇵 JA', 'lang_ja')
-    .text('🇰🇷 KO', 'lang_ko')
     .row()
+    .text('🇰🇷 KO', 'lang_ko')
     .text('🇮🇳 HI', 'lang_hi')
     .text('🇧🇷 PT', 'lang_pt');
 

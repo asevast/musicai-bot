@@ -4,6 +4,7 @@ import { StepDots } from '../components/StepDots';
 import { useWizardStore } from '../store/wizard.store';
 
 const languages = [
+  { code: 'RU', name: 'Русский', flag: '🇷🇺' },
   { code: 'EN', name: 'English', flag: '🇺🇸' },
   { code: 'DE', name: 'Deutsch', flag: '🇩🇪' },
   { code: 'ES', name: 'Español', flag: '🇪🇸' },
