@@ -14,23 +14,25 @@ import { BottomNav } from './components/BottomNav';
 
 function App() {
   return (
-    <BrowserRouter>
-      <div className="pb-20">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/create" element={<CreateType />} />
-          <Route path="/create/prompt" element={<CreatePrompt />} />
-          <Route path="/create/lang" element={<CreateLanguage />} />
-          <Route path="/create/confirm" element={<CreateConfirm />} />
-          <Route path="/generating" element={<Generating />} />
-          <Route path="/library" element={<Library />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/buy" element={<BuyCredits />} />
-          <Route path="/track/:id" element={<Track />} />
-        </Routes>
-      </div>
-      <BottomNav />
-    </BrowserRouter>
+    <AppRoot platform="ios">
+      <BrowserRouter>
+        <div className="pb-20">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/create" element={<CreateType />} />
+            <Route path="/create/prompt" element={<CreatePrompt />} />
+            <Route path="/create/lang" element={<CreateLanguage />} />
+            <Route path="/create/confirm" element={<CreateConfirm />} />
+            <Route path="/generating" element={<Generating />} />
+            <Route path="/library" element={<Library />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/buy" element={<BuyCredits />} />
+            <Route path="/track/:id" element={<Track />} />
+          </Routes>
+        </div>
+        <BottomNav />
+      </BrowserRouter>
+    </AppRoot>
   );
 }
 
