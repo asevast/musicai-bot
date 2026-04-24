@@ -1,48 +1,48 @@
 import { vi, afterEach } from 'vitest';
 import '@testing-library/jest-dom';
+import { useWizardStore } from '../store/wizard.store';
+import { useTracksStore } from '../store/tracks.store';
 
-// Re-export Telegram WebApp testing utilities
-export * from './telegram-webapp';
+// Mock Telegram SDK (hoisted - must use vi.fn() directly in factory)
+vi.mock('@telegram-apps/sdk-react', () => {
+  const mockMount = vi.fn().mockResolvedValue(undefined);
+  const mockUser = { id: 123456, firstName: 'Test', lastName: 'User', username: 'testuser' };
+  const mockLaunchParams = {
+    initData: { user: mockUser },
+    initDataRaw: 'test-init-data',
+    startParam: '',
+  };
 
-// Mock Telegram SDK
-const mockMount = vi.fn().mockResolvedValue(undefined);
-
-const mockUser = { id: 123456, firstName: 'Test', lastName: 'User', username: 'testuser' };
-const mockInitData = { user: mockUser };
-const mockLaunchParams = {
-  initData: mockInitData,
-  initDataRaw: 'test-init-data',
-  startParam: '',
-};
-
-vi.mock('@telegram-apps/sdk-react', () => ({
-  init: vi.fn().mockResolvedValue(undefined),
-  miniApp: { mount: mockMount, unmount: mockMount },
-  themeParams: { mount: mockMount, unmount: mockMount },
-  viewport: { mount: mockMount, unmount: mockMount, expand: vi.fn() },
-  backButton: { mount: mockMount, unmount: mockMount },
-  retrieveLaunchParams: vi.fn(() => mockLaunchParams),
-  useLaunchParams: () => mockLaunchParams,
-  useInitials: () => 'TU',
-  useThemeParams: () => ({}),
-  useBackButton: () => ({
-    mount: mockMount,
-    unmount: mockMount,
-    show: vi.fn(),
-    hide: vi.fn(),
-    onClick: vi.fn(),
-  }),
-  useMainButton: () => ({
-    mount: mockMount,
-    unmount: mockMount,
-    setText: vi.fn(),
-    enable: vi.fn(),
-    disable: vi.fn(),
-    show: vi.fn(),
-    hide: vi.fn(),
-    onClick: vi.fn(),
-  }),
-}));
+  return {
+    init: vi.fn().mockResolvedValue(undefined),
+    miniApp: { mount: mockMount, unmount: mockMount },
+    themeParams: { mount: mockMount, unmount: mockMount },
+    viewport: { mount: mockMount, unmount: mockMount, expand: vi.fn() },
+    backButton: { mount: mockMount, unmount: mockMount },
+    retrieveLaunchParams: vi.fn(() => mockLaunchParams),
+    useLaunchParams: () => mockLaunchParams,
+    useTelegramUser: () => mockUser,
+    useInitials: () => 'TU',
+    useThemeParams: () => ({}),
+    useBackButton: () => ({
+      mount: mockMount,
+      unmount: mockMount,
+      show: vi.fn(),
+      hide: vi.fn(),
+      onClick: vi.fn(),
+    }),
+    useMainButton: () => ({
+      mount: mockMount,
+      unmount: mockMount,
+      setText: vi.fn(),
+      enable: vi.fn(),
+      disable: vi.fn(),
+      show: vi.fn(),
+      hide: vi.fn(),
+      onClick: vi.fn(),
+    }),
+  };
+});
 
 // Mock socket.io-client
 vi.mock('socket.io-client', () => ({
@@ -116,10 +116,7 @@ vi.mock('../api/client', () => ({
   apiClient: createMockClient(),
 }));
 
-// Clean up stores
-import { useWizardStore } from '../store/wizard.store';
-import { useTracksStore } from '../store/tracks.store';
-
+// Clean up stores after each test
 afterEach(() => {
   useWizardStore.getState().resetWizard();
   useTracksStore.getState().setTracks([]);

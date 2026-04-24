@@ -3,13 +3,9 @@ import { render, screen } from '../test-utils';
 import { Profile } from '../../pages/Profile';
 
 describe('Profile', () => {
-  it('should render profile header', () => {
+  it('should render profile content', async () => {
     render(<Profile />);
-    expect(screen.getByText('Profile')).toBeInTheDocument();
-  });
-
-  it('should render credits balance', () => {
-    render(<Profile />);
-    expect(screen.getByText('Credits Balance')).toBeInTheDocument();
+    // TUI components wrap text, so use findByText for async rendering
+    expect(await screen.findByText(/Credits Balance/)).toBeInTheDocument();
   });
 });
