@@ -22,14 +22,16 @@ function AllTheProviders({
   );
 }
 
-export function render(ui: ReactNode, { initialEntries, ...options }: CustomRenderOptions = {}) {
+export function render(ui: ReactNode, { initialEntries = ['/'], ...options }: CustomRenderOptions = {}) {
   return rtlRender(ui as React.ReactElement, {
-    wrapper: ({ children }) => (
-      <AllTheProviders initialEntries={initialEntries}>{children}</AllTheProviders>
+    wrapper: ({ children }: { children: ReactNode }) => (
+      <MemoryRouter initialEntries={initialEntries}>
+        <AppRoot platform="ios">{children}</AppRoot>
+      </MemoryRouter>
     ),
     ...options,
   });
 }
 
-// Re-export everything from testing-library
-export * from '@testing-library/react';
+// Re-export everything from testing-library EXCEPT render
+export { screen, fireEvent, waitFor, within, cleanup } from '@testing-library/react';

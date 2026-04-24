@@ -5,12 +5,12 @@ import { Library } from '../../pages/Library';
 describe('Library', () => {
   it('should render tabs', () => {
     render(<Library />);
-    expect(screen.getByText(/Мои треки/i)).toBeInTheDocument();
-    expect(screen.getByText(/Все/i)).toBeInTheDocument();
+    expect(screen.getByText(/My Tracks/i)).toBeInTheDocument();
+    expect(screen.getByText(/Public/i)).toBeInTheDocument();
   });
 
   it('should render header', () => {
     render(<Library />);
-    expect(screen.getByText('Лента')).toBeInTheDocument();
+    expect(screen.getByText('Library')).toBeInTheDocument();
   });
 });

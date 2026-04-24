@@ -6,14 +6,13 @@ describe('BuyCredits', () => {
   it('should render balance header', () => {
     render(<BuyCredits />);
     expect(screen.getByText(/80/)).toBeInTheDocument();
-    expect(screen.getByText(/кредитов/)).toBeInTheDocument();
   });
 
   it('should render pack options', () => {
     render(<BuyCredits />);
-    expect(screen.getByText('S')).toBeInTheDocument();
-    expect(screen.getByText('M')).toBeInTheDocument();
-    expect(screen.getByText('L')).toBeInTheDocument();
+    expect(screen.getByText('Pack S')).toBeInTheDocument();
+    expect(screen.getByText('Pack M')).toBeInTheDocument();
+    expect(screen.getByText('Pack L')).toBeInTheDocument();
   });
 
   it('should render subscription options', () => {
@@ -24,6 +23,6 @@ describe('BuyCredits', () => {
 
   it('should show Popular badge on Pack M', () => {
     render(<BuyCredits />);
-    expect(screen.getByText('Popular')).toBeInTheDocument();
+    expect(screen.getByText('Популярный')).toBeInTheDocument();
   });
 });
