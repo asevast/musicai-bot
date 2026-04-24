@@ -79,16 +79,12 @@ export function Generating(): React.ReactElement {
                   stage.status === 'done'
                     ? 'bg-[#DCFCE7]'
                     : stage.status === 'active'
-                    ? 'bg-[#EEF2FF]'
-                    : 'bg-gray-100'
+                      ? 'bg-[#EEF2FF]'
+                      : 'bg-gray-100'
                 }`}
               >
-                {stage.status === 'done' && (
-                  <CheckIcon className="w-3 h-3 fill-[#16A34A]" />
-                )}
-                {stage.status === 'active' && (
-                  <PlayIcon className="w-3 h-3 fill-[#5B5FC7]" />
-                )}
+                {stage.status === 'done' && <CheckIcon className="w-3 h-3 fill-[#16A34A]" />}
+                {stage.status === 'active' && <PlayIcon className="w-3 h-3 fill-[#5B5FC7]" />}
                 {stage.status === 'pending' && stage.icon === 'cloud' && (
                   <CloudIcon className="w-3 h-3 fill-gray-400" />
                 )}
@@ -103,8 +99,8 @@ export function Generating(): React.ReactElement {
                   stage.status === 'done'
                     ? 'text-gray-900'
                     : stage.status === 'active'
-                    ? 'text-[#5B5FC7] font-medium'
-                    : 'text-gray-400'
+                      ? 'text-[#5B5FC7] font-medium'
+                      : 'text-gray-400'
                 }`}
               >
                 {stage.label}

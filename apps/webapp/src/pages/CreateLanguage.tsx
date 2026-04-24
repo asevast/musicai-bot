@@ -47,14 +47,14 @@ export function CreateLanguage(): React.ReactElement {
                 key={code}
                 onClick={() => updateField('language', code)}
                 className={`p-2.5 rounded-lg border flex items-center gap-2 transition-colors ${
-                  isSelected
-                    ? 'border-[#5B5FC7] bg-[#EEF2FF]'
-                    : 'border-gray-100 bg-white'
+                  isSelected ? 'border-[#5B5FC7] bg-[#EEF2FF]' : 'border-gray-100 bg-white'
                 }`}
               >
                 <span className="text-lg">{flag}</span>
                 <div className="text-left">
-                  <div className={`text-xs font-medium ${isSelected ? 'text-gray-900' : 'text-gray-700'}`}>
+                  <div
+                    className={`text-xs font-medium ${isSelected ? 'text-gray-900' : 'text-gray-700'}`}
+                  >
                     {name}
                   </div>
                   <div className={`text-xs ${isSelected ? 'text-gray-400' : 'text-gray-400'}`}>

@@ -22,10 +22,7 @@ export function CreatePrompt(): React.ReactElement {
       <div className="p-4 max-w-md mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <button
-            onClick={() => navigate('/create')}
-            className="text-xs text-[#5B5FC7] min-w-7"
-          >
+          <button onClick={() => navigate('/create')} className="text-xs text-[#5B5FC7] min-w-7">
             ←
           </button>
           <h1 className="text-sm font-medium">Новый трек</h1>

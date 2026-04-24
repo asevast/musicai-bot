@@ -508,7 +508,6 @@ export function setupBot(bot: Bot<BotContext>) {
     }
 
     // Parse parameters from the clip
-    // Parse parameters from the clip
 
     // Create confirmation message with cost
     const confirmKeyboard = new InlineKeyboard()

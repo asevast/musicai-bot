@@ -15,10 +15,7 @@ interface WizardState {
 
 interface WizardActions {
   setStep: (step: number) => void;
-  updateField: <K extends keyof WizardState>(
-    field: K,
-    value: WizardState[K]
-  ) => void;
+  updateField: <K extends keyof WizardState>(field: K, value: WizardState[K]) => void;
   resetWizard: () => void;
 }
 

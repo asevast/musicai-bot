@@ -17,11 +17,7 @@ export function StepDots({ currentStep, totalSteps = 4 }: StepDotsProps): React.
           <div
             key={step}
             className={`h-1.5 rounded-full transition-all duration-200 ${
-              isActive
-                ? 'w-4 bg-[#5B5FC7]'
-                : isDone
-                ? 'w-1.5 bg-[#5B5FC7]'
-                : 'w-1.5 bg-gray-200'
+              isActive ? 'w-4 bg-[#5B5FC7]' : isDone ? 'w-1.5 bg-[#5B5FC7]' : 'w-1.5 bg-gray-200'
             }`}
           />
         );

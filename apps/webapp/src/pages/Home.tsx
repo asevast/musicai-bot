@@ -12,9 +12,30 @@ interface TrackItem {
 }
 
 const recentTracks: TrackItem[] = [
-  { id: '1', emoji: '🎸', name: 'Summer Drive', genre: 'Pop', duration: '3:02', timeAgo: 'только что' },
-  { id: '2', emoji: '🌙', name: 'Midnight Chill', genre: 'Lo-fi', duration: '2:30', timeAgo: 'вчера' },
-  { id: '3', emoji: '🔥', name: 'Epic Cinematic', genre: 'Orchestral', duration: '3:04', timeAgo: '2 дня назад' },
+  {
+    id: '1',
+    emoji: '🎸',
+    name: 'Summer Drive',
+    genre: 'Pop',
+    duration: '3:02',
+    timeAgo: 'только что',
+  },
+  {
+    id: '2',
+    emoji: '🌙',
+    name: 'Midnight Chill',
+    genre: 'Lo-fi',
+    duration: '2:30',
+    timeAgo: 'вчера',
+  },
+  {
+    id: '3',
+    emoji: '🔥',
+    name: 'Epic Cinematic',
+    genre: 'Orchestral',
+    duration: '3:04',
+    timeAgo: '2 дня назад',
+  },
 ];
 
 export function Home(): React.ReactElement {
@@ -65,9 +86,7 @@ export function Home(): React.ReactElement {
 
                 {/* Track Info */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {track.name}
-                  </p>
+                  <p className="text-sm font-medium text-gray-900 truncate">{track.name}</p>
                   <p className="text-xs text-gray-400">
                     {track.genre} · {track.duration} · {track.timeAgo}
                   </p>

@@ -22,8 +22,23 @@ vi.mock('@telegram-apps/sdk-react', () => ({
   useLaunchParams: () => mockLaunchParams,
   useInitials: () => 'TU',
   useThemeParams: () => ({}),
-  useBackButton: () => ({ mount: mockMount, unmount: mockMount, show: vi.fn(), hide: vi.fn(), onClick: vi.fn() }),
-  useMainButton: () => ({ mount: mockMount, unmount: mockMount, setText: vi.fn(), enable: vi.fn(), disable: vi.fn(), show: vi.fn(), hide: vi.fn(), onClick: vi.fn() }),
+  useBackButton: () => ({
+    mount: mockMount,
+    unmount: mockMount,
+    show: vi.fn(),
+    hide: vi.fn(),
+    onClick: vi.fn(),
+  }),
+  useMainButton: () => ({
+    mount: mockMount,
+    unmount: mockMount,
+    setText: vi.fn(),
+    enable: vi.fn(),
+    disable: vi.fn(),
+    show: vi.fn(),
+    hide: vi.fn(),
+    onClick: vi.fn(),
+  }),
 }));
 
 // Mock socket.io-client

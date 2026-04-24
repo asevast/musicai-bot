@@ -41,13 +41,13 @@ export function CreateType(): React.ReactElement {
                 key={type}
                 onClick={() => updateField('trackType', type)}
                 className={`p-3 rounded-xl border text-center transition-colors ${
-                  isSelected
-                    ? 'border-[#5B5FC7] bg-[#EEF2FF]'
-                    : 'border-gray-100 bg-white'
+                  isSelected ? 'border-[#5B5FC7] bg-[#EEF2FF]' : 'border-gray-100 bg-white'
                 }`}
               >
                 <div className="text-2xl mb-1">{emoji}</div>
-                <div className={`text-xs font-medium ${isSelected ? 'text-gray-900' : 'text-gray-700'}`}>
+                <div
+                  className={`text-xs font-medium ${isSelected ? 'text-gray-900' : 'text-gray-700'}`}
+                >
                   {name}
                 </div>
                 <div className={`text-xs ${isSelected ? 'text-[#5B5FC7]' : 'text-gray-400'}`}>

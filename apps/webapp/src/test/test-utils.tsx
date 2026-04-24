@@ -7,7 +7,13 @@ interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
   initialEntries?: string[];
 }
 
-function AllTheProviders({ children, initialEntries = ['/'] }: { children: ReactNode; initialEntries?: string[] }) {
+function AllTheProviders({
+  children,
+  initialEntries = ['/'],
+}: {
+  children: ReactNode;
+  initialEntries?: string[];
+}) {
   return (
     <AppRoot platform="ios">
       <MemoryRouter initialEntries={initialEntries}>{children}</MemoryRouter>
@@ -15,10 +21,7 @@ function AllTheProviders({ children, initialEntries = ['/'] }: { children: React
   );
 }
 
-export function render(
-  ui: ReactNode,
-  { initialEntries, ...options }: CustomRenderOptions = {}
-) {
+export function render(ui: ReactNode, { initialEntries, ...options }: CustomRenderOptions = {}) {
   return rtlRender(ui, {
     wrapper: ({ children }) => (
       <AllTheProviders initialEntries={initialEntries}>{children}</AllTheProviders>

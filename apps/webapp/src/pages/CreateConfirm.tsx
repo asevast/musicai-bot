@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { StepDots } from '../components/StepDots';
+import { apiClient } from '../api/client';
 import { useWizardStore } from '../store/wizard.store';
+import { useTelegram } from '../hooks/useTelegram';
+import { useTracksStore } from '../store/tracks.store';
+import type { LyriaModel, CreateTrackDto } from '@musicai/shared-types';
 
 const typeLabels: Record<string, string> = {
   full_song: 'Полная песня',
@@ -26,14 +30,60 @@ const intensityLabels: Record<string, string> = {
 
 export function CreateConfirm(): React.ReactElement {
   const navigate = useNavigate();
-  const { trackType, prompt, intensity, duration, language, updateField } =
-    useWizardStore();
+  const { user } = useTelegram();
+  const addTrack = useTracksStore((state) => state.addTrack);
+  const { trackType, prompt, intensity, duration, language } = useWizardStore();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const cost = typeCosts[trackType] || 5;
 
-  const handleCreate = () => {
-    // Navigate to generating page
-    navigate('/generating');
+  const handleCreate = async () => {
+    if (!user?.id) {
+      console.error('User not authenticated');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const model: LyriaModel =
+        trackType === 'clip' ? 'lyria-3-clip-preview' : 'lyria-3-pro-preview';
+
+      const dto: Omit<CreateTrackDto, 'telegramId' | 'chatId' | 'messageId'> & {
+        telegramId: string;
+        chatId: number;
+        messageId: number;
+      } = {
+        model,
+        type: trackType,
+        prompt,
+        lyrics: undefined,
+        bpm: undefined,
+        intensity,
+        durationSeconds: duration,
+        language,
+        telegramId: String(user.id),
+        chatId: 0,
+        messageId: 0,
+      };
+
+      const response = await apiClient
+        .post('tracks', { json: dto })
+        .json<{ id: string; title: string; status: 'queued'; createdAt: string; type: string }>();
+
+      addTrack({
+        id: response.id,
+        title: response.title,
+        status: response.status,
+        createdAt: response.createdAt,
+        type: response.type,
+      });
+
+      navigate('/generating');
+    } catch (error) {
+      console.error('Failed to create track:', error);
+      setIsSubmitting(false);
+    }
   };
 
   return (

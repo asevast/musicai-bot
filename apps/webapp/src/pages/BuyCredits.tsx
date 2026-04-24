@@ -88,9 +88,7 @@ export function BuyCredits(): React.ReactElement {
             <button
               key={pack.id}
               className={`w-full p-3 rounded-xl border flex items-center justify-between transition-colors ${
-                pack.popular
-                  ? 'border-[#5B5FC7] relative'
-                  : 'border-gray-100'
+                pack.popular ? 'border-[#5B5FC7] relative' : 'border-gray-100'
               }`}
             >
               {pack.popular && (
