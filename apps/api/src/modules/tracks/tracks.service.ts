@@ -71,6 +71,7 @@ export class TracksService {
           model: dto.model,
           type: dto.type,
           prompt: dto.prompt,
+          negativePrompt: dto.negativePrompt,
           lyrics: dto.lyrics,
           parameters: {
             bpm: dto.bpm,
