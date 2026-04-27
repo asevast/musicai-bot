@@ -6,6 +6,7 @@ import { mapVertexError, RETRY_CONFIG } from '@musicai/vertex-ai';
 import { QUEUES, QUEUE_OPTIONS } from '@musicai/queues';
 import { storageService } from '@musicai/storage';
 import type { SynthJobPayload, NotifyPayload, TrackProgressEvent } from '@musicai/shared-types';
+import { recordSynthJobDuration, incrementVertexApiErrors } from '@musicai/telemetry';
 
 export class SynthJobProcessor {
   private notifyQueue: Queue;
@@ -30,6 +31,7 @@ export class SynthJobProcessor {
 
   async process(job: Job<SynthJobPayload>): Promise<void> {
     const { trackId, userId, lyriaRequest, chatId, messageId } = job.data;
+    const startTime = Date.now();
 
     await this.prismaInstance.track.update({
       where: { id: trackId },
