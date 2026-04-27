@@ -1,54 +1,103 @@
-import { MiddlewareFn } from 'grammy';
-import { loadEnv } from '@musicai/config';
+import type { Context, NextFunction } from 'grammy';
+import type { BotContext } from '../bot';
 
-interface RateLimitEntry {
+interface RateLimiterEntry {
   count: number;
-  resetAt: number;
+  resetTime: number;
 }
 
-const generateLimits = new Map<string, RateLimitEntry>();
-const commandLimits = new Map<string, RateLimitEntry>();
+export class BotRateLimiter {
+  private requests: Map<string, RateLimiterEntry> = new Map();
+  private readonly maxRequests: number;
+  private readonly windowMs: number;
+  private readonly keyGenerator: (ctx: Context) => string;
 
-export const generateRateLimit: MiddlewareFn = async (ctx, next) => {
-  const env = loadEnv();
-  const key = String(ctx.from?.id ?? 'unknown');
-  const now = Date.now();
-  const windowMs = 60_000;
-
-  const entry = generateLimits.get(key);
-  if (!entry || now > entry.resetAt) {
-    generateLimits.set(key, { count: 1, resetAt: now + windowMs });
-    return next();
+  constructor(options: {
+    maxRequests: number;
+    windowMs: number;
+    keyGenerator?: (ctx: Context) => string;
+  }) {
+    this.maxRequests = options.maxRequests;
+    this.windowMs = options.windowMs;
+    this.keyGenerator = options.keyGenerator || ((ctx) => ctx.from?.id?.toString() || 'unknown');
   }
 
-  if (entry.count >= env.GENERATE_RATE_LIMIT_PER_MIN) {
-    return ctx.reply(
-      `⏳ Rate limit exceeded. Try again in ${Math.ceil((entry.resetAt - now) / 1000)} seconds.`
-    );
+  private cleanup(): void {
+    const now = Date.now();
+    for (const [key, entry] of this.requests) {
+      if (entry.resetTime <= now) {
+        this.requests.delete(key);
+      }
+    }
   }
 
-  entry.count++;
-  return next();
-};
+  isRateLimited(key: string): { limited: boolean; remaining: number; resetIn: number } {
+    this.cleanup();
 
-export const commandRateLimit: MiddlewareFn = async (ctx, next) => {
-  const env = loadEnv();
-  const key = String(ctx.from?.id ?? 'unknown');
-  const now = Date.now();
-  const windowMs = 60_000;
+    const now = Date.now();
+    const entry = this.requests.get(key);
 
-  const entry = commandLimits.get(key);
-  if (!entry || now > entry.resetAt) {
-    commandLimits.set(key, { count: 1, resetAt: now + windowMs });
-    return next();
+    if (!entry || entry.resetTime <= now) {
+      this.requests.set(key, {
+        count: 1,
+        resetTime: now + this.windowMs,
+      });
+      return { limited: false, remaining: this.maxRequests - 1, resetIn: this.windowMs };
+    }
+
+    entry.count++;
+
+    if (entry.count > this.maxRequests) {
+      return {
+        limited: true,
+        remaining: 0,
+        resetIn: entry.resetTime - now,
+      };
+    }
+
+    return {
+      limited: false,
+      remaining: this.maxRequests - entry.count,
+      resetIn: entry.resetTime - now,
+    };
   }
 
-  if (entry.count >= env.COMMAND_RATE_LIMIT_PER_MIN) {
-    return ctx.reply(
-      `⏳ Too many commands. Try again in ${Math.ceil((entry.resetAt - now) / 1000)} seconds.`
-    );
-  }
+  middleware() {
+    return async (ctx: BotContext, next: NextFunction) => {
+      const key = this.keyGenerator(ctx);
+      const result = this.isRateLimited(key);
 
-  entry.count++;
-  return next();
-};
+      if (result.limited) {
+        const seconds = Math.ceil(result.resetIn / 1000);
+        await ctx.reply(
+          `⏳ Rate limit exceeded. Please wait ${seconds}s before trying again.`,
+        );
+        return;
+      }
+
+      return next();
+    };
+  }
+}
+
+// SPEC-compliant rate limiters
+// Generate: 5 req/min per user
+export const generateRateLimiter = new BotRateLimiter({
+  maxRequests: 5,
+  windowMs: 60_000,
+  keyGenerator: (ctx) => `generate:${ctx.from?.id || 'unknown'}`,
+});
+
+// Commands: 30 req/min per user
+export const commandRateLimiter = new BotRateLimiter({
+  maxRequests: 30,
+  windowMs: 60_000,
+  keyGenerator: (ctx) => `cmd:${ctx.from?.id || 'unknown'}`,
+});
+
+// Upload: 10 req/min per user
+export const uploadRateLimiter = new BotRateLimiter({
+  maxRequests: 10,
+  windowMs: 60_000,
+  keyGenerator: (ctx) => `upload:${ctx.from?.id || 'unknown'}`,
+});

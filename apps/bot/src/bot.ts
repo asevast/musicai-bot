@@ -33,6 +33,11 @@ import { fleshCommand } from './commands/flesh.command';
 import { imageToMusicCommand, imageToMusicScene } from './commands/image-to-music.command';
 import { buildPaymentInvoice, handleSuccessfulPayment } from './payments/stars.handler';
 import {
+  generateRateLimiter,
+  commandRateLimiter,
+  uploadRateLimiter,
+} from './middleware/rate-limit.middleware';
+import {
   mainMenuKeyboard,
   historyMenuKeyboard,
   profileMenuKeyboard,
@@ -71,6 +76,9 @@ export function setupBot(bot: Bot<BotContext>) {
   );
 
   bot.use(conversations());
+
+  // Rate limiting middleware (SPEC-compliant)
+  bot.use(commandRateLimiter.middleware());
 
   bot.use(async (ctx, next) => {
     console.log('Middleware: User update received', ctx.from?.id, ctx.message?.text);
