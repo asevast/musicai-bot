@@ -17,6 +17,7 @@ const API_URL = process.env.API_URL || 'http://localhost:3000';
 interface CreateTrackData {
   type?: 'full_song' | 'clip' | 'instrumental';
   prompt?: string;
+  negativePrompt?: string;
   language?: string;
   intensity?: 'low' | 'medium' | 'high' | 'epic';
   bpm?: number;
