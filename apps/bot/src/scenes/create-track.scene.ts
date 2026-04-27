@@ -278,6 +278,7 @@ export const createTrackScene = createConversation(async function createTrack(
     const settingsCtx = await conversation.waitForCallbackQuery([
       'settings_bpm',
       'settings_intensity',
+      'settings_negative',
       'settings_skip',
     ]);
     const setting = settingsCtx.callbackQuery.data;
@@ -318,6 +319,23 @@ export const createTrackScene = createConversation(async function createTrack(
         ''
       ) as CreateTrackData['intensity'];
       await intensityCtx.answerCallbackQuery().catch(() => {});
+      await ctx.reply('⚙️ *Additional Settings*\n\nAnything else?', {
+        parse_mode: 'Markdown',
+        reply_markup: additionalSettingsKeyboard(),
+      });
+    } else if (setting === 'settings_negative') {
+      await ctx.reply(
+        '🚫 *Negative Prompt*\n\n' +
+        'What should the AI avoid in the generation?\n' +
+        'For example: "drums, loud noise, screaming, distortion"\n\n' +
+        'Send your negative prompt or type /skip:',
+        { parse_mode: 'Markdown' }
+      );
+      const negativeCtx = await conversation.waitFor('message:text');
+      const negativeText = negativeCtx.msg.text.trim();
+      if (negativeText !== '/skip' && negativeText.length > 0) {
+        session.negativePrompt = negativeText.slice(0, 300);
+      }
       await ctx.reply('⚙️ *Additional Settings*\n\nAnything else?', {
         parse_mode: 'Markdown',
         reply_markup: additionalSettingsKeyboard(),
