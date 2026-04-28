@@ -1,9 +1,21 @@
 import { Controller, Post, Body, Headers, Req, Res } from '@nestjs/common';
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { Inject } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
-import { YuKassaService } from './yukassa.service';
+import { YuKassaService, type YuKassaPayment } from './yukassa.service';
 import { StripeService } from './stripe.service';
+
+interface YuKassaWebhookBody {
+  event: string;
+  object: YuKassaPayment;
+}
+
+interface StripeWebhookBody {
+  type: string;
+  data: {
+    object: Record<string, unknown>;
+  };
+}
 
 /**
  * Webhook handlers for external payment providers
@@ -23,20 +35,14 @@ export class PaymentsWebhookController {
    */
   @Post('yukassa')
   async handleYuKassaWebhook(
-    @Body() body: unknown,
-    @Headers('x-signature') signature: string,
+    @Body() body: YuKassaWebhookBody,
+    @Headers('x-signature') _signature: string,
     @Res() res: Response
   ) {
     try {
-      const result = await this.yukassaService.processWebhook(
-        body as {
-          event: string;
-          object: { id: string; status: string; metadata?: Record<string, string> };
-        }
-      );
+      const result = await this.yukassaService.processWebhook(body);
 
       if (result.success && result.userId && result.packageId && result.paymentId) {
-        // Process successful payment
         await this.paymentsService.processPayment(
           result.userId,
           result.packageId,
@@ -57,25 +63,22 @@ export class PaymentsWebhookController {
    */
   @Post('stripe')
   async handleStripeWebhook(
-    @Body() body: unknown,
-    @Headers('stripe-signature') signature: string,
-    @Req() req: Request,
+    @Body() body: StripeWebhookBody,
+    @Headers('stripe-signature') _signature: string,
+    @Req() _req: Request,
     @Res() res: Response
   ) {
     try {
       const payload = JSON.stringify(body);
-      const event = this.stripeService.constructWebhookEvent(payload, signature);
+      const event = this.stripeService.constructWebhookEvent(payload, _signature);
 
       if (!event) {
         return res.status(400).json({ error: 'Invalid signature' });
       }
 
-      const result = await this.stripeService.processWebhook(
-        event as { type: string; data: { object: Record<string, unknown> } }
-      );
+      const result = await this.stripeService.processWebhook(event);
 
       if (result.success && result.userId && result.packageId && result.paymentId) {
-        // Process successful payment
         await this.paymentsService.processPayment(
           result.userId,
           result.packageId,

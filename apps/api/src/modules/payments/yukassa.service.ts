@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { loadEnv } from '@musicai/config';
 
-interface YuKassaPayment {
+export interface YuKassaPayment {
   id: string;
   status: 'pending' | 'waiting_for_capture' | 'succeeded' | 'canceled';
   amount: { value: string; currency: string };

@@ -79,7 +79,7 @@ export class StripeService {
       body: bodyString,
     });
 
-    const data = await response.json();
+    const data = await response.json() as Record<string, unknown> & { error?: { message: string } };
 
     if (!response.ok) {
       this.logger.error(`Stripe API error: ${data.error?.message || response.statusText}`);
@@ -242,7 +242,7 @@ export class StripeService {
     this.logger.log(`Received Stripe webhook: ${type}`);
 
     if (type === 'payment_intent.succeeded') {
-      const paymentIntent = object as StripePaymentIntent;
+      const paymentIntent = object as unknown as StripePaymentIntent;
       const userId = paymentIntent.metadata?.userId;
       const packageId = paymentIntent.metadata?.packageId;
 
@@ -255,7 +255,7 @@ export class StripeService {
     }
 
     if (type === 'checkout.session.completed') {
-      const session = object as StripeCheckoutSession;
+      const session = object as unknown as StripeCheckoutSession;
       const userId = session.metadata?.userId;
       const packageId = session.metadata?.packageId;
 
@@ -273,7 +273,7 @@ export class StripeService {
     }
 
     if (type === 'payment_intent.payment_failed') {
-      const paymentIntent = object as StripePaymentIntent;
+      const paymentIntent = object as unknown as StripePaymentIntent;
       this.logger.log(`Payment failed: ${paymentIntent.id}`);
       return { success: false };
     }
