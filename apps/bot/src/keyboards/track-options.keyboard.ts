@@ -51,14 +51,21 @@ export const lyricsKeyboard = () =>
     .row()
     .text('⏭ Skip lyrics', 'lyrics_skip');
 
-export const additionalSettingsKeyboard = () =>
-  new InlineKeyboard()
+export const additionalSettingsKeyboard = (isPro = false) => {
+  const keyboard = new InlineKeyboard()
     .text('🎯 BPM', 'settings_bpm')
-    .text('🎚️ Intensity', 'settings_intensity')
+    .text('🎚️ Intensity', 'settings_intensity');
+
+  if (isPro) {
+    keyboard.row().text('⏱ Duration', 'settings_duration');
+  }
+
+  return keyboard
     .row()
     .text('🚫 Negative Prompt', 'settings_negative')
     .row()
     .text('⏭ Skip Advanced', 'settings_skip');
+};
 
 export const trackActionKeyboard = (trackId: string) =>
   new InlineKeyboard()

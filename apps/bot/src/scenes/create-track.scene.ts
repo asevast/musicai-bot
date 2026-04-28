@@ -21,6 +21,7 @@ interface CreateTrackData {
   language?: string;
   intensity?: 'low' | 'medium' | 'high' | 'epic';
   bpm?: number;
+  durationSeconds?: number;
   lyrics?: string;
   imageBase64?: string;
   imageMimeType?: string;
@@ -269,7 +270,7 @@ export const createTrackScene = createConversation(async function createTrack(
       'You can customize BPM and intensity, or skip to use defaults.',
     {
       parse_mode: 'Markdown',
-      reply_markup: additionalSettingsKeyboard(),
+      reply_markup: additionalSettingsKeyboard(isPaidUser),
     }
   );
 
@@ -277,6 +278,7 @@ export const createTrackScene = createConversation(async function createTrack(
   while (!settingsDone) {
     const settingsCtx = await conversation.waitForCallbackQuery([
       'settings_bpm',
+      'settings_duration',
       'settings_intensity',
       'settings_negative',
       'settings_skip',
@@ -301,7 +303,7 @@ export const createTrackScene = createConversation(async function createTrack(
       }
       await ctx.reply('⚙️ *Additional Settings*\n\nAnything else?', {
         parse_mode: 'Markdown',
-        reply_markup: additionalSettingsKeyboard(),
+        reply_markup: additionalSettingsKeyboard(isPaidUser),
       });
     } else if (setting === 'settings_intensity') {
       await ctx.reply('🎚️ *Select intensity:*', {
@@ -321,8 +323,40 @@ export const createTrackScene = createConversation(async function createTrack(
       await intensityCtx.answerCallbackQuery().catch(() => {});
       await ctx.reply('⚙️ *Additional Settings*\n\nAnything else?', {
         parse_mode: 'Markdown',
-        reply_markup: additionalSettingsKeyboard(),
+        reply_markup: additionalSettingsKeyboard(isPaidUser),
       });
+    } else if (setting === 'settings_duration') {
+      if (!isPaidUser || session.type === 'clip') {
+        await ctx.reply('⚠️ Duration control only available for Pro/Full Song tracks.');
+      } else {
+        await ctx.reply(
+          '⏱ *Track Duration*\n\n' +
+          'Enter duration in seconds (30-184):\n' +
+          '• 30-60s: 3 credits\n' +
+          '• 61-184s: 5 credits\n\n' +
+          'Or send "auto" for automatic duration:',
+          { parse_mode: 'Markdown' }
+        );
+        const durationCtx = await conversation.waitFor('message:text');
+        const durationText = durationCtx.msg.text.toLowerCase().trim();
+        if (durationText === 'auto') {
+          session.durationSeconds = undefined;
+        } else {
+          const duration = parseInt(durationText, 10);
+          if (isNaN(duration) || duration < 30 || duration > 184) {
+            await ctx.reply('⚠️ Invalid duration. Using auto.');
+            session.durationSeconds = undefined;
+          } else {
+            session.durationSeconds = duration;
+          }
+        }
+      }
+      if (session.type === 'clip' || isPaidUser) {
+        await ctx.reply('⚙️ *Additional Settings*\n\nAnything else?', {
+          parse_mode: 'Markdown',
+          reply_markup: additionalSettingsKeyboard(isPaidUser),
+        });
+      }
     } else if (setting === 'settings_negative') {
       await ctx.reply(
         '🚫 *Negative Prompt*\n\n' +
@@ -338,7 +372,7 @@ export const createTrackScene = createConversation(async function createTrack(
       }
       await ctx.reply('⚙️ *Additional Settings*\n\nAnything else?', {
         parse_mode: 'Markdown',
-        reply_markup: additionalSettingsKeyboard(),
+        reply_markup: additionalSettingsKeyboard(isPaidUser),
       });
     } else if (setting === 'settings_skip') {
       settingsDone = true;
