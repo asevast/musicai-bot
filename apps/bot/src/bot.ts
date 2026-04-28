@@ -28,6 +28,7 @@ import {
 import { deleteAccountCommand, confirmDeleteAccount } from './commands/delete-account.command';
 import { handleInlineQuery } from './inline/tracks.inline';
 import { libraryCommand } from './commands/library.command';
+import { batchCommand, handleBatchPrompt } from './commands/batch.command';
 import { menuCommand } from './commands/menu.command';
 import { fleshCommand } from './commands/flesh.command';
 import { imageToMusicCommand, imageToMusicScene } from './commands/image-to-music.command';
@@ -139,6 +140,7 @@ export function setupBot(bot: Bot<BotContext>) {
   bot.command('flesh', fleshCommand);
   bot.command('image', imageToMusicCommand);
   bot.command('lyrics', lyricsCommand);
+  bot.command('batch', batchCommand);
 
   bot.callbackQuery('main_menu', async (ctx) => {
     await ctx.answerCallbackQuery();
@@ -957,6 +959,13 @@ export function setupBot(bot: Bot<BotContext>) {
   // Lyrics text handler (check before other message handlers)
   bot.on('message:text', async (ctx, next) => {
     const handled = await handleLyricsRequest(ctx);
+    if (handled) return;
+    return next();
+  });
+
+  // Batch prompt handler
+  bot.on('message:text', async (ctx, next) => {
+    const handled = await handleBatchPrompt(ctx);
     if (handled) return;
     return next();
   });

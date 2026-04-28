@@ -1,7 +1,10 @@
 import { InlineKeyboard } from 'grammy';
 
 export const trackTypeKeyboard = (isPaidUser = false) => {
-  const keyboard = new InlineKeyboard().text('✂️ Clip 30s (1 cr)', 'type_clip');
+  const keyboard = new InlineKeyboard()
+    .text('✂️ Clip 30s (1 cr)', 'type_clip')
+    .row()
+    .text('🎲 Three Variants (3 cr)', 'type_batch');
 
   if (!isPaidUser) {
     return keyboard;
