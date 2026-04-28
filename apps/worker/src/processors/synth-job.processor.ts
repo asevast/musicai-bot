@@ -33,6 +33,18 @@ export class SynthJobProcessor {
     const { trackId, userId, lyriaRequest, chatId, messageId } = job.data;
     const startTime = Date.now();
 
+    // SPEC §13.4: Queue depth monitoring and ETA
+    const queueDepth = await this.getQueueDepth();
+    const estimatedWaitSec = this.calculateETA(queueDepth, job.opts?.priority);
+
+    if (queueDepth > 5) {
+      await this.sendNotify({
+        chatId,
+        messageId,
+        text: `⏳ High queue load! Queue depth: ${queueDepth} jobs. Estimated wait: ~${Math.ceil(estimatedWaitSec / 60)} min.`,
+      });
+    }
+
     await this.prismaInstance.track.update({
       where: { id: trackId },
       data: { status: 'processing' },
@@ -47,7 +59,8 @@ export class SynthJobProcessor {
       userId,
       trackId,
       status: 'processing',
-      etaSec: 60,
+      etaSec: estimatedWaitSec,
+      queuePos: queueDepth,
     });
 
     await this.sendNotify({
@@ -212,5 +225,47 @@ export class SynthJobProcessor {
         },
       }),
     ]);
+  }
+
+  /**
+   * Get current queue depth across all synth queues
+   * SPEC §13.4: Queue depth monitoring
+   */
+  private async getQueueDepth(): Promise<number> {
+    try {
+      const redis = this.redisPublisher;
+      const queues = ['synth-clip', 'synth-pro-urgent', 'synth-pro-normal'];
+
+      let total = 0;
+      for (const queueName of queues) {
+        const prioritized = await redis.zcard(`bull:${queueName}:prioritized`);
+        const waiting = await redis.llen(`bull:${queueName}:wait`);
+        const active = await redis.zcard(`bull:${queueName}:active`);
+        total += prioritized + waiting + active;
+      }
+
+      return total;
+    } catch (error) {
+      console.error('[SynthJobProcessor] Failed to get queue depth:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Calculate estimated time until track completion
+   * Based on queue position and average generation time
+   */
+  private calculateETA(queueDepth: number, priority?: number): number {
+    const AVG_PROCESSING_TIME_SEC = 45;
+    const PRIORITY_BASED_DELAY: Record<number | string, number> = {
+      10: 0,   // synth-pro-urgent (paid users)
+      1: 30,   // synth-pro-normal (free users)
+      default: 60,
+    };
+
+    const baseDelay = PRIORITY_BASED_DELAY[priority ?? 'default'] ?? PRIORITY_BASED_DELAY.default;
+    const waitTime = queueDepth * AVG_PROCESSING_TIME_SEC * 0.5 + baseDelay;
+
+    return Math.max(waitTime, 30);
   }
 }

@@ -1,0 +1,83 @@
+name: Deploy Webapp to Cloudflare Pages
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'apps/webapp/**'
+      - '.github/workflows/deploy-webapp.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy to Cloudflare Pages
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build webapp
+        run: pnpm --filter @musicai/webapp build
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_TELEGRAM_BOT_NAME: ${{ vars.VITE_TELEGRAM_BOT_NAME }}
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: ${{ vars.CLOUDFLARE_PAGES_PROJECT }}
+          directory: apps/webapp/dist
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Comment deployment URL
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: comments } = await github.rest.repos.listCommentsForCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha
+            });
+
+            const botComment = comments.find(c => c.user?.login === 'github-actions[bot]');
+
+            const output = `🚀 Webapp deployed to Cloudflare Pages!\n\n- **Project**: ${{ vars.CLOUDFLARE_PAGES_PROJECT }}\n- **Commit**: ${context.sha.slice(0, 7)}`;
+
+            if (botComment) {
+              await github.rest.repos.updateCommitComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: output
+              });
+            } else {
+              await github.rest.repos.createCommitComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                commit_sha: context.sha,
+                body: output
+              });
+            }
