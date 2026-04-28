@@ -30,6 +30,7 @@ import { handleInlineQuery } from './inline/tracks.inline';
 import { libraryCommand } from './commands/library.command';
 import { batchCommand, handleBatchPrompt } from './commands/batch.command';
 import { menuCommand } from './commands/menu.command';
+import { i18nMiddleware, languageCommand, handleLocaleCallback } from './middleware/i18n.middleware';
 import { fleshCommand } from './commands/flesh.command';
 import { imageToMusicCommand, imageToMusicScene } from './commands/image-to-music.command';
 import { buildPaymentInvoice, handleSuccessfulPayment } from './payments/stars.handler';
@@ -80,6 +81,9 @@ export function setupBot(bot: Bot<BotContext>) {
 
   // Rate limiting middleware (SPEC-compliant)
   bot.use(commandRateLimiter.middleware());
+
+  // i18n middleware - adds translation helpers to context
+  bot.use(i18nMiddleware());
 
   bot.use(async (ctx, next) => {
     console.log('Middleware: User update received', ctx.from?.id, ctx.message?.text);
@@ -141,6 +145,7 @@ export function setupBot(bot: Bot<BotContext>) {
   bot.command('image', imageToMusicCommand);
   bot.command('lyrics', lyricsCommand);
   bot.command('batch', batchCommand);
+  bot.command('language', languageCommand);
 
   bot.callbackQuery('main_menu', async (ctx) => {
     await ctx.answerCallbackQuery();
@@ -968,6 +973,12 @@ export function setupBot(bot: Bot<BotContext>) {
     const handled = await handleBatchPrompt(ctx);
     if (handled) return;
     return next();
+  });
+
+  // Language callback handlers
+  bot.callbackQuery(/^set_locale_/, async (ctx) => {
+    const locale = ctx.callbackQuery.data.replace('set_locale_', '');
+    await handleLocaleCallback(ctx, locale);
   });
 }
 
