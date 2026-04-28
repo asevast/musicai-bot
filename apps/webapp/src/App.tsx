@@ -11,6 +11,7 @@ import { Library } from './pages/Library';
 import { Profile } from './pages/Profile';
 import { BuyCredits } from './pages/BuyCredits';
 import { Track } from './pages/Track';
+import { Settings } from './pages/Settings';
 import { BottomNav } from './components/BottomNav';
 
 type Platform = 'ios' | 'base';
@@ -43,7 +44,8 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/buy" element={<BuyCredits />} />
             <Route path="/track/:id" element={<Track />} />
-          </Routes>
+            <Route path="/settings" element={<Settings />} />
+        </Routes>
         </div>
         <BottomNav />
       </BrowserRouter>
