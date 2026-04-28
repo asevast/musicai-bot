@@ -4,11 +4,12 @@ import { TracksController } from './tracks.controller';
 import { TracksService } from './tracks.service';
 import { TracksGateway } from './tracks.gateway';
 import { loadEnv } from '@musicai/config';
+import { ContentModule } from '../content/content.module';
 
 const env = loadEnv();
 
 @Module({
-  imports: [CreditsModule],
+  imports: [CreditsModule, ContentModule],
   controllers: [TracksController],
   providers: [
     TracksService,
