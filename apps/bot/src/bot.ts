@@ -100,6 +100,24 @@ export function setupBot(bot: Bot<BotContext>) {
       });
     }
 
+    // Fetch full user data including referredById
+    user = await prisma.user.findUnique({
+      where: { telegramId },
+      select: {
+        id: true,
+        telegramId: true,
+        username: true,
+        firstName: true,
+        credits: true,
+        subscriptionTier: true,
+        subscriptionExpiresAt: true,
+        defaultSettings: true,
+        referredById: true,
+      },
+    });
+
+    if (!user) return next();
+
     ctx.user = user;
     console.log('Middleware: User loaded', user.id);
     return next();
@@ -955,6 +973,7 @@ declare module 'grammy' {
       subscriptionTier: string;
       subscriptionExpiresAt?: Date | null;
       defaultSettings?: unknown;
+      referredById?: string | null;
     };
   }
 }
