@@ -10,13 +10,17 @@ import { prisma, type Track } from '@musicai/database';
 import { SynthJobProducer } from '@musicai/queues';
 import type { CreateTrackDto, SubscriptionTier } from '@musicai/shared-types';
 import { CreditsService } from '../credits/credits.service';
+import { ContentFilterService } from '../content/content-filter.service';
 
 @Injectable()
 export class TracksService {
   private synthJobProducer = new SynthJobProducer();
   private readonly env = loadEnv();
 
-  constructor(private readonly creditsService: CreditsService) {}
+  constructor(
+    @Inject(CreditsService) private readonly creditsService: CreditsService,
+    @Inject(ContentFilterService) private readonly contentFilter: ContentFilterService
+  ) {}
 
   async getPublicTracks(limit = 20, offset = 0): Promise<Track[]> {
     return prisma.track.findMany({
@@ -37,6 +41,14 @@ export class TracksService {
 
   async createTrack(telegramId: string, dto: CreateTrackDto): Promise<Track> {
     this.validateDto(dto);
+    // SPEC §11.4: Content filter check
+    const filterResult = await this.contentFilter.checkPrompt(dto.prompt);
+    if (!filterResult.allowed) {
+      throw new BadRequestException(
+        `Content filter: ${filterResult.reason}`
+      );
+    }
+
 
     let user = await prisma.user.findUniqueOrThrow({
       where: { telegramId: Number(telegramId) },
