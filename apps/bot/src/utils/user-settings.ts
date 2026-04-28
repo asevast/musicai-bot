@@ -9,7 +9,7 @@ export interface UserSettings {
   model?: LyriaModel;
 }
 
-const VALID_LANGUAGES = new Set(['en', 'de', 'es', 'fr', 'hi', 'ja', 'ko', 'pt']);
+const VALID_LANGUAGES = new Set(['ru', 'en', 'de', 'es', 'fr', 'hi', 'ja', 'ko', 'pt']);
 const VALID_INTENSITIES = new Set(['low', 'medium', 'high', 'epic']);
 const VALID_NOTIFICATIONS = new Set(['all', 'important', 'off']);
 const VALID_MODELS = new Set(['lyria-3-pro-preview', 'lyria-3-clip-preview']);
@@ -43,6 +43,7 @@ export function parseUserSettings(value: unknown): UserSettings {
 
 export function formatLanguage(value?: string): string {
   const labels: Record<string, string> = {
+    ru: 'Russian',
     en: 'English',
     de: 'German',
     es: 'Spanish',

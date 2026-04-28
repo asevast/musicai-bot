@@ -12,6 +12,7 @@ const typeLabels: Record<TrackType, string> = {
   full_song: 'Full Song',
   clip: 'Clip',
   instrumental: 'Instrumental',
+  variants: 'Variants',
 };
 
 const statusColors: Record<Track['status'], string> = {

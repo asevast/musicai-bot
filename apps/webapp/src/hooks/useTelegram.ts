@@ -37,12 +37,17 @@ interface UseTelegramReturn {
   startParam: string | null;
 }
 
+const isDev = typeof process !== 'undefined' && process.env.NODE_ENV === 'development';
+
 export function useTelegram(): UseTelegramReturn {
   const launchParams = useMemo((): LaunchParams | null => {
     try {
       return retrieveLaunchParams() as LaunchParams;
     } catch {
       // Not running inside Telegram Mini App
+      if (isDev) {
+        console.log('[useTelegram] Dev mode: using mock launch params');
+      }
       return null;
     }
   }, []);

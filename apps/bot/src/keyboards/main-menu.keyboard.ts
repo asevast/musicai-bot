@@ -57,14 +57,15 @@ export const settingsMenuKeyboard = () =>
 
 export const settingsLanguageKeyboard = (current?: string) =>
   new InlineKeyboard()
+    .text(`${current === 'ru' ? '✓ ' : ''}RU`, 'set_language_ru')
     .text(`${current === 'en' ? '✓ ' : ''}EN`, 'set_language_en')
     .text(`${current === 'de' ? '✓ ' : ''}DE`, 'set_language_de')
-    .text(`${current === 'es' ? '✓ ' : ''}ES`, 'set_language_es')
     .row()
+    .text(`${current === 'es' ? '✓ ' : ''}ES`, 'set_language_es')
     .text(`${current === 'fr' ? '✓ ' : ''}FR`, 'set_language_fr')
     .text(`${current === 'ja' ? '✓ ' : ''}JA`, 'set_language_ja')
-    .text(`${current === 'ko' ? '✓ ' : ''}KO`, 'set_language_ko')
     .row()
+    .text(`${current === 'ko' ? '✓ ' : ''}KO`, 'set_language_ko')
     .text(`${current === 'hi' ? '✓ ' : ''}HI`, 'set_language_hi')
     .text(`${current === 'pt' ? '✓ ' : ''}PT`, 'set_language_pt')
     .row()

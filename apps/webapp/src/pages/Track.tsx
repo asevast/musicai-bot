@@ -26,6 +26,7 @@ const typeLabels: Record<TrackType, string> = {
   full_song: 'Full Song',
   clip: 'Clip',
   instrumental: 'Instrumental',
+  variants: 'Variants',
 };
 
 const statusModeMap: Record<TrackStatus, 'primary' | 'critical' | 'gray' | 'secondary'> = {

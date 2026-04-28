@@ -9,6 +9,7 @@ const TRACK_TYPES: { value: TrackType; label: string }[] = [
 ];
 
 const LANGUAGES: { value: string; label: string }[] = [
+  { value: 'ru', label: 'Russian' },
   { value: 'en', label: 'English' },
   { value: 'de', label: 'German' },
   { value: 'es', label: 'Spanish' },
@@ -43,7 +44,7 @@ interface PromptFormProps {
 export function PromptForm({ onSubmit, isSubmitting }: PromptFormProps): React.ReactElement {
   const [prompt, setPrompt] = useState('');
   const [type, setType] = useState<TrackType>('full_song');
-  const [language, setLanguage] = useState('en');
+  const [language, setLanguage] = useState('ru');
   const [lyrics, setLyrics] = useState('');
   const [bpm, setBpm] = useState(120);
   const [intensity, setIntensity] = useState<Intensity>('medium');

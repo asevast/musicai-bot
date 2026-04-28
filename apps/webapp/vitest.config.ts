@@ -13,10 +13,11 @@ export default defineConfig({
         },
       },
     },
-    resolve: {
-      alias: {
-        '@': resolve(__dirname, './src'),
-      },
+  },
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, './src'),
     },
+    dedupe: ['react', 'react-dom', 'react-router'],
   },
 });
