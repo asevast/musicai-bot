@@ -55,7 +55,8 @@ function buildLibraryMessage(result: LibraryPageResult, page: number): string {
   let message = '📚 *Community Library*\n\n';
 
   if (result.tracks.length === 0) {
-    message += 'No public tracks yet. Be the first to share your creation!\n\nUse /create to generate a track and add it to the library.';
+    message +=
+      'No public tracks yet. Be the first to share your creation!\n\nUse /create to generate a track and add it to the library.';
     return message;
   }
 
@@ -76,10 +77,7 @@ function buildLibraryMessage(result: LibraryPageResult, page: number): string {
 /**
  * Build library keyboard with pagination
  */
-function buildLibraryKeyboard(
-  page: number,
-  result: LibraryPageResult
-): InlineKeyboard {
+function buildLibraryKeyboard(page: number, result: LibraryPageResult): InlineKeyboard {
   const keyboard = new InlineKeyboard();
 
   // Add play buttons for each track
@@ -113,10 +111,7 @@ function buildLibraryKeyboard(
  * Show library page
  * SPEC §6.1: Paginated library with audio playback
  */
-export async function showLibraryPage(
-  ctx: Context,
-  page: number
-): Promise<void> {
+export async function showLibraryPage(ctx: Context, page: number): Promise<void> {
   const result = await getLibraryPage(page);
 
   const message = buildLibraryMessage(result, page);

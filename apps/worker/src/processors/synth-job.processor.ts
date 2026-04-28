@@ -258,8 +258,8 @@ export class SynthJobProcessor {
   private calculateETA(queueDepth: number, priority?: number): number {
     const AVG_PROCESSING_TIME_SEC = 45;
     const PRIORITY_BASED_DELAY: Record<number | string, number> = {
-      10: 0,   // synth-pro-urgent (paid users)
-      1: 30,   // synth-pro-normal (free users)
+      10: 0, // synth-pro-urgent (paid users)
+      1: 30, // synth-pro-normal (free users)
       default: 60,
     };
 

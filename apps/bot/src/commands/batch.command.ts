@@ -18,9 +18,9 @@ export const batchCommand = async (ctx: Context) => {
   if (user.credits < 3) {
     return ctx.reply(
       `❌ Not enough credits!\n\n` +
-      `Batch generation requires 3 credits (3 clips × 1 credit).\n` +
-      `You have: ${user.credits} credits\n\n` +
-      `Use /buy to purchase more credits.`
+        `Batch generation requires 3 credits (3 clips × 1 credit).\n` +
+        `You have: ${user.credits} credits\n\n` +
+        `Use /buy to purchase more credits.`
     );
   }
 
@@ -34,13 +34,14 @@ export const batchCommand = async (ctx: Context) => {
     },
   });
 
-  const dailyLimit = user.subscriptionTier === 'free' ? 3 : user.subscriptionTier === 'pro' ? 20 : 50;
+  const dailyLimit =
+    user.subscriptionTier === 'free' ? 3 : user.subscriptionTier === 'pro' ? 20 : 50;
   if (createdToday + 3 > dailyLimit) {
     return ctx.reply(
       `❌ Daily limit would be exceeded!\n\n` +
-      `Track limit for ${user.subscriptionTier} tier: ${dailyLimit}/day\n` +
-      `Already created today: ${createdToday}\n` +
-      `Batch generation creates 3 tracks.`
+        `Track limit for ${user.subscriptionTier} tier: ${dailyLimit}/day\n` +
+        `Already created today: ${createdToday}\n` +
+        `Batch generation creates 3 tracks.`
     );
   }
 
@@ -50,11 +51,11 @@ export const batchCommand = async (ctx: Context) => {
 
   await ctx.reply(
     `🎲 *Batch Clip Generation*\n\n` +
-    `I'll create *3 different variants* of a 30-second clip based on your prompt.\n` +
-    `Cost: *3 credits* (3 × 1 credit per clip)\n\n` +
-    `📝 *Describe your track:*\n\n` +
-    `Genre, mood, instruments, atmosphere...\n\n` +
-    `*Example:* Lo-fi hip hop, soft piano, vinyl crackle, 75 BPM, study mood`,
+      `I'll create *3 different variants* of a 30-second clip based on your prompt.\n` +
+      `Cost: *3 credits* (3 × 1 credit per clip)\n\n` +
+      `📝 *Describe your track:*\n\n` +
+      `Genre, mood, instruments, atmosphere...\n\n` +
+      `*Example:* Lo-fi hip hop, soft piano, vinyl crackle, 75 BPM, study mood`,
     { parse_mode: 'Markdown' }
   );
 };
@@ -83,8 +84,7 @@ export const handleBatchPrompt = async (ctx: Context): Promise<boolean> => {
 
   const batchGroupId = randomUUID().slice(0, 8);
   const statusMsg = await ctx.reply(
-    `🎲 Creating batch *${batchGroupId}*...\n\n` +
-    `Patience you must have, young padawan...`
+    `🎲 Creating batch *${batchGroupId}*...\n\n` + `Patience you must have, young padawan...`
   );
 
   // Create 3 tracks
@@ -113,7 +113,7 @@ export const handleBatchPrompt = async (ctx: Context): Promise<boolean> => {
       });
 
       if (response.ok) {
-        const track = await response.json() as { id: string };
+        const track = (await response.json()) as { id: string };
         trackIds.push(track.id);
       } else {
         errors.push(`Variant ${i}: ${await response.text()}`);
@@ -124,17 +124,15 @@ export const handleBatchPrompt = async (ctx: Context): Promise<boolean> => {
   }
 
   if (trackIds.length === 0) {
-    await ctx.reply(
-      `❌ Failed to create any variants:\n${errors.join('\n')}`
-    );
+    await ctx.reply(`❌ Failed to create any variants:\n${errors.join('\n')}`);
     return true;
   }
 
   await ctx.reply(
     `✅ *Batch ${batchGroupId} started!*\n\n` +
-    `Created ${trackIds.length}/3 variants.\n` +
-    `Track IDs: ${trackIds.map(id => '`' + id.slice(0, 8) + '...`').join(', ')}\n\n` +
-    `You will be notified when all tracks are ready.`,
+      `Created ${trackIds.length}/3 variants.\n` +
+      `Track IDs: ${trackIds.map((id) => '`' + id.slice(0, 8) + '...`').join(', ')}\n\n` +
+      `You will be notified when all tracks are ready.`,
     { parse_mode: 'Markdown' }
   );
 

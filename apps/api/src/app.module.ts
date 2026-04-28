@@ -11,7 +11,14 @@ import {
 } from './middleware/rate-limit.middleware';
 
 @Module({
-  imports: [TracksModule, UsersModule, CreditsModule, PaymentsModule, SubscriptionsModule, ContentModule],
+  imports: [
+    TracksModule,
+    UsersModule,
+    CreditsModule,
+    PaymentsModule,
+    SubscriptionsModule,
+    ContentModule,
+  ],
   providers: [GenerateRateLimitMiddleware, CommandRateLimitMiddleware],
   exports: [GenerateRateLimitMiddleware, CommandRateLimitMiddleware],
 })

@@ -44,11 +44,8 @@ export class TracksService {
     // SPEC §11.4: Content filter check
     const filterResult = await this.contentFilter.checkPrompt(dto.prompt);
     if (!filterResult.allowed) {
-      throw new BadRequestException(
-        `Content filter: ${filterResult.reason}`
-      );
+      throw new BadRequestException(`Content filter: ${filterResult.reason}`);
     }
-
 
     let user = await prisma.user.findUniqueOrThrow({
       where: { telegramId: Number(telegramId) },

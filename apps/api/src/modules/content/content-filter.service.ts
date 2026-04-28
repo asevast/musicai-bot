@@ -143,9 +143,7 @@ export class ContentFilterService {
 
     if (criticalOrHigh.length > 0) {
       const reasons = criticalOrHigh.map((v) => `${v.category} (${v.severity})`).join(', ');
-      this.logger.warn(
-        `Prompt blocked: ${prompt.slice(0, 50)} - Violations: ${reasons}`
-      );
+      this.logger.warn(`Prompt blocked: ${prompt.slice(0, 50)} - Violations: ${reasons}`);
       return {
         allowed: false,
         reason: criticalOrHigh[0].message,
@@ -156,9 +154,7 @@ export class ContentFilterService {
     // Log medium/low violations but allow
     if (violations.length > 0) {
       const reasons = violations.map((v) => `${v.category} (${v.severity})`).join(', ');
-      this.logger.log(
-        `Prompt flagged but allowed: ${prompt.slice(0, 50)} - Flags: ${reasons}`
-      );
+      this.logger.log(`Prompt flagged but allowed: ${prompt.slice(0, 50)} - Flags: ${reasons}`);
     }
 
     return { allowed: true };

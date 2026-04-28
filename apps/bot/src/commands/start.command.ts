@@ -49,8 +49,7 @@ export const startCommand = async (ctx: Context) => {
         await ctx.reply(
           `🎁 *Welcome Bonus!*
 
-` +
-          `You received +${REFERRAL_BONUS_CREDITS} bonus credits for joining via a referral link!`,
+` + `You received +${REFERRAL_BONUS_CREDITS} bonus credits for joining via a referral link!`,
           { parse_mode: 'Markdown' }
         );
       }

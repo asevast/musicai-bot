@@ -18,7 +18,8 @@ function Root() {
         console.log('[Debug] Starting SDK init...');
 
         // Check if we're in Telegram WebApp
-        const tgWebApp = (window as unknown as { Telegram?: { WebApp?: unknown } }).Telegram?.WebApp;
+        const tgWebApp = (window as unknown as { Telegram?: { WebApp?: unknown } }).Telegram
+          ?.WebApp;
         setIsTelegramEnv(!!tgWebApp);
 
         // Initialize Telegram Mini App SDK

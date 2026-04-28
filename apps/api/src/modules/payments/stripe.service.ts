@@ -3,7 +3,14 @@ import { loadEnv } from '@musicai/config';
 
 interface StripePaymentIntent {
   id: string;
-  status: 'requires_payment_method' | 'requires_confirmation' | 'requires_action' | 'processing' | 'requires_capture' | 'canceled' | 'succeeded';
+  status:
+    | 'requires_payment_method'
+    | 'requires_confirmation'
+    | 'requires_action'
+    | 'processing'
+    | 'requires_capture'
+    | 'canceled'
+    | 'succeeded';
   amount: number;
   currency: string;
   client_secret?: string;
@@ -40,7 +47,11 @@ export class StripeService {
     }
   }
 
-  private async request<T>(method: string, path: string, body?: Record<string, unknown>): Promise<T> {
+  private async request<T>(
+    method: string,
+    path: string,
+    body?: Record<string, unknown>
+  ): Promise<T> {
     const url = `${this.baseUrl}${path}`;
     const headers: Record<string, string> = {
       Authorization: `Bearer ${this.secretKey}`,
@@ -193,7 +204,10 @@ export class StripeService {
   /**
    * Construct webhook event and verify signature
    */
-  constructWebhookEvent(payload: string, signature: string): {
+  constructWebhookEvent(
+    payload: string,
+    signature: string
+  ): {
     type: string;
     data: { object: Record<string, unknown> };
   } | null {
@@ -246,7 +260,12 @@ export class StripeService {
       const packageId = session.metadata?.packageId;
 
       if (userId && packageId) {
-        return { success: true, userId, packageId, paymentId: session.payment_intent || session.id };
+        return {
+          success: true,
+          userId,
+          packageId,
+          paymentId: session.payment_intent || session.id,
+        };
       }
 
       this.logger.error(`Missing metadata in webhook for ${session.id}`);

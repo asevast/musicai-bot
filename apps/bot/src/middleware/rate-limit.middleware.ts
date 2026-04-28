@@ -69,9 +69,7 @@ export class BotRateLimiter {
 
       if (result.limited) {
         const seconds = Math.ceil(result.resetIn / 1000);
-        await ctx.reply(
-          `⏳ Rate limit exceeded. Please wait ${seconds}s before trying again.`,
-        );
+        await ctx.reply(`⏳ Rate limit exceeded. Please wait ${seconds}s before trying again.`);
         return;
       }
 

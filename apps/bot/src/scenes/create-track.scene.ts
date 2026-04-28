@@ -331,10 +331,10 @@ export const createTrackScene = createConversation(async function createTrack(
       } else {
         await ctx.reply(
           '⏱ *Track Duration*\n\n' +
-          'Enter duration in seconds (30-184):\n' +
-          '• 30-60s: 3 credits\n' +
-          '• 61-184s: 5 credits\n\n' +
-          'Or send "auto" for automatic duration:',
+            'Enter duration in seconds (30-184):\n' +
+            '• 30-60s: 3 credits\n' +
+            '• 61-184s: 5 credits\n\n' +
+            'Or send "auto" for automatic duration:',
           { parse_mode: 'Markdown' }
         );
         const durationCtx = await conversation.waitFor('message:text');
@@ -360,9 +360,9 @@ export const createTrackScene = createConversation(async function createTrack(
     } else if (setting === 'settings_negative') {
       await ctx.reply(
         '🚫 *Negative Prompt*\n\n' +
-        'What should the AI avoid in the generation?\n' +
-        'For example: "drums, loud noise, screaming, distortion"\n\n' +
-        'Send your negative prompt or type /skip:',
+          'What should the AI avoid in the generation?\n' +
+          'For example: "drums, loud noise, screaming, distortion"\n\n' +
+          'Send your negative prompt or type /skip:',
         { parse_mode: 'Markdown' }
       );
       const negativeCtx = await conversation.waitFor('message:text');

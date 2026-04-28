@@ -63,8 +63,7 @@ export class SubscriptionsService {
       return true;
     }
 
-    const daysSinceRefresh =
-      (Date.now() - lastRefresh.getTime()) / (24 * 60 * 60 * 1000);
+    const daysSinceRefresh = (Date.now() - lastRefresh.getTime()) / (24 * 60 * 60 * 1000);
     return daysSinceRefresh >= 30;
   }
 

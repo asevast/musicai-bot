@@ -10,15 +10,17 @@ vi.mock('@musicai/database', () => ({
     creditTransaction: {
       create: vi.fn(),
     },
-    $transaction: vi.fn((fn) => fn({
-      user: {
-        findUnique: vi.fn(),
-        update: vi.fn(),
-      },
-      creditTransaction: {
-        create: vi.fn(),
-      },
-    })),
+    $transaction: vi.fn((fn) =>
+      fn({
+        user: {
+          findUnique: vi.fn(),
+          update: vi.fn(),
+        },
+        creditTransaction: {
+          create: vi.fn(),
+        },
+      })
+    ),
   },
 }));
 

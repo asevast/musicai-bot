@@ -125,9 +125,7 @@ export class PaymentsService {
       paymentId
     );
 
-    console.log(
-      `[Referral] Awarded ${bonusCredits} credits to referrer ${user.referredById}`
-    );
+    console.log(`[Referral] Awarded ${bonusCredits} credits to referrer ${user.referredById}`);
   }
 
   async handleTelegramStarsPayment(

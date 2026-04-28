@@ -28,10 +28,12 @@ export class PaymentsWebhookController {
     @Res() res: Response
   ) {
     try {
-      const result = await this.yukassaService.processWebhook(body as {
-        event: string;
-        object: { id: string; status: string; metadata?: Record<string, string> };
-      });
+      const result = await this.yukassaService.processWebhook(
+        body as {
+          event: string;
+          object: { id: string; status: string; metadata?: Record<string, string> };
+        }
+      );
 
       if (result.success && result.userId && result.packageId && result.paymentId) {
         // Process successful payment

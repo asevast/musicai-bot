@@ -45,8 +45,8 @@ export async function languageCommand(ctx: BotContext): Promise<void> {
 
   await ctx.reply(
     '🌐 *Select Language / Выбор Языка*\n\n' +
-    'Choose your preferred language:\n' +
-    'Выберите предпочитаемый язык:',
+      'Choose your preferred language:\n' +
+      'Выберите предпочитаемый язык:',
     { parse_mode: 'Markdown', reply_markup: keyboard }
   );
 }

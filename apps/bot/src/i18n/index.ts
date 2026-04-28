@@ -74,7 +74,11 @@ export function t(
  * Translation helper bound to context
  * Usage: ctx.t('key', { param: 'value' })
  */
-export function translate(ctx: Context, key: string, params?: Record<string, string | number>): string {
+export function translate(
+  ctx: Context,
+  key: string,
+  params?: Record<string, string | number>
+): string {
   const locale = getLocale(ctx);
   return t(locale, key, params);
 }

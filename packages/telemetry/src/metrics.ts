@@ -1,4 +1,11 @@
-import { metrics, Meter, Counter, Histogram, UpDownCounter, ObservableGauge } from '@opentelemetry/api';
+import {
+  metrics,
+  Meter,
+  Counter,
+  Histogram,
+  UpDownCounter,
+  ObservableGauge,
+} from '@opentelemetry/api';
 
 // Global meter instance
 let meter: Meter;
@@ -73,7 +80,10 @@ export function initializeMetrics(serviceName: string) {
 
 // Helper functions for recording metrics
 
-export function recordSynthJobDuration(durationMs: number, attributes: { model: string; status: string }) {
+export function recordSynthJobDuration(
+  durationMs: number,
+  attributes: { model: string; status: string }
+) {
   synthJobDurationMs?.record(durationMs, attributes);
 }
 
@@ -100,4 +110,10 @@ export function setActiveUsersDailyCallback(callback: () => number) {
 }
 
 // Export instruments for direct use if needed
-export { meter, synthJobDurationMs, vertexApiErrorsTotal, creditsSpentTotal, telegramMessagesTotal };
+export {
+  meter,
+  synthJobDurationMs,
+  vertexApiErrorsTotal,
+  creditsSpentTotal,
+  telegramMessagesTotal,
+};

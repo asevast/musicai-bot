@@ -123,11 +123,7 @@ export function Settings() {
     <div className="p-4">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
-        <Avatar
-          src={user?.photoUrl}
-          fallback={user?.firstName?.[0] || 'U'}
-          size={64}
-        />
+        <Avatar src={user?.photoUrl} fallback={user?.firstName?.[0] || 'U'} size={64} />
         <div>
           <Text weight="1" size="6">
             {user?.firstName} {user?.lastName}
@@ -220,28 +216,17 @@ export function Settings() {
       </Section>
 
       {/* Delete Confirmation Modal */}
-      <Modal
-        header="Delete Account?"
-        open={showDeleteModal}
-        onOpenChange={setShowDeleteModal}
-      >
+      <Modal header="Delete Account?" open={showDeleteModal} onOpenChange={setShowDeleteModal}>
         <div className="p-4">
           <Text className="mb-4">
-            This action cannot be undone. All your tracks, credits, and data will be permanently deleted.
+            This action cannot be undone. All your tracks, credits, and data will be permanently
+            deleted.
           </Text>
           <div className="flex gap-2 mt-4">
-            <Button
-              mode="bezeled"
-              stretched
-              onClick={() => setShowDeleteModal(false)}
-            >
+            <Button mode="bezeled" stretched onClick={() => setShowDeleteModal(false)}>
               Cancel
             </Button>
-            <Button
-              mode="destructive"
-              stretched
-              onClick={handleDeleteAccount}
-            >
+            <Button mode="destructive" stretched onClick={handleDeleteAccount}>
               Delete
             </Button>
           </div>
@@ -249,12 +234,7 @@ export function Settings() {
       </Modal>
 
       {/* Snackbar */}
-      {snackbar && (
-        <Snackbar
-          onClose={() => setSnackbar(null)}
-          description={snackbar.message}
-        />
-      )}
+      {snackbar && <Snackbar onClose={() => setSnackbar(null)} description={snackbar.message} />}
     </div>
   );
 }

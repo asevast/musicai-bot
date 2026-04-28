@@ -30,7 +30,11 @@ import { handleInlineQuery } from './inline/tracks.inline';
 import { libraryCommand, setupLibraryHandlers } from './commands/library.command';
 import { batchCommand, handleBatchPrompt } from './commands/batch.command';
 import { menuCommand } from './commands/menu.command';
-import { i18nMiddleware, languageCommand, handleLocaleCallback } from './middleware/i18n.middleware';
+import {
+  i18nMiddleware,
+  languageCommand,
+  handleLocaleCallback,
+} from './middleware/i18n.middleware';
 import { fleshCommand } from './commands/flesh.command';
 import { imageToMusicCommand, imageToMusicScene } from './commands/image-to-music.command';
 import { buildPaymentInvoice, handleSuccessfulPayment } from './payments/stars.handler';
