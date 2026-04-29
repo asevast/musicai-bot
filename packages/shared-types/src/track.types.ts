@@ -17,6 +17,7 @@ export interface CreateTrackDto {
   model: LyriaModel;
   type: TrackType;
   prompt: string;
+  negativePrompt?: string;
   lyrics?: string;
   promptRewriter?: boolean;
   bpm?: number;

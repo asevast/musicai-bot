@@ -11,6 +11,7 @@ import { Library } from './pages/Library';
 import { Profile } from './pages/Profile';
 import { BuyCredits } from './pages/BuyCredits';
 import { Track } from './pages/Track';
+import { Settings } from './pages/Settings';
 import { BottomNav } from './components/BottomNav';
 
 type Platform = 'ios' | 'base';
@@ -18,7 +19,8 @@ type Platform = 'ios' | 'base';
 function usePlatform(): Platform {
   return useMemo(() => {
     if (typeof window === 'undefined') return 'base';
-    const tg = (window as unknown as { Telegram?: { WebApp?: { platform?: string } } }).Telegram?.WebApp;
+    const tg = (window as unknown as { Telegram?: { WebApp?: { platform?: string } } }).Telegram
+      ?.WebApp;
     const platform = tg?.platform?.toLowerCase() ?? '';
     // Telegram platform can be: ios, android, macos, tdesktop, web, etc.
     // We treat ios as iOS style, everything else as base style
@@ -43,6 +45,7 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/buy" element={<BuyCredits />} />
             <Route path="/track/:id" element={<Track />} />
+            <Route path="/settings" element={<Settings />} />
           </Routes>
         </div>
         <BottomNav />

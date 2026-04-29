@@ -27,7 +27,7 @@ const initialState: WizardState = {
   prompt: '',
   intensity: 'medium',
   duration: 120,
-  language: 'RU',
+  language: 'ru',
   customLyrics: '',
 };
 

@@ -1,0 +1,14 @@
+# Copy this file to terraform.tfvars and fill in your values
+
+project_id = "your-gcp-project-id"
+region     = "us-central1"
+environment = "dev"
+
+# Optional - defaults will be used if not specified
+db_tier     = "db-f1-micro"  # Upgrade to "db-g1-small" for production
+redis_tier  = "BASIC"          # Use "STANDARD_HA" for production
+
+# GitHub integration for Cloud Build (optional)
+github_owner  = "your-github-username"
+github_repo   = "your-repo-name"
+github_branch = "main"

@@ -27,11 +27,22 @@ import {
 } from './commands/lyrics.command';
 import { deleteAccountCommand, confirmDeleteAccount } from './commands/delete-account.command';
 import { handleInlineQuery } from './inline/tracks.inline';
-import { libraryCommand } from './commands/library.command';
+import { libraryCommand, setupLibraryHandlers } from './commands/library.command';
+import { batchCommand, handleBatchPrompt } from './commands/batch.command';
 import { menuCommand } from './commands/menu.command';
+import {
+  i18nMiddleware,
+  languageCommand,
+  handleLocaleCallback,
+} from './middleware/i18n.middleware';
 import { fleshCommand } from './commands/flesh.command';
 import { imageToMusicCommand, imageToMusicScene } from './commands/image-to-music.command';
 import { buildPaymentInvoice, handleSuccessfulPayment } from './payments/stars.handler';
+import {
+  generateRateLimiter,
+  commandRateLimiter,
+  uploadRateLimiter,
+} from './middleware/rate-limit.middleware';
 import {
   mainMenuKeyboard,
   historyMenuKeyboard,
@@ -72,6 +83,12 @@ export function setupBot(bot: Bot<BotContext>) {
 
   bot.use(conversations());
 
+  // Rate limiting middleware (SPEC-compliant)
+  bot.use(commandRateLimiter.middleware());
+
+  // i18n middleware - adds translation helpers to context
+  bot.use(i18nMiddleware());
+
   bot.use(async (ctx, next) => {
     console.log('Middleware: User update received', ctx.from?.id, ctx.message?.text);
     const telegramId = BigInt(ctx.from?.id ?? 0);
@@ -91,6 +108,24 @@ export function setupBot(bot: Bot<BotContext>) {
         },
       });
     }
+
+    // Fetch full user data including referredById
+    user = await prisma.user.findUnique({
+      where: { telegramId },
+      select: {
+        id: true,
+        telegramId: true,
+        username: true,
+        firstName: true,
+        credits: true,
+        subscriptionTier: true,
+        subscriptionExpiresAt: true,
+        defaultSettings: true,
+        referredById: true,
+      },
+    });
+
+    if (!user) return next();
 
     ctx.user = user;
     console.log('Middleware: User loaded', user.id);
@@ -113,6 +148,8 @@ export function setupBot(bot: Bot<BotContext>) {
   bot.command('flesh', fleshCommand);
   bot.command('image', imageToMusicCommand);
   bot.command('lyrics', lyricsCommand);
+  bot.command('batch', batchCommand);
+  bot.command('language', languageCommand);
 
   bot.callbackQuery('main_menu', async (ctx) => {
     await ctx.answerCallbackQuery();
@@ -934,6 +971,22 @@ export function setupBot(bot: Bot<BotContext>) {
     if (handled) return;
     return next();
   });
+
+  // Batch prompt handler
+  bot.on('message:text', async (ctx, next) => {
+    const handled = await handleBatchPrompt(ctx);
+    if (handled) return;
+    return next();
+  });
+
+  // Language callback handlers
+  bot.callbackQuery(/^set_locale_/, async (ctx) => {
+    const locale = ctx.callbackQuery.data.replace('set_locale_', '');
+    await handleLocaleCallback(ctx, locale);
+  });
+
+  // Library handlers
+  setupLibraryHandlers(bot);
 }
 
 declare module 'grammy' {
@@ -947,6 +1000,7 @@ declare module 'grammy' {
       subscriptionTier: string;
       subscriptionExpiresAt?: Date | null;
       defaultSettings?: unknown;
+      referredById?: string | null;
     };
   }
 }

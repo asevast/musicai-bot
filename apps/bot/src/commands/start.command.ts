@@ -1,11 +1,59 @@
 import { Context } from 'grammy';
 import { loadEnv } from '@musicai/config';
+import { prisma } from '@musicai/database';
 import { mainMenuKeyboard } from '../keyboards/main-menu.keyboard';
+
+const REFERRAL_BONUS_CREDITS = 5;
 
 export const startCommand = async (ctx: Context) => {
   const user = ctx.user;
   if (!user) {
     return ctx.reply('Error: User not found');
+  }
+
+  // Parse deep link referral parameter: /start ref=<userId>
+  const startPayload = ctx.message?.text?.split(' ')[1];
+  if (startPayload && startPayload.startsWith('ref=')) {
+    const referrerId = startPayload.replace('ref=', '');
+
+    // Validate referrer exists and is not the same user
+    if (referrerId !== user.id) {
+      const referrer = await prisma.user.findUnique({
+        where: { id: referrerId },
+      });
+
+      if (referrer && !user.referredById) {
+        // Set referral relationship
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { referredById: referrerId },
+        });
+
+        // Award bonus credits to invitee (new user)
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { credits: { increment: REFERRAL_BONUS_CREDITS } },
+        });
+
+        // Create transaction record for bonus
+        await prisma.creditTransaction.create({
+          data: {
+            userId: user.id,
+            amount: REFERRAL_BONUS_CREDITS,
+            type: 'bonus',
+            description: `Referral bonus for using invite link from ${referrer.username || referrer.firstName || 'user'}`,
+          },
+        });
+
+        // Notify new user about bonus
+        await ctx.reply(
+          `🎁 *Welcome Bonus!*
+
+` + `You received +${REFERRAL_BONUS_CREDITS} bonus credits for joining via a referral link!`,
+          { parse_mode: 'Markdown' }
+        );
+      }
+    }
   }
 
   const tierEmoji = {

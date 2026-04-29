@@ -1,7 +1,10 @@
 import { InlineKeyboard } from 'grammy';
 
 export const trackTypeKeyboard = (isPaidUser = false) => {
-  const keyboard = new InlineKeyboard().text('✂️ Clip 30s (1 cr)', 'type_clip');
+  const keyboard = new InlineKeyboard()
+    .text('✂️ Clip 30s (1 cr)', 'type_clip')
+    .row()
+    .text('🎲 Three Variants (3 cr)', 'type_batch');
 
   if (!isPaidUser) {
     return keyboard;
@@ -51,12 +54,21 @@ export const lyricsKeyboard = () =>
     .row()
     .text('⏭ Skip lyrics', 'lyrics_skip');
 
-export const additionalSettingsKeyboard = () =>
-  new InlineKeyboard()
+export const additionalSettingsKeyboard = (isPro = false) => {
+  const keyboard = new InlineKeyboard()
     .text('🎯 BPM', 'settings_bpm')
-    .text('🎚️ Intensity', 'settings_intensity')
+    .text('🎚️ Intensity', 'settings_intensity');
+
+  if (isPro) {
+    keyboard.row().text('⏱ Duration', 'settings_duration');
+  }
+
+  return keyboard
+    .row()
+    .text('🚫 Negative Prompt', 'settings_negative')
     .row()
     .text('⏭ Skip Advanced', 'settings_skip');
+};
 
 export const trackActionKeyboard = (trackId: string) =>
   new InlineKeyboard()

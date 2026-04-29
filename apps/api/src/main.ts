@@ -15,6 +15,7 @@ import { json, urlencoded } from 'express';
 import { AppModule } from './app.module';
 import { loadEnv } from '@musicai/config';
 import { IoAdapter } from './ws-adapter';
+import { BigIntInterceptor } from './interceptors/bigint.interceptor';
 
 const env = loadEnv();
 
@@ -38,6 +39,9 @@ async function bootstrap() {
 
   // Setup WebSocket adapter for real-time notifications
   app.useWebSocketAdapter(new IoAdapter(app));
+
+  // Add BigInt serialization interceptor globally
+  app.useGlobalInterceptors(new BigIntInterceptor());
 
   await app.listen(env.PORT);
   console.log(`API server running on port ${env.PORT} (body parser limit: ${bodyParserLimit})`);

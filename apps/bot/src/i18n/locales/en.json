@@ -1,0 +1,16 @@
+{
+  "start": "🎵 *Welcome to MusicAI Bot!*\n\n👤 *Your Profile:*\n• Credits: {credits}\n{tierEmoji} Tier: {tier}\n\n📝 *Commands:*\n/create - Create a new track\n/batch - Create 3 variants at once\n/history - View your track history\n/library - Browse community tracks\n/profile - View your profile\n/settings - Configure defaults\n/buy - Buy credits\n\nMay the Force be with you! 🌟",
+  "not_authorized": "❌ Error: You are not authorized to use this bot.",
+  "user_not_found": "❌ Error: User not found",
+  "rate_limit": "⏳ Rate limit exceeded. Please wait {seconds}s before trying again.",
+  "credits_insufficient": "❌ Not enough credits!\n\nRequired: {required}\nYou have: {credits}\n\nUse /buy to purchase more.",
+  "daily_limit": "❌ Daily limit reached!\n\nTrack limit for {tier} tier: {limit}/day\nAlready created today: {count}",
+  "credits_added": "✅ Added {amount} credits!",
+  "track_queued": "✅ *Track queued!*\n\nTrack ID: `{trackId}...`\nEstimated time: ~45 seconds\n\nYou will be notified when your track is ready.",
+  "track_failed": "❌ Track generation failed: {error}",
+  "track_ready": "🎵 *Your track is ready!*\n\n{prompt}",
+  "select_language": "🌐 *Select Language*\n\nChoose your preferred language:",
+  "language_set": "✅ Language set to {language}",
+  "referral_bonus": "🎁 *Welcome Bonus!*\n\nYou received +{amount} bonus credits for joining via a referral link!",
+  "referral_link": "🔗 *Your Referral Link*\n\nShare this link with friends:\n`https://t.me/{botUsername}?start=ref={userId}`\n\nWhen someone joins via your link:\n• They get +5 bonus credits\n• You get 20% of their first purchase"
+}

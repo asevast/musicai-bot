@@ -53,6 +53,7 @@ export const envSchema = z.object({
   YUKASSA_SECRET_KEY: z.string().optional(),
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  TELEGRAM_WEBHOOK_SECRET: z.string().optional(),
 
   // Limits
   FREE_DAILY_TRACKS_LIMIT: z.coerce.number().default(3),
