@@ -173,14 +173,14 @@ export async function handleLibraryPlay(ctx: Context): Promise<void> {
     const pathParts = gcsUrlObj.pathname.split('/').filter(Boolean);
     const storageKey = pathParts.slice(1).join('/');
 
-    // Get audio buffer
-    const audioBuffer = await storageService.getFileBuffer(storageKey);
+    // Use presigned URL instead of downloading buffer to memory
+    const audioUrl = await storageService.getPresignedUrl(storageKey, 300);
 
     const displayName = track.user?.username || track.user?.firstName || 'Anonymous';
     const trackType = track.type === 'instrumental' ? '🎹 Instrumental' : '🎵 Vocal';
 
-    // Send as voice message for inline playback
-    await ctx.replyWithVoice(audioBuffer, {
+    // Send as voice message using URL (avoids buffering entire file in memory)
+    await ctx.replyWithVoice(audioUrl, {
       caption: `${trackType} by ${displayName}\n📝 ${track.prompt.slice(0, 100)}${track.prompt.length > 100 ? '...' : ''}`,
     });
   } catch (error) {

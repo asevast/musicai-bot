@@ -24,6 +24,7 @@ export class SubscriptionsService {
 
   private readonly PRO_MONTHLY_CREDITS = 150;
   private readonly SUBSCRIPTION_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+  private readonly REFRESH_BATCH_SIZE = 50;
 
   /**
    * Check if a user is eligible for monthly credit refresh
@@ -129,27 +130,39 @@ export class SubscriptionsService {
 
   /**
    * Process all subscriptions that need credit refresh
-   * Returns results of all processed refreshes
+   * Uses batched cursor-based processing to avoid long-running transactions
+   * and DB connection exhaustion at scale
    */
   async processMonthlyRefreshes(): Promise<SubscriptionRefreshResult[]> {
-    const users = await prisma.user.findMany({
-      where: {
-        subscriptionTier: { in: ['pro', 'unlimited'] },
-        subscriptionExpiresAt: { gt: new Date() },
-      },
-      select: { id: true },
-    });
-
     const results: SubscriptionRefreshResult[] = [];
+    let cursor: string | undefined;
 
-    for (const { id } of users) {
-      const shouldRefresh = await this.shouldRefreshCredits(id);
-      if (shouldRefresh) {
-        const result = await this.refreshMonthlyCredits(id);
-        if (result) {
-          results.push(result);
+    while (true) {
+      const users = await prisma.user.findMany({
+        where: {
+          subscriptionTier: { in: ['pro', 'unlimited'] },
+          subscriptionExpiresAt: { gt: new Date() },
+          ...(cursor ? { id: { gt: cursor } } : {}),
+        },
+        select: { id: true },
+        take: this.REFRESH_BATCH_SIZE,
+        orderBy: { id: 'asc' },
+      });
+
+      if (users.length === 0) break;
+
+      for (const { id } of users) {
+        const shouldRefresh = await this.shouldRefreshCredits(id);
+        if (shouldRefresh) {
+          const result = await this.refreshMonthlyCredits(id);
+          if (result) {
+            results.push(result);
+          }
         }
       }
+
+      if (users.length < this.REFRESH_BATCH_SIZE) break;
+      cursor = users[users.length - 1].id;
     }
 
     return results;

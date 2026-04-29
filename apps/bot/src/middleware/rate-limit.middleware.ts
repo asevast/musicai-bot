@@ -11,19 +11,30 @@ export class BotRateLimiter {
   private readonly maxRequests: number;
   private readonly windowMs: number;
   private readonly keyGenerator: (ctx: Context) => string;
+  private lastCleanup = Date.now();
+  private readonly cleanupIntervalMs: number;
 
   constructor(options: {
     maxRequests: number;
     windowMs: number;
     keyGenerator?: (ctx: Context) => string;
+    cleanupIntervalMs?: number;
   }) {
     this.maxRequests = options.maxRequests;
     this.windowMs = options.windowMs;
     this.keyGenerator = options.keyGenerator || ((ctx) => ctx.from?.id?.toString() || 'unknown');
+    this.cleanupIntervalMs = options.cleanupIntervalMs ?? 60_000;
   }
 
-  private cleanup(): void {
+  /**
+   * Lazy cleanup: only runs when enough time has passed since last sweep.
+   * Avoids O(N) scan on every request while still preventing unbounded growth.
+   */
+  private maybeCleanup(): void {
     const now = Date.now();
+    if (now - this.lastCleanup < this.cleanupIntervalMs) return;
+    this.lastCleanup = now;
+
     for (const [key, entry] of this.requests) {
       if (entry.resetTime <= now) {
         this.requests.delete(key);
@@ -32,11 +43,12 @@ export class BotRateLimiter {
   }
 
   isRateLimited(key: string): { limited: boolean; remaining: number; resetIn: number } {
-    this.cleanup();
+    this.maybeCleanup();
 
     const now = Date.now();
     const entry = this.requests.get(key);
 
+    // Lazy per-entry expiry: delete stale entry on access
     if (!entry || entry.resetTime <= now) {
       this.requests.set(key, {
         count: 1,
