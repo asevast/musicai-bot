@@ -173,15 +173,17 @@ export class YuKassaService {
   }
 
   /**
-   * Verify webhook signature
-   * YuKassa sends webhook with notification body
+   * Validate webhook notification structure
+   * IP verification is handled in the controller; this validates the payload shape
    */
-  verifyWebhook(body: unknown, signature: string): boolean {
-    // YuKassa uses IP whitelist + body inspection for webhook validation
-    // In production, verify IP is from YuKassa (185.71.76.0/27, 185.71.77.0/27)
-    // and validate notification structure
-
-    this.logger.log('Webhook verification (IP whitelist recommended in production)');
+  verifyWebhook(body: unknown): boolean {
+    if (!body || typeof body !== 'object') return false;
+    const obj = body as Record<string, unknown>;
+    if (typeof obj.event !== 'string' || !obj.event) return false;
+    if (!obj.object || typeof obj.object !== 'object') return false;
+    const payment = obj.object as Record<string, unknown>;
+    if (typeof payment.id !== 'string' || !payment.id) return false;
+    if (typeof payment.status !== 'string') return false;
     return true;
   }
 

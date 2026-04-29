@@ -226,6 +226,21 @@ resource "google_secret_manager_secret_version" "db_password" {
   secret_data = random_password.db_password.result
 }
 
+resource "google_secret_manager_secret" "database_url" {
+  secret_id  = "${local.prefix}-database-url"
+  project    = local.project_id
+
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret_version" "database_url" {
+  secret      = google_secret_manager_secret.database_url.id
+  version     = "1"
+  secret_data = "postgresql://${google_sql_user.app.name}:${random_password.db_password.result}@/${google_sql_database.app.name}?host=/cloudsql/${local.project_id}:${local.region}:${google_sql_database_instance.main.name}"
+}
+
 # Cloud Run - API
 resource "google_cloud_run_v2_service" "api" {
   name     = "${local.prefix}-api"
@@ -248,8 +263,13 @@ resource "google_cloud_run_v2_service" "api" {
         value = var.environment
       }
       env {
-        name  = "DATABASE_URL"
-        value = "postgresql://${google_sql_user.app.name}:${random_password.db_password.result}@/${google_sql_database.app.name}?host=/cloudsql/${local.project_id}:${local.region}:${google_sql_database_instance.main.name}"
+        name = "DATABASE_URL"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.database_url.secret_id
+            version = "latest"
+          }
+        }
       }
       env {
         name  = "REDIS_URL"
@@ -302,8 +322,13 @@ resource "google_cloud_run_v2_service" "bot" {
         value = google_cloud_run_v2_service.api.uri
       }
       env {
-        name  = "DATABASE_URL"
-        value = "postgresql://${google_sql_user.app.name}:${random_password.db_password.result}@/${google_sql_database.app.name}?host=/cloudsql/${local.project_id}:${local.region}:${google_sql_database_instance.main.name}"
+        name = "DATABASE_URL"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.database_url.secret_id
+            version = "latest"
+          }
+        }
       }
       env {
         name  = "REDIS_URL"
@@ -341,8 +366,13 @@ resource "google_cloud_run_v2_service" "worker" {
       image = "${local.region}-docker.pkg.dev/${local.project_id}/musicai/worker:latest"
 
       env {
-        name  = "DATABASE_URL"
-        value = "postgresql://${google_sql_user.app.name}:${random_password.db_password.result}@/${google_sql_database.app.name}?host=/cloudsql/${local.project_id}:${local.region}:${google_sql_database_instance.main.name}"
+        name = "DATABASE_URL"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.database_url.secret_id
+            version = "latest"
+          }
+        }
       }
       env {
         name  = "REDIS_URL"

@@ -28,16 +28,17 @@ export class ContentFilterService {
   private readonly logger = new Logger(ContentFilterService.name);
 
   // SPEC §11.4: Content filtering rules
+  // Note: no 'g' flag — shared RegExp instances with 'g' leak lastIndex between calls
   private readonly rules: FilterRule[] = [
     // Violence and gore
     {
-      pattern: /\b(kill(ing|er)?|murder(ing|er)?|execute|torture|die painfully|slaughter)\b/gi,
+      pattern: /\b(kill(ing|er)?|murder(ing|er)?|execute|torture|die painfully|slaughter)\b/i,
       category: 'violence',
       severity: 'critical',
       message: 'Content contains references to violence or harm',
     },
     {
-      pattern: /\b(blood|gore|mutilated?|decapitated?)\b/gi,
+      pattern: /\b(blood|gore|mutilated?|decapitated?)\b/i,
       category: 'violence',
       severity: 'high',
       message: 'Content contains violent or graphic references',
@@ -45,7 +46,7 @@ export class ContentFilterService {
 
     // Self-harm
     {
-      pattern: /\b(suicid(ing|e)|kill myself|end my life|self.harm|cutting)\b/gi,
+      pattern: /\b(suicid(ing|e)|kill myself|end my life|self.harm|cutting)\b/i,
       category: 'self_harm',
       severity: 'critical',
       message: 'Content contains references to self-harm',
@@ -53,13 +54,13 @@ export class ContentFilterService {
 
     // Harassment and hate
     {
-      pattern: /\b(hate speech|nazi|racist|derogatory slur)\b/gi,
+      pattern: /\b(hate speech|nazi|racist|derogatory slur)\b/i,
       category: 'hate_speech',
       severity: 'critical',
       message: 'Content contains hate speech',
     },
     {
-      pattern: /\b(racist|sexist|homophobic|homophobe)\b/gi,
+      pattern: /\b(racist|sexist|homophobic|homophobe)\b/i,
       category: 'harassment',
       severity: 'high',
       message: 'Content may contain discriminatory language',
@@ -67,7 +68,7 @@ export class ContentFilterService {
 
     // Sexual content
     {
-      pattern: /\b(nude|naked|pornographic|explicit|sexual(ly)?)\b/gi,
+      pattern: /\b(nude|naked|pornographic|explicit|sexual(ly)?)\b/i,
       category: 'sexual_content',
       severity: 'high',
       message: 'Content contains sexual references',
@@ -75,19 +76,19 @@ export class ContentFilterService {
 
     // Personal information
     {
-      pattern: /\b\d{3}-\d{2}-\d{4}\b/g, // SSN pattern
+      pattern: /\b\d{3}-\d{2}-\d{4}\b/, // SSN pattern
       category: 'personal_info',
       severity: 'medium',
       message: 'Content may contain personal information (SSN)',
     },
     {
-      pattern: /\b(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g, // Phone
+      pattern: /\b(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/, // Phone
       category: 'personal_info',
       severity: 'low',
       message: 'Content may contain phone numbers',
     },
     {
-      pattern: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, // Email
+      pattern: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/, // Email
       category: 'personal_info',
       severity: 'low',
       message: 'Content may contain email addresses',
@@ -95,13 +96,16 @@ export class ContentFilterService {
 
     // Spam patterns
     {
-      pattern: /(.+)\1{4,}/gi, // Repeated text
+      // Detect 5+ consecutive repeated words/phrases — ReDoS-safe alternative
+      // Instead of backreference (/(.+)\1{4,}/) which causes catastrophic backtracking,
+      // use a character-class quantifier with an upper bound
+      pattern: /(\b\w+\b)(?:\s+\1){4,}/i,
       category: 'spam',
       severity: 'low',
       message: 'Content appears to be spam (repeated text)',
     },
     {
-      pattern: /\b(buy now|click here|viagra|casino|lottery)\b/gi,
+      pattern: /\b(buy now|click here|viagra|casino|lottery)\b/i,
       category: 'spam',
       severity: 'medium',
       message: 'Content may contain spam or promotion',
@@ -109,7 +113,7 @@ export class ContentFilterService {
 
     // Inappropriate for music generation
     {
-      pattern: /\b(exploit(ing|ation)?|abuse|manipulat(e|ing|ion))\b/gi,
+      pattern: /\b(exploit(ing|ation)?|abuse|manipulat(e|ing|ion))\b/i,
       category: 'inappropriate',
       severity: 'medium',
       message: 'Content may be inappropriate',

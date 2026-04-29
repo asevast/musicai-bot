@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { createHmac, timingSafeEqual } from 'crypto';
 import { loadEnv } from '@musicai/config';
 
 interface StripePaymentIntent {
@@ -79,7 +80,9 @@ export class StripeService {
       body: bodyString,
     });
 
-    const data = await response.json() as Record<string, unknown> & { error?: { message: string } };
+    const data = (await response.json()) as Record<string, unknown> & {
+      error?: { message: string };
+    };
 
     if (!response.ok) {
       this.logger.error(`Stripe API error: ${data.error?.message || response.statusText}`);
@@ -202,7 +205,8 @@ export class StripeService {
   }
 
   /**
-   * Construct webhook event and verify signature
+   * Construct webhook event and verify signature using HMAC-SHA256
+   * Stripe signs webhooks with a timestamped HMAC: t=<timestamp>,v1=<signature>
    */
   constructWebhookEvent(
     payload: string,
@@ -216,9 +220,10 @@ export class StripeService {
       return null;
     }
 
-    // In production, use Stripe SDK's constructEvent
-    // For now, log and process (proper verification requires SDK)
-    this.logger.log('Webhook signature verification (use SDK in production)');
+    if (!this.verifySignature(payload, signature)) {
+      this.logger.error('Stripe webhook signature verification failed');
+      return null;
+    }
 
     try {
       const event = JSON.parse(payload);
@@ -227,6 +232,53 @@ export class StripeService {
       this.logger.error('Invalid webhook payload');
       return null;
     }
+  }
+
+  /**
+   * Verify Stripe webhook signature (HMAC-SHA256)
+   * Stripe format: t=<timestamp>,v1=<signature>[,v0=<legacy>]
+   */
+  private verifySignature(payload: string, signatureHeader: string): boolean {
+    const parts = signatureHeader.split(',');
+    const timestampPart = parts.find((p) => p.startsWith('t='));
+    const signaturePart = parts.find((p) => p.startsWith('v1='));
+
+    if (!timestampPart || !signaturePart) {
+      this.logger.error('Invalid Stripe signature header format');
+      return false;
+    }
+
+    const timestamp = timestampPart.slice(2);
+    const signature = signaturePart.slice(3);
+
+    // Reject signatures older than 5 minutes to prevent replay attacks
+    const currentTime = Math.floor(Date.now() / 1000);
+    const signatureTime = parseInt(timestamp, 10);
+    if (isNaN(signatureTime) || Math.abs(currentTime - signatureTime) > 300) {
+      this.logger.error('Stripe webhook signature timestamp expired');
+      return false;
+    }
+
+    const signedPayload = `${timestamp}.${payload}`;
+    const expectedSignature = createHmac('sha256', this.webhookSecret)
+      .update(signedPayload)
+      .digest('hex');
+
+    // Compare all v1 signatures (multiple may exist during key rotation)
+    const signatures = signature.split('&');
+    for (const sig of signatures) {
+      try {
+        const expected = Buffer.from(expectedSignature, 'hex');
+        const actual = Buffer.from(sig, 'hex');
+        if (expected.length === actual.length && timingSafeEqual(expected, actual)) {
+          return true;
+        }
+      } catch {
+        continue;
+      }
+    }
+
+    return false;
   }
 
   /**
