@@ -8,15 +8,13 @@ import {
   Avatar,
   Modal,
   Snackbar,
-} from '@telegram-apps/telegram-ui';
-import {
   Icon24ChevronRight,
   Icon24Language,
   Icon24Notification,
   Icon24Delete,
   Icon24InfoCircle,
   Icon24Help,
-} from '@telegram-apps/telegram-ui/dist/icons';
+} from '@telegram-apps/telegram-ui';
 import { useState, useEffect } from 'react';
 import { initData, useSignal } from '@telegram-apps/sdk-react';
 
@@ -123,10 +121,10 @@ export function Settings() {
     <div className="p-4">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
-        <Avatar src={user?.photoUrl} fallback={user?.firstName?.[0] || 'U'} size={64} />
+        <Avatar src={user?.photo_url} fallback={user?.first_name?.[0] || 'U'} size={48} />
         <div>
           <Text weight="1" size="6">
-            {user?.firstName} {user?.lastName}
+            {user?.first_name} {user?.last_name}
           </Text>
           <Text color="textSecondary">@{user?.username}</Text>
         </div>
@@ -226,7 +224,7 @@ export function Settings() {
             <Button mode="bezeled" stretched onClick={() => setShowDeleteModal(false)}>
               Cancel
             </Button>
-            <Button mode="destructive" stretched onClick={handleDeleteAccount}>
+            <Button mode="bezeled" stretched onClick={handleDeleteAccount}>
               Delete
             </Button>
           </div>
