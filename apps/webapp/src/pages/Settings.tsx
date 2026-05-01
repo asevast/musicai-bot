@@ -9,14 +9,8 @@ import {
   Modal,
   Snackbar,
 } from '@telegram-apps/telegram-ui';
-import {
-  Icon24ChevronRight,
-  Icon24Language,
-  Icon24Notification,
-  Icon24Delete,
-  Icon24InfoCircle,
-  Icon24Help,
-} from '@telegram-apps/telegram-ui/dist/icons';
+import { Icon24ChevronRight } from '@telegram-apps/telegram-ui/dist/icons/24/chevron_right';
+import { Icon24Notifications } from '@telegram-apps/telegram-ui/dist/icons/24/notifications';
 import { useState, useEffect } from 'react';
 import { initData, useSignal } from '@telegram-apps/sdk-react';
 
@@ -123,10 +117,10 @@ export function Settings() {
     <div className="p-4">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
-        <Avatar src={user?.photoUrl} fallback={user?.firstName?.[0] || 'U'} size={64} />
+        <Avatar src={user?.photo_url} />
         <div>
-          <Text weight="1" size="6">
-            {user?.firstName} {user?.lastName}
+          <Text weight="1" size={6}>
+            {user?.first_name} {user?.last_name}
           </Text>
           <Text color="textSecondary">@{user?.username}</Text>
         </div>
@@ -136,7 +130,7 @@ export function Settings() {
       <Section header="Account">
         <List>
           <Cell
-            before={<Icon24Language />}
+            before={<span style={{ fontSize: 24 }}>🌐</span>}
             after={
               <select
                 value={language}
@@ -154,7 +148,7 @@ export function Settings() {
             Language
           </Cell>
           <Cell
-            before={<Icon24Notification />}
+            before={<Icon24Notifications />}
             after={
               <div
                 className={`w-12 h-6 rounded-full transition-colors cursor-pointer ${
@@ -173,7 +167,7 @@ export function Settings() {
             Notifications
           </Cell>
           <Cell
-            before={<Icon24InfoCircle />}
+            before={<span style={{ fontSize: 24 }}>👤</span>}
             after={<Icon24ChevronRight />}
             onClick={() => navigate('/profile')}
           >
@@ -186,14 +180,14 @@ export function Settings() {
       <Section header="Support" className="mt-4">
         <List>
           <Cell
-            before={<Icon24Help />}
+            before={<span style={{ fontSize: 24 }}>❓</span>}
             after={<Icon24ChevronRight />}
             onClick={() => window.open('https://t.me/musicai_support', '_blank')}
           >
             Help & Support
           </Cell>
           <Cell
-            before={<Icon24InfoCircle />}
+            before={<span style={{ fontSize: 24 }}>ℹ️</span>}
             after={<Icon24ChevronRight />}
             onClick={() => navigate('/about')}
           >
@@ -206,7 +200,7 @@ export function Settings() {
       <Section header="Danger Zone" className="mt-4">
         <List>
           <Cell
-            before={<Icon24Delete className="text-red-500" />}
+            before={<span style={{ fontSize: 24 }}>🗑️</span>}
             className="text-red-500"
             onClick={() => setShowDeleteModal(true)}
           >
@@ -226,7 +220,7 @@ export function Settings() {
             <Button mode="bezeled" stretched onClick={() => setShowDeleteModal(false)}>
               Cancel
             </Button>
-            <Button mode="destructive" stretched onClick={handleDeleteAccount}>
+            <Button mode="outline" stretched className="text-red-500 border-red-500 hover:bg-red-500 hover:text-white" onClick={handleDeleteAccount}>
               Delete
             </Button>
           </div>
