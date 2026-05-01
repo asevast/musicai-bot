@@ -12,7 +12,7 @@ import {
 import { Icon24ChevronRight } from '@telegram-apps/telegram-ui/dist/icons/24/chevron_right';
 import { Icon24Notifications } from '@telegram-apps/telegram-ui/dist/icons/24/notifications';
 import { useState, useEffect } from 'react';
-import { initData, useSignal } from '@telegram-apps/sdk-react';
+import { useTelegram } from '../hooks/useTelegram';
 
 /**
  * Settings Page for MusicAI Webapp
@@ -20,8 +20,7 @@ import { initData, useSignal } from '@telegram-apps/sdk-react';
  */
 export function Settings() {
   const navigate = useNavigate();
-  const initDataState = useSignal(initData.state);
-  const user = initDataState?.user;
+  const { user } = useTelegram();
 
   const [language, setLanguage] = useState<string>('en');
   const [notifications, setNotifications] = useState<boolean>(true);
@@ -117,10 +116,10 @@ export function Settings() {
     <div className="p-4">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
-        <Avatar src={user?.photo_url} />
+        <Avatar src={user?.photoUrl} />
         <div>
           <Text weight="1" size={6}>
-            {user?.first_name} {user?.last_name}
+            {user?.firstName} {user?.lastName}
           </Text>
           <Text color="textSecondary">@{user?.username}</Text>
         </div>
