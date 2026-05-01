@@ -130,7 +130,7 @@ export function Settings() {
       <Section header="Account">
         <List>
           <Cell
-            before={<span style={{ fontSize: 24 }}>🌐</span>}
+            before={<Icon24Language />}
             after={
               <select
                 value={language}
